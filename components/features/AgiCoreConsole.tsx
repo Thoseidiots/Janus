@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, FC } from 'react';
 import { Card } from '../common/Card';
 import { Button } from '../common/Button';
 import { PowerIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
@@ -24,19 +24,16 @@ class SimulatedMoralGovernor {
 }
 
 const safeEval = (expr: string): number | string => {
-    // Basic safety check for arithmetic expressions
-    if (!/^[0-9+\-*/().\s^]+$/.test(expr)) {
-        return "Invalid characters in expression.";
-    }
-    // More robust check to prevent function calls
-    if (/[a-zA-Z]/.test(expr)) {
-        return "Only numeric calculations are allowed.";
-    }
+    // Restrict characters to prevent injection attacks
+    if (!/^[0-9+\-*/().\s^]+$/.test(expr)) return "Invalid characters in expression.";
+    // Prevent access to global scope (window, etc.)
+    if (/[a-zA-Z]/.test(expr)) return "Only numeric calculations are allowed.";
     try {
-        // Replace ^ with ** for exponentiation
+        // A safer way to evaluate mathematical expressions, though still limited.
+        // For a real app, a dedicated math parsing library is recommended.
         const sanitizedExpr = expr.replace(/\^/g, '**');
         // eslint-disable-next-line no-eval
-        const result = eval(sanitizedExpr);
+        const result = new Function(`return ${sanitizedExpr}`)();
         if (typeof result !== 'number' || !isFinite(result)) {
             return "Invalid or non-finite result.";
         }
@@ -46,7 +43,7 @@ const safeEval = (expr: string): number | string => {
     }
 };
 
-export const AgiCoreConsole: React.FC = () => {
+export const AgiCoreConsole: FC = () => {
     const [isPoweredOn, setIsPoweredOn] = useState(false);
     const [logs, setLogs] = useState<string[]>([]);
     const [userInput, setUserInput] = useState('');
@@ -54,13 +51,10 @@ export const AgiCoreConsole: React.FC = () => {
     
     const logContainerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
-
-    const governor = new SimulatedMoralGovernor();
+    const governorRef = useRef(new SimulatedMoralGovernor());
 
     useEffect(() => {
-        if (logContainerRef.current) {
-            logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
-        }
+        logContainerRef.current?.scrollTo(0, logContainerRef.current.scrollHeight);
     }, [logs]);
 
     useEffect(() => {
@@ -69,11 +63,11 @@ export const AgiCoreConsole: React.FC = () => {
         }
     }, [isPoweredOn, isProcessing]);
 
-    const addLog = (message: string, prefix = '') => {
+    const addLog = useCallback((message: string, prefix = '') => {
         setLogs(prev => [...prev, `${prefix}${message}`]);
-    };
+    }, []);
     
-    const powerOn = () => {
+    const powerOn = useCallback(() => {
         setLogs([]);
         addLog("Booting system...");
         setTimeout(() => {
@@ -89,23 +83,23 @@ export const AgiCoreConsole: React.FC = () => {
             addLog("\n[AGI] Persistent interactive service started. Waiting for stdin goals.", "");
             setIsPoweredOn(true);
         }, 2500);
-    };
+    }, [addLog]);
 
-    const powerOff = () => {
+    const powerOff = useCallback(() => {
         addLog("\n[AGI] Shutdown command received. Exiting.");
         setIsPoweredOn(false);
-    };
+    }, [addLog]);
 
-    const processGoal = (goal: string) => {
+    const processGoal = useCallback((goal: string) => {
         if (!goal.trim()) return;
 
         setIsProcessing(true);
-        addLog(goal, ">> "); // Echo user input
+        addLog(goal, ">> ");
 
         setTimeout(() => {
             addLog(`\n[OPERATOR] New Goal Received: ${goal}`);
+            const governor = governorRef.current;
 
-            // 1. Simple Q&A
             const lg = goal.toLowerCase();
             if ((lg.includes('what') && lg.includes('name')) || lg.startsWith('your name') || lg.includes('who are you')) {
                 addLog("[AGI-CORE] My name is GitHub Copilot.");
@@ -118,7 +112,6 @@ export const AgiCoreConsole: React.FC = () => {
                 return;
             }
 
-            // 2. Arithmetic
             const match = goal.match(/([-+*/\d.\s\^\(\)]+)/);
             if (match && /[+\-*/\^]/.test(match[0]) && /\d/.test(match[0])) {
                 const expr = match[0].trim();
@@ -128,7 +121,6 @@ export const AgiCoreConsole: React.FC = () => {
                 return;
             }
 
-            // 3. Research (simulated)
             if (lg.startsWith('research')) {
                 const query = goal.substring(8).trim().replace(/ /g, '+');
                 const steps = [
@@ -143,23 +135,16 @@ export const AgiCoreConsole: React.FC = () => {
                     const [ok, reason] = governor.judge(goal, step);
                     if (!ok) {
                         addLog(`[MORAL GOVERNOR] VETO: ${reason}`);
-                        setIsProcessing(false);
-                        return; // Stop processing
+                        setIsProcessing(false); return;
                     }
                     addLog(`  [EFP] Executing Step: ${step}`);
-                    if (step.startsWith('Execute WIM')) {
-                        addLog(`  [WIM] Handing off URL request to the external proxy layer.`);
-                        addLog(`  [WIM] Received content. Passing to Sanitization Gateway...`);
-                        addLog(`  [WIM] Gateway reports content is safe.`);
-                        addLog(`[AGI-CORE] Research result preview:\n(Simulated sanitized HTML content for '${query.replace(/\+/g, ' ')}')`);
-                    }
                 }
+                addLog(`[AGI-CORE] Research complete (simulated).`);
                 addLog(`[EFP] Goal '${goal}' completed.`);
                 setIsProcessing(false);
                 return;
             }
             
-            // 4. Default Veto Check for any other goal
             const [ok, reason] = governor.judge(goal, goal);
             if (!ok) {
                  addLog(`[MORAL GOVERNOR] VETO: ${reason}`);
@@ -167,24 +152,23 @@ export const AgiCoreConsole: React.FC = () => {
                  return;
             }
 
-            // 5. Fallback
             addLog("[AGI-CORE] I can answer simple questions and evaluate arithmetic locally. For web research ask 'Research ...'.");
             setIsProcessing(false);
 
         }, 500);
-    };
+    }, [addLog]);
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter' && !isProcessing) {
             const command = userInput.trim();
             setUserInput('');
-            if (command.toLowerCase() === 'exit' || command.toLowerCase() === 'quit' || command.toLowerCase() === 'halt') {
+            if (['exit', 'quit', 'halt'].includes(command.toLowerCase())) {
                 powerOff();
             } else {
                 processGoal(command);
             }
         }
-    };
+    }, [isProcessing, userInput, powerOff, processGoal]);
     
     return (
         <div className="space-y-6">

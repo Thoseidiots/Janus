@@ -1,5 +1,4 @@
-
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, FC } from 'react';
 import { generateVideoFromText, generateVideoFromImage } from '../../services/geminiService';
 import { fileToBase64 } from '../../utils/fileUtils';
 import { useVeo, VeoStatus } from '../../hooks/useVeo';
@@ -7,11 +6,12 @@ import { Card } from '../common/Card';
 import { Button } from '../common/Button';
 import { FileUpload } from '../common/FileUpload';
 import { Spinner } from '../common/Spinner';
+import { VideoCameraIcon } from '@heroicons/react/24/outline';
 
 type VideoMode = 'text-to-video' | 'image-to-video';
 type AspectRatio = '16:9' | '9:16';
 
-export const VideoTools: React.FC = () => {
+export const VideoTools: FC = () => {
     const [mode, setMode] = useState<VideoMode>('text-to-video');
     const [prompt, setPrompt] = useState('');
     const [aspectRatio, setAspectRatio] = useState<AspectRatio>('16:9');
@@ -27,7 +27,7 @@ export const VideoTools: React.FC = () => {
         }
     }, []);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = useCallback((e: React.FormEvent) => {
         e.preventDefault();
         if (!prompt || (mode === 'image-to-video' && !sourceImage)) return;
 
@@ -41,7 +41,14 @@ export const VideoTools: React.FC = () => {
         };
 
         handleGeneration(startGeneration);
-    };
+    }, [prompt, mode, sourceImage, aspectRatio, handleGeneration]);
+
+    const handleModeChange = useCallback((newMode: VideoMode) => {
+        setMode(newMode);
+        setPrompt('');
+        setSourceImage(null);
+        reset();
+    }, [reset]);
 
     const renderForm = () => (
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -78,7 +85,7 @@ export const VideoTools: React.FC = () => {
                 </div>
             </div>
 
-            <Button type="submit" isLoading={status === VeoStatus.GENERATING} disabled={!prompt || (mode === 'image-to-video' && !sourceImage)} className="w-full">
+            <Button type="submit" isLoading={status === VeoStatus.GENERATING} disabled={status === VeoStatus.GENERATING || !prompt || (mode === 'image-to-video' && !sourceImage)} className="w-full">
                 Generate Video
             </Button>
         </form>
@@ -107,8 +114,8 @@ export const VideoTools: React.FC = () => {
             <p className="text-gray-400">Generate high-quality videos from text prompts, or bring your static images to life with animation.</p>
 
             <div className="flex items-center space-x-2 bg-gray-800 rounded-lg p-1 w-min">
-                <button onClick={() => { setMode('text-to-video'); reset(); }} className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${mode === 'text-to-video' ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:bg-gray-700'}`}>Text-to-Video</button>
-                <button onClick={() => { setMode('image-to-video'); reset(); }} className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${mode === 'image-to-video' ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:bg-gray-700'}`}>Image-to-Video</button>
+                <button onClick={() => handleModeChange('text-to-video')} className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${mode === 'text-to-video' ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:bg-gray-700'}`}>Text-to-Video</button>
+                <button onClick={() => handleModeChange('image-to-video')} className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${mode === 'image-to-video' ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:bg-gray-700'}`}>Image-to-Video</button>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -117,11 +124,22 @@ export const VideoTools: React.FC = () => {
                 </Card>
                 <Card className="flex items-center justify-center min-h-[300px]">
                     {status === VeoStatus.GENERATING && <Spinner text="Generating video... This may take a few minutes." />}
-                    {error && <p className="text-red-400 text-center">Error: {error}</p>}
+                    {error && (
+                        <div className="text-center text-red-400">
+                            <p>Error: {error}</p>
+                            {status === VeoStatus.NEEDS_KEY && <Button onClick={selectApiKey} className="mt-4">Select New API Key</Button>}
+                        </div>
+                    )}
                     {videoUrl && status === VeoStatus.SUCCESS && (
                         <div className="w-full">
                             <h3 className="text-xl font-semibold text-center mb-4">Generated Video</h3>
                             <video src={videoUrl} controls autoPlay loop className="w-full rounded-lg" />
+                        </div>
+                    )}
+                    {status === VeoStatus.IDLE && !videoUrl && (
+                        <div className="text-center text-gray-500">
+                            <VideoCameraIcon className="h-16 w-16 mx-auto mb-2"/>
+                            Your generated video will appear here.
                         </div>
                     )}
                 </Card>

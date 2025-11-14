@@ -1,5 +1,4 @@
-
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, FC } from 'react';
 import { Card } from '../common/Card';
 import { Button } from '../common/Button';
 import { CheckCircleIcon, XCircleIcon, ShieldCheckIcon, RocketLaunchIcon } from '@heroicons/react/24/solid';
@@ -8,7 +7,7 @@ import { Spinner } from '../common/Spinner';
 type Status = 'idle' | 'pending' | 'success' | 'error';
 type LaunchStep = 'idle' | 'vpn' | 'tor' | 'confirm' | 'launched' | 'shuttingdown';
 
-const StatusIndicator: React.FC<{ status: Status; text: string }> = ({ status, text }) => {
+const StatusIndicator: FC<{ status: Status; text: string }> = ({ status, text }) => {
     const getIcon = () => {
         switch (status) {
             case 'pending':
@@ -30,7 +29,7 @@ const StatusIndicator: React.FC<{ status: Status; text: string }> = ({ status, t
     );
 };
 
-export const SecureLauncher: React.FC = () => {
+export const SecureLauncher: FC = () => {
     const [step, setStep] = useState<LaunchStep>('idle');
     const [logs, setLogs] = useState<string[]>([]);
     const [vpnStatus, setVpnStatus] = useState<Status>('idle');
@@ -44,31 +43,35 @@ export const SecureLauncher: React.FC = () => {
         }
     }, [logs]);
 
-    const addLog = (message: string) => {
+    const addLog = useCallback((message: string) => {
         const timestamp = new Date().toLocaleTimeString();
         setLogs(prev => [...prev, `[${timestamp}] ${message}`]);
-    };
+    }, []);
 
-    const resetState = () => {
+    const resetState = useCallback(() => {
         setStep('idle');
         setLogs([]);
         setVpnStatus('idle');
         setTorStatus('idle');
         setConfirmInput('');
-    };
+    }, []);
     
-    const simulateTor = () => {
-        addLog("[LAUNCHER] Step 2: Starting Tor Service...");
-        setTorStatus('pending');
-        setTimeout(() => addLog("  > Tor process started in background. Waiting for proxy to become active..."), 1500);
-        setTimeout(() => {
-            addLog("  > SUCCESS: Tor SOCKS proxy is active on port 9050.");
-            setTorStatus('success');
-            setStep('confirm');
-        }, 4000);
-    };
+    const handleLaunch = useCallback(() => {
+        resetState();
+        setStep('vpn');
+        addLog("--- Project Manus Launch Assistant (v2.3) ---");
+        
+        const simulateTor = () => {
+            addLog("[LAUNCHER] Step 2: Starting Tor Service...");
+            setTorStatus('pending');
+            setTimeout(() => addLog("  > Tor process started in background. Waiting for proxy to become active..."), 1500);
+            setTimeout(() => {
+                addLog("  > SUCCESS: Tor SOCKS proxy is active on port 9050.");
+                setTorStatus('success');
+                setStep('confirm');
+            }, 4000);
+        };
 
-    const simulateVpn = () => {
         addLog("[LAUNCHER] Step 1: Connecting to Proton VPN...");
         setVpnStatus('pending');
         setTimeout(() => addLog("  > Public IP before VPN attempt: 1.2.3.4"), 1000);
@@ -82,16 +85,9 @@ export const SecureLauncher: React.FC = () => {
             setStep('tor');
             simulateTor();
         }, 6000);
-    };
-
-    const handleLaunch = () => {
-        resetState();
-        setStep('vpn');
-        addLog("--- Project Manus Launch Assistant (v2.3) ---");
-        simulateVpn();
-    };
+    }, [addLog, resetState]);
     
-    const handleShutdown = () => {
+    const handleShutdown = useCallback(() => {
         setStep('shuttingdown');
         addLog("[LAUNCHER] Initiating cleanup sequence...");
         setTimeout(() => {
@@ -106,9 +102,9 @@ export const SecureLauncher: React.FC = () => {
             addLog("  > Shutdown complete.");
             resetState();
         }, 4500);
-    };
+    }, [addLog, resetState]);
 
-    const handleConfirm = () => {
+    const handleConfirm = useCallback(() => {
         if (confirmInput === 'LAUNCH') {
             addLog("[LAUNCHER] Confirmation received. Launching AGI core...");
             setStep('launched');
@@ -117,7 +113,7 @@ export const SecureLauncher: React.FC = () => {
         } else {
             addLog("[LAUNCHER] Incorrect confirmation. Launch aborted.");
         }
-    };
+    }, [addLog, confirmInput]);
 
     const isBusy = step === 'vpn' || step === 'tor' || step === 'shuttingdown';
 

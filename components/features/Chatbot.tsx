@@ -1,5 +1,4 @@
-
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { generateChatResponse } from '../../services/geminiService';
 import { ChatMessage } from '../../types';
 import { Card } from '../common/Card';
@@ -34,13 +33,13 @@ To get the best advice, enable **Web Search** for the latest research or **attac
         }]);
     }, []);
 
-    const scrollToBottom = () => {
+    const scrollToBottom = useCallback(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    };
+    }, []);
 
     useEffect(scrollToBottom, [messages]);
 
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
             const reader = new FileReader();
@@ -53,9 +52,9 @@ To get the best advice, enable **Web Search** for the latest research or **attac
         if (event.target) {
             event.target.value = '';
         }
-    };
+    }, []);
 
-    const handleSendMessage = async () => {
+    const handleSendMessage = useCallback(async () => {
         if (!userInput.trim() || isLoading) return;
 
         let promptWithContext = userInput;
@@ -82,16 +81,16 @@ To get the best advice, enable **Web Search** for the latest research or **attac
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [userInput, isLoading, attachedFile, messages, useWebSearch]);
 
-    const handlePromptStarter = (prompt: string) => {
+    const handlePromptStarter = useCallback((prompt: string) => {
         setUserInput(prompt);
-    };
+    }, []);
 
     return (
         <div className="h-full flex flex-col">
-             <h2 className="text-3xl font-bold text-white mb-4">Tuning Chatbot</h2>
-             <p className="text-gray-400 mb-6">Have a conversation about your model. Ask for clarifications, explore alternatives, and dive deeper into hyperparameter tuning strategies.</p>
+            <h2 className="text-3xl font-bold text-white mb-4">Tuning Chatbot</h2>
+            <p className="text-gray-400 mb-6">Have a conversation about your model. Ask for clarifications, explore alternatives, and dive deeper into hyperparameter tuning strategies.</p>
             <Card className="flex-grow flex flex-col">
                 <div className="flex-grow overflow-y-auto pr-4 -mr-4 space-y-4">
                     {messages.map((msg, index) => (
@@ -116,7 +115,7 @@ To get the best advice, enable **Web Search** for the latest research or **attac
                                     </div>
                                 )}
                             </div>
-                             {msg.role === 'user' && <UserCircleIcon className="h-8 w-8 text-gray-400 flex-shrink-0 mt-1" />}
+                            {msg.role === 'user' && <UserCircleIcon className="h-8 w-8 text-gray-400 flex-shrink-0 mt-1" />}
                         </div>
                     ))}
                      {isLoading && (
@@ -144,7 +143,7 @@ To get the best advice, enable **Web Search** for the latest research or **attac
                         </div>
                     )}
 
-                    {!isLoading && messages.length <= 2 && (
+                    {!isLoading && messages.length <= 1 && (
                         <div className="flex flex-wrap gap-2">
                              {promptStarters.map((prompt, i) => (
                                 <button 

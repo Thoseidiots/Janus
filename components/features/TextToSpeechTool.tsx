@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, FC } from 'react';
 import { generateSpeech } from '../../services/geminiService';
 import { decode, decodeAudioData } from '../../utils/audioUtils';
 import { Card } from '../common/Card';
@@ -6,7 +6,7 @@ import { Button } from '../common/Button';
 import { Spinner } from '../common/Spinner';
 import { SpeakerWaveIcon, PlayIcon, StopIcon } from '@heroicons/react/24/solid';
 
-export const TextToSpeechTool: React.FC = () => {
+export const TextToSpeechTool: FC = () => {
     const [text, setText] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -17,11 +17,16 @@ export const TextToSpeechTool: React.FC = () => {
     const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null);
     
     useEffect(() => {
-        // Fix: Cast window to `any` to access legacy `webkitAudioContext` for broader browser compatibility.
-        audioContextRef.current = new ((window as any).AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+        // Initialize AudioContext on component mount
+        if (!audioContextRef.current) {
+            audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+        }
         
+        // Cleanup function to close AudioContext on unmount
         return () => {
-            audioContextRef.current?.close();
+            if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+                audioContextRef.current.close();
+            }
         };
     }, []);
 
@@ -35,21 +40,27 @@ export const TextToSpeechTool: React.FC = () => {
     }, []);
 
     const playAudio = useCallback(() => {
-        if (!audioBufferRef.current || !audioContextRef.current || isPlaying) return;
+        if (!audioBufferRef.current || !audioContextRef.current || audioContextRef.current.state === 'closed') return;
 
-        stopPlayback(); // Stop any previous playback
+        // Stop any previous playback
+        if (sourceNodeRef.current) {
+             stopPlayback();
+        }
 
         const source = audioContextRef.current.createBufferSource();
         source.buffer = audioBufferRef.current;
         source.connect(audioContextRef.current.destination);
-        source.onended = () => setIsPlaying(false);
+        source.onended = () => {
+            setIsPlaying(false);
+            sourceNodeRef.current = null;
+        };
         source.start(0);
         
         sourceNodeRef.current = source;
         setIsPlaying(true);
-    }, [isPlaying, stopPlayback]);
+    }, [stopPlayback]);
 
-    const handleGenerate = async (e: React.FormEvent) => {
+    const handleGenerate = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
         if (!text || isLoading) return;
 
@@ -61,17 +72,17 @@ export const TextToSpeechTool: React.FC = () => {
         try {
             const base64Audio = await generateSpeech(text);
             const decodedAudio = decode(base64Audio);
-            if (audioContextRef.current) {
+            if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
                 const buffer = await decodeAudioData(decodedAudio, audioContextRef.current, 24000, 1);
                 audioBufferRef.current = buffer;
-                playAudio();
+                playAudio(); // Autoplay after generation
             }
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An unknown error occurred.');
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [text, isLoading, stopPlayback, playAudio]);
     
     return (
         <div className="space-y-6">
@@ -94,7 +105,7 @@ export const TextToSpeechTool: React.FC = () => {
                                 Generate & Play
                            </Button>
                            {audioBufferRef.current && (
-                               <Button variant="secondary" onClick={isPlaying ? stopPlayback : playAudio}>
+                               <Button type="button" variant="secondary" onClick={isPlaying ? stopPlayback : playAudio}>
                                    {isPlaying ? <StopIcon className="h-5 w-5 mr-2" /> : <PlayIcon className="h-5 w-5 mr-2" />}
                                    {isPlaying ? 'Stop' : 'Replay'}
                                </Button>

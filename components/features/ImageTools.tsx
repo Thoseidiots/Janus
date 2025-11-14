@@ -1,18 +1,16 @@
-
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, FC } from 'react';
 import { generateImage, editImage } from '../../services/geminiService';
 import { fileToBase64 } from '../../utils/fileUtils';
 import { Card } from '../common/Card';
 import { Button } from '../common/Button';
 import { FileUpload } from '../common/FileUpload';
 import { Spinner } from '../common/Spinner';
-// Fix: Import PhotoIcon to resolve 'Cannot find name' error.
 import { PhotoIcon } from '@heroicons/react/24/outline';
 
 type ToolMode = 'generate' | 'edit';
 const aspectRatios = ["1:1", "16:9", "9:16", "4:3", "3:4"];
 
-export const ImageTools: React.FC = () => {
+export const ImageTools: FC = () => {
     const [mode, setMode] = useState<ToolMode>('generate');
     const [prompt, setPrompt] = useState('');
     const [aspectRatio, setAspectRatio] = useState('1:1');
@@ -26,12 +24,13 @@ export const ImageTools: React.FC = () => {
             const base64 = await fileToBase64(file);
             setSourceImage({ file, base64, mimeType: file.type });
             setGeneratedImage(null); // Clear previous result when new image is uploaded
+            setError(null);
         } catch (err) {
             setError('Failed to read the selected file.');
         }
     }, []);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
         if (!prompt || isLoading || (mode === 'edit' && !sourceImage)) return;
         
@@ -54,7 +53,7 @@ export const ImageTools: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [prompt, isLoading, mode, sourceImage, aspectRatio]);
     
     const renderGeneratorForm = () => (
         <div className="space-y-4">

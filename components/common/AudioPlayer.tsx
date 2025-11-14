@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, FC } from 'react';
 import { decode, decodeAudioData } from '../../utils/audioUtils';
 import { Button } from './Button';
 import { PlayIcon, StopIcon } from '@heroicons/react/24/solid';
@@ -8,7 +7,7 @@ interface AudioPlayerProps {
     base64Audio: string;
 }
 
-export const AudioPlayer: React.FC<AudioPlayerProps> = ({ base64Audio }) => {
+export const AudioPlayer: FC<AudioPlayerProps> = ({ base64Audio }) => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -19,12 +18,14 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({ base64Audio }) => {
     useEffect(() => {
         const initAudio = async () => {
             try {
-                if (!audioContextRef.current) {
+                // Ensure AudioContext is available
+                if (!audioContextRef.current || audioContextRef.current.state === 'closed') {
                     audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
                 }
                 const decodedAudio = decode(base64Audio);
                 const buffer = await decodeAudioData(decodedAudio, audioContextRef.current, 24000, 1);
                 audioBufferRef.current = buffer;
+                setError(null); // Clear previous errors on new audio
             } catch (err) {
                 setError("Failed to decode audio.");
                 console.error(err);
@@ -32,10 +33,20 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({ base64Audio }) => {
         };
         initAudio();
         
+        // Stop playback when the component unmounts or the audio source changes
         return () => {
             sourceNodeRef.current?.stop();
         };
     }, [base64Audio]);
+    
+    // Cleanup AudioContext on final unmount
+    useEffect(() => {
+        return () => {
+             if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+                audioContextRef.current.close();
+             }
+        }
+    }, [])
 
     const stopPlayback = useCallback(() => {
         if (sourceNodeRef.current) {
@@ -47,14 +58,20 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({ base64Audio }) => {
     }, []);
 
     const playAudio = useCallback(() => {
-        if (!audioBufferRef.current || !audioContextRef.current || isPlaying) return;
+        if (!audioBufferRef.current || !audioContextRef.current || isPlaying || audioContextRef.current.state === 'closed') return;
 
-        stopPlayback();
+        // Stop any previous playback to avoid overlapping sounds
+        if (sourceNodeRef.current) {
+             stopPlayback();
+        }
 
         const source = audioContextRef.current.createBufferSource();
         source.buffer = audioBufferRef.current;
         source.connect(audioContextRef.current.destination);
-        source.onended = () => setIsPlaying(false);
+        source.onended = () => {
+            setIsPlaying(false);
+            sourceNodeRef.current = null;
+        };
         source.start(0);
         
         sourceNodeRef.current = source;

@@ -3,7 +3,6 @@ export interface GroundingSource {
     uri: string;
 }
 
-// Fix: Add missing type definitions for ChatMessage, Storyboard, and UnifiedChatMessage.
 export interface ChatMessage {
     role: 'user' | 'model';
     content: string;

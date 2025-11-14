@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { generateText } from '../../services/geminiService';
 import { Card } from '../common/Card';
 import { Button } from '../common/Button';
@@ -11,13 +10,11 @@ import { InformationCircleIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicon
 type GenerationMode = 'fast' | 'standard' | 'deep';
 type TuningStrategy = 'defaults' | 'grid' | 'random' | 'bayesian' | 'evolutionary' | 'hyperband';
 
-
 const modeConfig = {
     fast: { model: 'gemini-2.5-flash-lite', title: 'Fast Mode', useThinking: false },
     standard: { model: 'gemini-2.5-flash', title: 'Standard Mode', useThinking: false },
     deep: { model: 'gemini-2.5-pro', title: 'Deep Dive', useThinking: true },
 } as const;
-
 
 export const HyperparameterGenerator: React.FC = () => {
     const [prompt, setPrompt] = useState('');
@@ -27,18 +24,17 @@ export const HyperparameterGenerator: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showExplanation, setShowExplanation] = useState(false);
-
     const [generatedCode, setGeneratedCode] = useState('');
     const [isCodeLoading, setIsCodeLoading] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
 
-    const handleReset = () => {
+    const handleReset = useCallback(() => {
         setResult('');
         setGeneratedCode('');
         setError(null);
-    }
+    }, []);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
         if (!prompt || isLoading) return;
 
@@ -78,9 +74,9 @@ export const HyperparameterGenerator: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [prompt, isLoading, handleReset, mode, strategy]);
 
-    const handleGenerateCode = async () => {
+    const handleGenerateCode = useCallback(async () => {
         if (!prompt || !result || isCodeLoading) return;
         setIsCodeLoading(true);
         setGeneratedCode('');
@@ -111,15 +107,15 @@ export const HyperparameterGenerator: React.FC = () => {
         } finally {
             setIsCodeLoading(false);
         }
-    };
+    }, [prompt, result, isCodeLoading, strategy]);
 
-    const handleCopy = () => {
+    const handleCopy = useCallback(() => {
         if (generatedCode) {
             navigator.clipboard.writeText(generatedCode);
             setIsCopied(true);
             setTimeout(() => setIsCopied(false), 2000);
         }
-    };
+    }, [generatedCode]);
     
     return (
         <div className="space-y-6">

@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, FC, useRef } from 'react';
 import { generateWithGoogleSearch, generateWithGoogleMaps } from '../../services/geminiService';
 import { ChatMessage } from '../../types';
 import { Card } from '../common/Card';
@@ -10,15 +9,16 @@ import { Spinner } from '../common/Spinner';
 
 type SearchMode = 'web' | 'maps';
 
-export const GroundedSearch: React.FC = () => {
+export const GroundedSearch: FC = () => {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [userInput, setUserInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [mode, setMode] = useState<SearchMode>('web');
     const [location, setLocation] = useState<{ lat: number, lon: number } | null>(null);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (mode === 'maps') {
+        if (mode === 'maps' && !location) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     setLocation({
@@ -31,22 +31,27 @@ export const GroundedSearch: React.FC = () => {
                 }
             );
         }
-    }, [mode]);
+    }, [mode, location]);
+    
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages]);
 
-    const handleSendMessage = async () => {
+    const handleSendMessage = useCallback(async () => {
         if (!userInput.trim() || isLoading) return;
 
         const newUserMessage: ChatMessage = { role: 'user', content: userInput };
         setMessages(prev => [...prev, newUserMessage]);
+        const currentInput = userInput;
         setUserInput('');
         setIsLoading(true);
 
         try {
             let response;
             if (mode === 'web') {
-                response = await generateWithGoogleSearch(userInput);
+                response = await generateWithGoogleSearch(currentInput);
             } else {
-                response = await generateWithGoogleMaps(userInput, location?.lat, location?.lon);
+                response = await generateWithGoogleMaps(currentInput, location?.lat, location?.lon);
             }
             const modelMessage: ChatMessage = { role: 'model', content: response.text, sources: response.sources };
             setMessages(prev => [...prev, modelMessage]);
@@ -56,7 +61,7 @@ export const GroundedSearch: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [userInput, isLoading, mode, location]);
     
     return (
         <div className="h-full flex flex-col">
@@ -80,7 +85,7 @@ export const GroundedSearch: React.FC = () => {
                                 </div>
                             </div>
                             {msg.sources && msg.sources.length > 0 && (
-                                <div className="mt-2 ml-10">
+                                <div className={`mt-2 ${msg.role === 'user' ? 'mr-10 text-right' : 'ml-10'}`}>
                                     <h4 className="text-sm font-semibold text-gray-400 mb-1">Sources:</h4>
                                     <ul className="flex flex-wrap gap-2">
                                         {msg.sources.map((source, i) => (
@@ -96,6 +101,7 @@ export const GroundedSearch: React.FC = () => {
                         </div>
                     ))}
                     {isLoading && <div className="flex justify-center"><Spinner /></div>}
+                    <div ref={messagesEndRef} />
                 </div>
                 <div className="mt-4 pt-4 border-t border-gray-700 flex items-center gap-2">
                     <input

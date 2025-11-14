@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from 'react';
 import { pollVideoOperation } from '../services/geminiService';
 
@@ -39,8 +38,8 @@ export const useVeo = () => {
             checkApiKey();
         } else {
             // Handle case where aistudio is not available
-             setError("aistudio environment not found. Video generation is disabled.");
-             setStatus(VeoStatus.ERROR);
+            setError("aistudio environment not found. Video generation is disabled.");
+            setStatus(VeoStatus.ERROR);
         }
     }, [checkApiKey]);
 
@@ -70,32 +69,34 @@ export const useVeo = () => {
 
             const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
             if (downloadLink) {
-                 const response = await fetch(`${downloadLink}&key=${process.env.API_KEY}`);
-                 const blob = await response.blob();
-                 setVideoUrl(URL.createObjectURL(blob));
+                const response = await fetch(`${downloadLink}&key=${process.env.API_KEY}`);
+                const blob = await response.blob();
+                setVideoUrl(URL.createObjectURL(blob));
                 setStatus(VeoStatus.SUCCESS);
             } else {
                 throw new Error("Video generation completed but no video URI was found.");
             }
         } catch (e: any) {
             console.error("Video generation failed:", e);
-             if (e.message?.includes("Requested entity was not found")) {
+            if (e.message?.includes("Requested entity was not found.")) {
                 setError("API Key is invalid. Please select a valid key.");
                 setApiKeySelected(false);
                 setStatus(VeoStatus.NEEDS_KEY);
-             } else {
+            } else {
                 setError(e.message || "An unknown error occurred during video generation.");
                 setStatus(VeoStatus.ERROR);
-             }
+            }
         }
     }, []);
     
     const reset = useCallback(() => {
-        setStatus(VeoStatus.IDLE);
         setVideoUrl(null);
         setError(null);
-        if(apiKeySelected) setStatus(VeoStatus.IDLE);
-        else setStatus(VeoStatus.NEEDS_KEY);
+        if(apiKeySelected) {
+            setStatus(VeoStatus.IDLE);
+        } else {
+            setStatus(VeoStatus.NEEDS_KEY);
+        }
     }, [apiKeySelected]);
 
     return { status, videoUrl, error, apiKeySelected, handleGeneration, selectApiKey, reset };

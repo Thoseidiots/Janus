@@ -1,4 +1,3 @@
-
 import React, { useRef, useState } from 'react';
 import { ArrowUpTrayIcon, PhotoIcon, VideoCameraIcon, DocumentIcon } from '@heroicons/react/24/solid';
 

@@ -1,5 +1,5 @@
-
 import React, { useState, FC, ElementType, useCallback } from 'react';
+import { Sidebar } from './components/sidebar/Sidebar';
 // Import all feature components
 import { JanusAGIControl } from './components/features/JanusAGIControl';
 import { HyperparameterGenerator } from './components/features/HyperparameterGenerator';
@@ -28,7 +28,6 @@ import {
     FilmIcon,
     ShieldCheckIcon,
     CommandLineIcon,
-    CubeTransparentIcon
 } from '@heroicons/react/24/outline';
 
 // Define the structure for a tool
@@ -54,7 +53,6 @@ const tools: Tool[] = [
     { name: 'AGI Core Console', component: AgiCoreConsole, icon: CommandLineIcon },
 ];
 
-
 const App: React.FC = () => {
     // State to track the currently selected tool
     const [activeToolName, setActiveToolName] = useState<string>(tools[0].name);
@@ -69,35 +67,16 @@ const App: React.FC = () => {
         }
     }, [mountedTools]);
 
+    const sidebarTools = tools.map(({ name, icon }) => ({ name, icon }));
 
     return (
         <div className="h-screen bg-gray-900 text-gray-100 font-sans flex overflow-hidden">
             {/* Sidebar Navigation */}
-            <aside className="w-64 bg-gray-900/70 backdrop-blur-sm border-r border-gray-800 flex flex-col flex-shrink-0">
-                <div className="h-16 flex items-center justify-center border-b border-gray-800 flex-shrink-0">
-                    <CubeTransparentIcon className="h-8 w-8 text-indigo-400" />
-                    <h1 className="text-xl font-bold ml-2">ThinkingBrain</h1>
-                </div>
-                <nav className="flex-grow overflow-y-auto">
-                    <ul className="p-2 space-y-1">
-                        {tools.map((tool) => (
-                            <li key={tool.name}>
-                                <button
-                                    onClick={() => handleToolSelect(tool.name)}
-                                    className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors ${
-                                        activeToolName === tool.name
-                                            ? 'bg-indigo-600 text-white font-semibold'
-                                            : 'text-gray-300 hover:bg-gray-800'
-                                    }`}
-                                >
-                                    <tool.icon className="h-5 w-5" />
-                                    <span>{tool.name}</span>
-                                </button>
-                            </li>
-                        ))}
-                    </ul>
-                </nav>
-            </aside>
+            <Sidebar 
+                tools={sidebarTools}
+                activeToolName={activeToolName}
+                onToolSelect={handleToolSelect}
+            />
 
             {/* Main Content Area */}
             <main className="flex-1 overflow-y-auto">

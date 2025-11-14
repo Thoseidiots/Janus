@@ -1,5 +1,4 @@
-
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, FC } from 'react';
 import { analyzeImage, analyzeVideo } from '../../services/geminiService';
 import { fileToBase64 } from '../../utils/fileUtils';
 import { Card } from '../common/Card';
@@ -11,7 +10,7 @@ import { DocumentChartBarIcon } from '@heroicons/react/24/solid';
 
 type AnalysisMode = 'image' | 'video';
 
-export const AnalysisTools: React.FC = () => {
+export const AnalysisTools: FC = () => {
     const [mode, setMode] = useState<AnalysisMode>('image');
     const [prompt, setPrompt] = useState('');
     const [sourceFile, setSourceFile] = useState<File | null>(null);
@@ -22,9 +21,18 @@ export const AnalysisTools: React.FC = () => {
     const handleFileSelect = useCallback((file: File) => {
         setSourceFile(file);
         setAnalysisResult(null);
+        setError(null);
+    }, []);
+    
+    const handleModeChange = useCallback((newMode: AnalysisMode) => {
+        setMode(newMode);
+        setSourceFile(null);
+        setAnalysisResult(null);
+        setError(null);
+        setPrompt('');
     }, []);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
         if (!prompt || !sourceFile || isLoading) return;
         
@@ -46,7 +54,7 @@ export const AnalysisTools: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [prompt, sourceFile, isLoading, mode]);
 
     return (
         <div className="space-y-6">
@@ -54,8 +62,8 @@ export const AnalysisTools: React.FC = () => {
             <p className="text-gray-400">Upload an image of a loss curve or a video of a training session to get AI-powered insights.</p>
             
             <div className="flex items-center space-x-2 bg-gray-800 rounded-lg p-1 w-min">
-                <button onClick={() => { setMode('image'); setSourceFile(null); }} className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${mode === 'image' ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:bg-gray-700'}`}>Analyze Image</button>
-                <button onClick={() => { setMode('video'); setSourceFile(null); }} className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${mode === 'video' ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:bg-gray-700'}`}>Analyze Video</button>
+                <button onClick={() => handleModeChange('image')} className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${mode === 'image' ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:bg-gray-700'}`}>Analyze Image</button>
+                <button onClick={() => handleModeChange('video')} className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${mode === 'video' ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:bg-gray-700'}`}>Analyze Video</button>
             </div>
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

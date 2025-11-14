@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, FC } from 'react';
 import { generateStoryboardFromFile, generateStoryboardFromUrl } from '../../services/geminiService';
 import { Storyboard } from '../../types';
 import { Card } from '../common/Card';
@@ -9,7 +9,7 @@ import { FilmIcon } from '@heroicons/react/24/solid';
 
 type InputType = 'upload' | 'url';
 
-export const Storyboarder: React.FC = () => {
+export const Storyboarder: FC = () => {
     const [inputType, setInputType] = useState<InputType>('upload');
     const [sourceFile, setSourceFile] = useState<File | null>(null);
     const [videoUrl, setVideoUrl] = useState('');
@@ -17,26 +17,26 @@ export const Storyboarder: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const resetState = () => {
+    const resetState = useCallback(() => {
         setStoryboard(null);
         setError(null);
-    };
+    }, []);
 
     const handleFileSelect = useCallback((file: File) => {
         setSourceFile(file);
         setVideoUrl('');
         setInputType('upload');
         resetState();
-    }, []);
+    }, [resetState]);
 
-    const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleUrlChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         setVideoUrl(e.target.value);
         setSourceFile(null);
         setInputType('url');
         resetState();
-    };
+    }, [resetState]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
         const isReady = (inputType === 'upload' && sourceFile) || (inputType === 'url' && videoUrl);
         if (!isReady || isLoading) return;
@@ -61,7 +61,7 @@ export const Storyboarder: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [inputType, sourceFile, videoUrl, isLoading, resetState]);
 
     const isSubmitDisabled = isLoading || (inputType === 'upload' && !sourceFile) || (inputType === 'url' && !videoUrl.trim());
 
