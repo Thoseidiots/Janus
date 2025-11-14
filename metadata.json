@@ -1,0 +1,9 @@
+{
+  "name": "ThinkingBrain Project Simulator",
+  "description": "An interactive simulation of the ThinkingBrain architecture, a biologically-inspired artificial intelligence with consciousness, emotions, imagination, language, and intrinsic motivation.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}
