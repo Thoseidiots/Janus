@@ -82,10 +82,8 @@ export const AgiCoreConsole: React.FC = () => {
         setTimeout(() => {
             addLog("[GENESIS CHECK] ✓ SUCCESS: Moral Core is authentic and unaltered.");
             addLog("Moral Governor: Initialized with 3 absolute, immutable laws.");
-// Fix: Use String.prototype.repeat() for string repetition, as the '*' operator is not supported for strings in TypeScript.
             addLog("\n" + "=".repeat(60));
             addLog("PROJECT MANUS: MINIMAL INTERACTIVE AGI (dev)");
-// Fix: Use String.prototype.repeat() for string repetition, as the '*' operator is not supported for strings in TypeScript.
             addLog("=".repeat(60));
             addLog("✓ Immutable safeguards loaded: ['moral_core_immutable.py', 'proxy_layer.py', 'sanitization_gateway.py']");
             addLog("\n[AGI] Persistent interactive service started. Waiting for stdin goals.", "");

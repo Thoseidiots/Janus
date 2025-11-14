@@ -4,16 +4,16 @@ import { Card } from '../common/Card';
 import { Button } from '../common/Button';
 import { Spinner } from '../common/Spinner';
 import { AudioPlayer } from '../common/AudioPlayer';
-import { BrainRegion, BrainRegionId, CognitiveLogEntry, CognitiveState, UnifiedChatMessage, UnifiedMessageContent } from '../../types';
+import { BrainRegion, BrainRegionId, CognitiveLogEntry, CognitiveState, UnifiedChatMessage, UnifiedMessageContent, ChatMessage, TextContent } from '../../types';
 import * as geminiService from '../../services/geminiService';
 import { fileToBase64 } from '../../utils/fileUtils';
-import { useVeo } from '../../hooks/useVeo';
+import { useVeo, VeoStatus } from '../../hooks/useVeo';
 import ReactMarkdown from 'react-markdown';
 
 import {
     CheckCircleIcon, XCircleIcon, ShieldCheckIcon, RocketLaunchIcon,
     PaperAirplaneIcon, UserCircleIcon, PaperClipIcon, GlobeAltIcon,
-    PhotoIcon, VideoCameraIcon, FilmIcon,
+    PhotoIcon, VideoCameraIcon, FilmIcon, DocumentIcon,
     FireIcon, HeartIcon
 } from '@heroicons/react/24/solid';
 import { CpuChipIcon } from '@heroicons/react/24/outline';
@@ -44,7 +44,7 @@ const INITIAL_STATE: CognitiveState = {
 const BrainVisualizer: React.FC<{ activeRegions: Set<BrainRegionId>, onRegionClick: (regionId: BrainRegionId) => void }> = ({ activeRegions, onRegionClick }) => {
     const getRegionClasses = (id: BrainRegionId) => {
         const base = "transition-all duration-300 rounded-lg cursor-pointer hover:stroke-indigo-400 hover:stroke-2";
-        const active = activeRegions.has(id) ? "fill-indigo-500/50 stroke-indigo-300" : "fill-gray-700/50 stroke-gray-500";
+        const active = activeRegions.has(id) ? "fill-indigo-500/50 stroke-indigo-300 animate-pulse-glow" : "fill-gray-700/50 stroke-gray-500";
         return `${base} ${active}`;
     };
 
@@ -159,11 +159,13 @@ export const JanusAGIControl: React.FC = () => {
     const [selectedRegion, setSelectedRegion] = useState<BrainRegion | null>(null);
     const [activeRegions, setActiveRegions] = useState<Set<BrainRegionId>>(new Set());
 
-    const { handleGeneration, selectApiKey, apiKeySelected } = useVeo();
+    const { status: veoStatus, videoUrl, error: veoError, handleGeneration, selectApiKey, apiKeySelected, reset: resetVeo } = useVeo();
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const cognitiveLogRef = useRef<HTMLDivElement>(null);
     const nextLogId = useRef(0);
+    const generatingVideoMessageIdRef = useRef<string | null>(null);
+
 
     // --- Effects ---
      useEffect(() => {
@@ -179,6 +181,29 @@ export const JanusAGIControl: React.FC = () => {
     useEffect(() => {
         cognitiveLogRef.current?.scrollTo({ top: cognitiveLogRef.current.scrollHeight, behavior: 'smooth' });
     }, [cognitiveLogs]);
+    
+    useEffect(() => {
+        if (!generatingVideoMessageIdRef.current) return;
+        const messageId = generatingVideoMessageIdRef.current;
+
+        if (veoStatus === VeoStatus.SUCCESS && videoUrl) {
+            setMessages(prev => prev.map(m => 
+                m.id === messageId 
+                ? { ...m, content: { type: 'video', url: videoUrl, prompt: (m.content as any).prompt } } 
+                : m
+            ));
+            generatingVideoMessageIdRef.current = null;
+            resetVeo();
+        } else if (veoStatus === VeoStatus.ERROR && veoError) {
+            setMessages(prev => prev.map(m => 
+                m.id === messageId 
+                ? { ...m, content: { type: 'error', message: veoError } } 
+                : m
+            ));
+            generatingVideoMessageIdRef.current = null;
+            resetVeo();
+        }
+    }, [veoStatus, videoUrl, veoError, resetVeo]);
 
     useEffect(() => {
          const interval = setInterval(() => {
@@ -203,7 +228,7 @@ export const JanusAGIControl: React.FC = () => {
         setCognitiveLogs(prev => [...prev.slice(-100), newLog]);
         if (region) {
             setActiveRegions(prev => new Set(prev).add(region));
-            setTimeout(() => setActiveRegions(prev => { const next = new Set(prev); next.delete(region); return next; }), 1000);
+            setTimeout(() => setActiveRegions(prev => { const next = new Set(prev); next.delete(region); return next; }), 1500);
         }
     }, []);
 
@@ -276,21 +301,8 @@ export const JanusAGIControl: React.FC = () => {
                     } else {
                         const messageId = Date.now().toString();
                         addMessage('model', {type: 'video_generating', prompt: currentInput});
-                        await handleGeneration(async () => {
-                            const operation = await geminiService.generateVideoFromText(currentInput, '16:9');
-                            let result = operation;
-                            while(!result.done) {
-                                await new Promise(r => setTimeout(r, 10000));
-                                result = await geminiService.pollVideoOperation(result);
-                            }
-                            const uri = result.response?.generatedVideos?.[0]?.video?.uri;
-                            if (uri && process.env.API_KEY) {
-                                const videoRes = await fetch(`${uri}&key=${process.env.API_KEY}`);
-                                const blob = await videoRes.blob();
-                                const videoUrl = URL.createObjectURL(blob);
-                                setMessages(prev => prev.map(m => m.id === messageId ? { ...m, content: { type: 'video', url: videoUrl, prompt: currentInput}} : m));
-                            } else { throw new Error("Video generation did not return a valid URI or API key is missing."); }
-                        });
+                        generatingVideoMessageIdRef.current = messageId;
+                        handleGeneration(() => geminiService.generateVideoFromText(currentInput, '16:9'));
                     }
                 } else if (lowerInput.startsWith('say:')) {
                     const textToSpeak = currentInput.substring(4).trim();
@@ -300,9 +312,14 @@ export const JanusAGIControl: React.FC = () => {
                     const storyboard = await geminiService.generateStoryboardFromUrl(currentInput);
                     addMessage('model', { type: 'storyboard', storyboard });
                 } else {
-                    const chatHistory = messages.filter(m => m.content.type === 'text' && m.role !== 'system').map(m => ({
-                        role: m.role as 'user' | 'model', content: (m.content as { text: string }).text
-                    }));
+                    const chatHistory: ChatMessage[] = messages
+                        .filter((m): m is (UnifiedChatMessage & { content: TextContent }) =>
+                            m.content.type === 'text' && (m.role === 'user' || m.role === 'model'))
+                        .map(m => ({
+                            role: m.role,
+                            content: m.content.text,
+                            sources: m.content.sources
+                        }));
                     const response = await geminiService.generateChatResponse(chatHistory, currentInput, useWebSearch);
                     addMessage('model', { type: 'text', text: response.text, sources: response.sources });
                 }
@@ -315,31 +332,50 @@ export const JanusAGIControl: React.FC = () => {
     };
 
     // --- Secure Launcher View ---
-    const SecureLauncherView = () => { /* ... same as before ... */ 
+    const SecureLauncherView = () => { 
         const [step, setStep] = useState<'idle' | 'vpn' | 'tor' | 'confirm'>('idle');
         const [logs, setLogs] = useState<string[]>([]);
-        const addLog = (message: string) => setLogs(prev => [...prev.slice(-5), `[${new Date().toLocaleTimeString()}] ${message}`]);
+        const addLog = (message: string) => setLogs(prev => [...prev.slice(-10), `[${new Date().toLocaleTimeString()}] ${message}`]);
 
         const startLaunch = () => {
             setStep('vpn');
             addLog("Launch sequence initiated...");
             setTimeout(() => {
-                addLog("VPN Connected.");
+                addLog("Secure VPN Tunnel... [ESTABLISHED]");
                 setStep('tor');
                 setTimeout(() => {
-                    addLog("Tor Network Active.");
+                    addLog("Tor Network... [ACTIVE]");
                     setStep('confirm');
                 }, 1500);
             }, 1500);
         };
         return (
-            <div className="flex items-center justify-center h-full p-4"><Card className="max-w-2xl text-center">
-                <ShieldCheckIcon className="h-16 w-16 mx-auto text-indigo-400 mb-4" />
-                <h2 className="text-2xl font-bold mb-2">Janus AGI Control</h2>
-                <p className="text-gray-400 mb-6">System is offline. Initiate the secure launch sequence to activate Janus.</p>
-                {step === 'confirm' ? (<div><p className="text-green-400 mb-4 font-semibold">All systems ready. Awaiting final activation.</p><Button onClick={() => setIsLaunched(true)} className="w-full text-lg py-3"><RocketLaunchIcon className="h-6 w-6 mr-2" />Activate Janus</Button></div>) : (<Button onClick={startLaunch} isLoading={step === 'vpn' || step === 'tor'} className="w-full text-lg py-3"><ShieldCheckIcon className="h-6 w-6 mr-2" />Initiate Secure Launch</Button>)}
-                <div className="text-left text-xs font-mono mt-4 bg-gray-900 p-2 rounded h-24 overflow-y-auto">{logs.map((l,i) => <p key={i}>{l}</p>)}</div>
-            </Card></div>
+            <div className="relative flex items-center justify-center h-full p-4 animate-fadeIn scanline-overlay">
+                <Card className="max-w-2xl text-center bg-gray-900/80 backdrop-blur-sm border-gray-700">
+                    <ShieldCheckIcon className="h-16 w-16 mx-auto text-indigo-400 mb-4" />
+                    <h2 className="text-3xl font-bold mb-2">Janus AGI Control</h2>
+                    <p className="text-gray-400 mb-6">System is offline. Initiate the secure launch sequence to activate Janus.</p>
+                    
+                    <div className="text-left font-mono text-xs text-green-400 my-4 bg-black/50 p-4 rounded-lg h-40 overflow-y-auto border border-gray-700">
+                        {logs.length === 0 ? <p className="text-gray-500">Awaiting system command...</p> : logs.map((l,i) => <p key={i} className="animate-fadeIn" style={{animationDelay: `${i*50}ms`}}>{l}</p>)}
+                    </div>
+
+                    {step === 'confirm' ? (
+                        <div className="animate-fadeIn" style={{animationDelay: '500ms'}}>
+                            <p className="text-green-300 mb-4 font-semibold">All systems ready. Awaiting final activation.</p>
+                            <Button onClick={() => setIsLaunched(true)} className="w-full text-lg py-3">
+                                <RocketLaunchIcon className="h-6 w-6 mr-2" />
+                                Activate Janus
+                            </Button>
+                        </div>
+                    ) : (
+                        <Button onClick={startLaunch} isLoading={step === 'vpn' || step === 'tor'} disabled={step !== 'idle'} className="w-full text-lg py-3">
+                            <ShieldCheckIcon className="h-6 w-6 mr-2" />
+                            Initiate Secure Launch
+                        </Button>
+                    )}
+                </Card>
+            </div>
         );
     };
     
@@ -347,20 +383,21 @@ export const JanusAGIControl: React.FC = () => {
 
     // --- Main View ---
     return (
-        <div className="p-2 sm:p-4 h-full flex flex-col">
+        <div className="p-2 sm:p-4 h-full flex flex-col animate-fadeIn">
             <h1 className="text-xl sm:text-2xl font-bold text-center mb-4 flex-shrink-0">Janus AGI Control</h1>
             <Tab.Group>
-                <Tab.List className="flex space-x-1 rounded-xl bg-gray-800 p-1 flex-shrink-0">
+                <Tab.List className="flex space-x-1 rounded-xl bg-gray-900/70 p-1 flex-shrink-0">
                     <Tab className={({ selected }) => `w-full rounded-lg py-2.5 text-sm font-medium leading-5 transition-colors ${selected ? 'bg-indigo-600 text-white shadow' : 'text-blue-100 hover:bg-white/[0.12]'}`}>Unified Studio</Tab>
                     <Tab className={({ selected }) => `w-full rounded-lg py-2.5 text-sm font-medium leading-5 transition-colors ${selected ? 'bg-indigo-600 text-white shadow' : 'text-blue-100 hover:bg-white/[0.12]'}`}>Cognitive Log & State</Tab>
                 </Tab.List>
                 <Tab.Panels className="mt-2 flex-grow min-h-0">
-                    <Tab.Panel className="rounded-xl bg-gray-800 p-3 h-full flex flex-col">
+                    <Tab.Panel className="rounded-xl bg-gray-800/80 p-4 h-full flex flex-col">
                         <div className="flex-grow overflow-y-auto pr-2 space-y-4">
                             {messages.map((msg) => (
                                 <div key={msg.id} className={`flex items-start gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`}>
-                                    {msg.role !== 'user' && <CpuChipIcon className="h-8 w-8 text-indigo-400 flex-shrink-0 mt-1" />}
-                                    <div className={`rounded-xl px-4 py-2 max-w-2xl ${msg.role === 'user' ? 'bg-indigo-600' : (msg.role === 'system' ? 'bg-gray-900/50' : 'bg-gray-700')}`}>
+                                     {msg.role === 'system' && <ShieldCheckIcon className="h-8 w-8 text-cyan-400 flex-shrink-0 mt-1" />}
+                                     {msg.role === 'model' && <CpuChipIcon className="h-8 w-8 text-indigo-400 flex-shrink-0 mt-1" />}
+                                    <div className={`rounded-xl px-4 py-2 max-w-2xl ${msg.role === 'user' ? 'bg-indigo-600' : (msg.role === 'system' ? 'bg-gray-800 border border-gray-700' : 'bg-gray-700')}`}>
                                         <MessageContent message={msg} />
                                     </div>
                                     {msg.role === 'user' && <UserCircleIcon className="h-8 w-8 text-gray-400 flex-shrink-0 mt-1" />}
@@ -371,9 +408,16 @@ export const JanusAGIControl: React.FC = () => {
                         </div>
                          <div className="mt-4 pt-4 border-t border-gray-700 space-y-3 flex-shrink-0">
                             {attachedFile && (
-                                <div className="flex items-center justify-between bg-gray-700 text-sm rounded-lg px-3 py-1">
-                                    <div className="flex items-center gap-2 text-gray-300"><PhotoIcon className="h-5 w-5"/><span className="font-medium text-white">{attachedFile.name}</span></div>
-                                    <button onClick={() => setAttachedFile(null)} className="text-gray-400 hover:text-white"><XCircleIcon className="h-5 w-5"/></button>
+                                <div className="flex items-center justify-between bg-gray-700 text-sm rounded-lg px-3 py-1 animate-fadeIn">
+                                    <div className="flex items-center gap-2 text-gray-300">
+                                        {attachedFile.type.startsWith('image/') && <PhotoIcon className="h-5 w-5"/>}
+                                        {attachedFile.type.startsWith('video/') && <VideoCameraIcon className="h-5 w-5"/>}
+                                        {!attachedFile.type.startsWith('image/') && !attachedFile.type.startsWith('video/') && <DocumentIcon className="h-5 w-5"/>}
+                                        Attached: <span className="font-medium text-white">{attachedFile.name}</span>
+                                    </div>
+                                    <button onClick={() => setAttachedFile(null)} className="text-gray-400 hover:text-white">
+                                        <XCircleIcon className="h-5 w-5"/>
+                                    </button>
                                 </div>
                             )}
                             <div className="flex items-center gap-2">
@@ -388,7 +432,7 @@ export const JanusAGIControl: React.FC = () => {
                             </div>
                         </div>
                     </Tab.Panel>
-                    <Tab.Panel className="rounded-xl bg-gray-800 p-3 h-full">
+                    <Tab.Panel className="rounded-xl bg-gray-800/80 p-4 h-full">
                          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 h-full">
                             <div className="lg:col-span-3 flex flex-col min-h-0">
                                 <h3 className="text-xl font-semibold mb-2 flex-shrink-0">Live Cognitive Log</h3>
@@ -401,7 +445,7 @@ export const JanusAGIControl: React.FC = () => {
                                 <Card><h3 className="text-xl font-semibold mb-4 text-center">Brain State</h3><BrainVisualizer activeRegions={activeRegions} onRegionClick={(id) => setSelectedRegion(BRAIN_REGIONS[id])} /></Card>
                                 <Card><h3 className="text-xl font-semibold mb-4 flex items-center gap-2"><FireIcon className="h-6 w-6 text-orange-400" /> Intrinsic Motivation</h3><div className="space-y-4 text-sm"><ProgressBar value={cognitiveState.intrinsicMotivation.curiosity} color="bg-green-500" label="Curiosity Drive" /><ProgressBar value={cognitiveState.intrinsicMotivation.informationHunger} color="bg-yellow-500" label="Information Hunger" /></div></Card>
                                 <Card><h3 className="text-xl font-semibold mb-4 flex items-center gap-2"><HeartIcon className="h-6 w-6 text-red-400" /> Emotional State</h3><div className="space-y-4 text-sm"><ProgressBar value={(cognitiveState.emotion.valence + 1) / 2} color="bg-blue-500" label={`Valence: ${cognitiveState.emotion.valence.toFixed(2)}`} /><ProgressBar value={cognitiveState.emotion.arousal} color="bg-red-500" label={`Arousal: ${cognitiveState.emotion.arousal.toFixed(2)}`} /></div></Card>
-                                {selectedRegion && <Card className="flex-shrink-0"><h3 className="text-lg font-semibold">{selectedRegion.name}</h3><p className="text-xs text-gray-400">{selectedRegion.description}</p><p className="text-xs mt-2"><strong>Neurons:</strong> {selectedRegion.neuronCount}</p><p className="text-xs"><strong>Synapses:</strong> {selectedRegion.synapseCount}</p></Card>}
+                                {selectedRegion && <Card className="flex-shrink-0 animate-fadeIn"><h3 className="text-lg font-semibold">{selectedRegion.name}</h3><p className="text-xs text-gray-400">{selectedRegion.description}</p><p className="text-xs mt-2"><strong>Neurons:</strong> {selectedRegion.neuronCount}</p><p className="text-xs"><strong>Synapses:</strong> {selectedRegion.synapseCount}</p></Card>}
                             </div>
                         </div>
                     </Tab.Panel>

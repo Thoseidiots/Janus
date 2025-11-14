@@ -25,7 +25,7 @@ export interface Storyboard {
     scenes: Scene[];
 }
 
-interface TextContent {
+export interface TextContent {
     type: 'text';
     text: string;
     sources?: GroundingSource[];
