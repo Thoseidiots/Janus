@@ -1,6 +1,6 @@
 {
-  "name": "ThinkingBrain Project Simulator",
-  "description": "An interactive simulation of the ThinkingBrain architecture, a biologically-inspired artificial intelligence with consciousness, emotions, imagination, language, and intrinsic motivation.",
+  "name": "Gemini Hyperparameter Studio",
+  "description": "An all-in-one AI-powered studio to generate, analyze, and tune machine learning hyperparameters using the Gemini API. Features include text, image, audio, and video analysis, grounded generation, conversational AI, and advanced creative tools.",
   "requestFramePermissions": [
     "camera",
     "microphone",
