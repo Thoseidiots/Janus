@@ -1,0 +1,9 @@
+torch
+transformers
+opencv-python
+Pillow
+face_recognition
+ultralytics
+moviepy
+librosa
+av
