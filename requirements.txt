@@ -1,9 +1,3 @@
-torch
-transformers
-opencv-python
-Pillow
-face_recognition
-ultralytics
-moviepy
-librosa
-av
+requests
+sentence-transformers
+openai # For Ollama/Gemma API calls
