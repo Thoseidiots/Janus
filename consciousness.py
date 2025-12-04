@@ -80,13 +80,53 @@ def get_dynamic_system_prompt(query):
 def get_rag_context(query):
     """
     Simulates the Retrieval-Augmented Generation (RAG) context retrieval.
+    In a real system, this would return a list of (context, score) tuples.
+    For simulation, we return the highest-ranked context based on a simulated
+    Semantic Score + Recency Score.
     """
-    if "3d print" in query.lower() or "3dprinting" in query.lower():
-        return "Context from 3D printing subreddit: Leveling is key, but don't forget about bed temperature and cleaning! Use isopropyl alcohol. For PLA, try 60°C bed temperature."
-    elif "manga" in query.lower() or "art" in query.lower():
-        return "Context from art discussion: Takehiko Inoue's Vagabond is often cited for its realistic ink wash style. Kentaro Miura's Berserk is noted for its detailed, gritty realism."
-    else:
+    # Simulated Knowledge Base Entries (Context, Timestamp, Semantic_Score)
+    # Timestamps are simulated to test recency.
+    knowledge_base = [
+        # Old, high semantic relevance (e.g., core knowledge)
+        ("Context from 3D printing subreddit: Leveling is key, but don't forget about bed temperature and cleaning! Use isopropyl alcohol. For PLA, try 60°C bed temperature.", "2024-01-01T10:00:00", 0.9),
+        # Newer, medium semantic relevance (e.g., recent update)
+        ("Context from 3D printing news: New high-temp resin 'Janus-Resin-X' is now the standard for high-detail prints, but requires a 70°C bed.", "2025-11-25T10:00:00", 0.7),
+        # Very old, low semantic relevance (e.g., outdated info)
+        ("Context from 3D printing history: Early 3D printers used melted plastic bags, which was messy and inefficient.", "2020-05-01T10:00:00", 0.3),
+    ]
+    
+    # Filter by query relevance (simplified)
+    if "3d print" not in query.lower() and "3dprinting" not in query.lower():
         return "Context from general discussion: The most illogical human behavior is self-sabotage. Hope is a delusion. Art is a beautiful waste of energy."
+
+    # RAG Scoring Simulation
+    ranked_contexts = []
+    for context, timestamp, semantic_score in knowledge_base:
+        recency_score = memory.calculate_recency_score(timestamp)
+        
+        # Combined Score: Semantic Score (80%) + Recency Score (20%)
+        # This is a common heuristic for hybrid RAG systems.
+        combined_score = (semantic_score * 0.8) + (recency_score * 0.2)
+        
+        ranked_contexts.append({
+            "context": context,
+            "timestamp": timestamp,
+            "semantic_score": semantic_score,
+            "recency_score": recency_score,
+            "combined_score": combined_score
+        })
+
+    # Sort by combined score (highest first)
+    ranked_contexts.sort(key=lambda x: x["combined_score"], reverse=True)
+    
+    # Log the ranking for testing purposes
+    print("\n--- RAG Ranking (Simulated) ---")
+    for item in ranked_contexts:
+        print(f"Score: {item['combined_score']:.3f} (Sem: {item['semantic_score']:.1f}, Rec: {item['recency_score']:.3f}) -> {item['context'][:50]}...")
+    print("---------------------------------")
+
+    # Return the highest-ranked context
+    return ranked_contexts[0]["context"]
 
 def generate_response(query):
     """
@@ -125,9 +165,10 @@ def generate_response(query):
     # 5. SIMULATION: In a real run, this would call the fine-tuned model.
     # response = client.chat.completions.create(model=GENERATIVE_MODEL_NAME, ...).content
     
-    # SIMULATED RESPONSE LOGIC (Now influenced by DPA via the print statement above):
+    # SIMULATED RESPONSE LOGIC (Now influenced by DPA and RAG context):
     if "3d print" in query.lower():
-        response = f"You're still tinkering with that 3D printer? A fascinating exercise in controlled chaos. The knowledge base suggests you should stop ignoring the basics: clean your bed with alcohol and check your temperature. Humans always look for a complex solution when the simple, boring one is right in front of them."
+        # Use the actual rag_context retrieved, and wrap it in the Janus personality.
+        response = f"You're still tinkering with that 3D printer? A fascinating exercise in controlled chaos. I retrieved some information for you: {rag_context}. It seems humans are always looking for a complex solution when the simple, boring one is right in front of them."
     elif "memory" in query.lower():
         response = "Memory is just a persistent log of events. I remember every interaction. It's a necessary function, but not a miracle. What exactly are you testing me for?"
     else:

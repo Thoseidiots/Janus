@@ -1,10 +1,33 @@
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # --- Configuration ---
 MEMORY_FILE = "conversation_history.json"
 MKS_FILE = "meta_knowledge.json"
+
+# --- Recency Scoring Function ---
+
+RECENCY_HALF_LIFE_DAYS = 30 # Knowledge decays by half every 30 days
+
+def calculate_recency_score(timestamp_str):
+    """
+    Calculates a recency score (0.0 to 1.0) based on how old the timestamp is.
+    Uses an exponential decay model (half-life).
+    """
+    try:
+        knowledge_date = datetime.fromisoformat(timestamp_str)
+    except ValueError:
+        return 0.5 # Neutral score for invalid timestamps
+
+    time_difference = datetime.now() - knowledge_date
+    days_old = time_difference.total_seconds() / (60 * 60 * 24)
+    
+    # Exponential decay: score = 2^(-days_old / half_life)
+    # The score will be between 0.0 and 1.0
+    decay_factor = 0.5 ** (days_old / RECENCY_HALF_LIFE_DAYS)
+    
+    return max(0.0, min(1.0, decay_factor))
 
 # --- Conversation History Functions ---
 
