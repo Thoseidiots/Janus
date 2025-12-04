@@ -35,9 +35,9 @@ def planner_agent(critique):
     """
     if critique["suggested_fix_category"] == "Personality Adjustment":
         # Planner's Logic: If personality is insufficient, increase a relevant trait.
-        # We will randomly choose between increasing sarcasm or cynicism.
+        # We will randomly choose between increasing sarcasm, cynicism, or reflection.
         
-        adjustment_type = random.choice(["sarcasm", "cynicism"])
+        adjustment_type = random.choice(["sarcasm", "cynicism", "reflection"])
         
         new_rule = {
             "topic": critique["topic"], # The topic is passed through the trigger function
