@@ -4,6 +4,7 @@ import random
 # from sentence_transformers import SentenceTransformer, util
 from openai import OpenAI # Used for the generative model (simulated Janus-v2)
 import learning # Import the learning module for the self-coding trigger
+import os # Import os to access environment variables
 
 # --- Configuration ---
 EMBEDDING_MODEL_NAME = "all-MiniLM-L6-v2"
@@ -41,7 +42,13 @@ Based on these parameters, your communication style should be:
 # --- Initialization (Simulated) ---
 try:
     # embedder = SentenceTransformer(EMBEDDING_MODEL_NAME)
-    # client = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
+    
+    # Use the GEMINI_API_KEY from the environment if available
+    gemini_key = os.environ.get("GEMINI_API_KEY")
+    if gemini_key:
+        # client = OpenAI(api_key=gemini_key, base_url="https://api.gemini.com/v1") # Simulated Gemini API endpoint
+        print("[CONFIG] Gemini API Key loaded and ready for use.")
+    
     pass
 except Exception:
     pass
