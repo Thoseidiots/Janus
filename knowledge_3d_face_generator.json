@@ -1,0 +1,20 @@
+[
+    {
+        "topic": "3D Face Generator Architecture",
+        "timestamp": "2025-12-01T00:00:00",
+        "semantic_tags": ["3DMM", "NeRF", "EG3D", "GAN", "Tri-plane", "Volume Rendering"],
+        "content": "The architecture is a modern Generative Neural Radiance Field (NeRF) approach, resembling EG3D. It uses a Generator (G) that maps noise to a 3D representation via Tri-planes (XY, XZ, YZ feature maps), a Differentiable Renderer (Volume Rendering via Ray Marching) to project 3D to 2D, and a Dual Discriminator (D) to critique both texture and geometry. The core mathematical principle is the volume rendering integral: C(r) = sum(Ti * (1 - exp(-sigma_i * delta_i)) * c_i)."
+    },
+    {
+        "topic": "3D Face Generator Components",
+        "timestamp": "2025-12-01T00:00:00",
+        "semantic_tags": ["Generator", "Discriminator", "Renderer", "Tri-plane"],
+        "content": "The Generator uses a Mapping Network (MLP) to create a style code (w) and a Backbone (Transposed Conv2d) to generate the Tri-Planes. The Neural Renderer (Decoder) is an MLP that turns sampled features into Color + Density (RGB + Sigma). Tri-planes are used because they are memory-efficient (3 * N^2 memory) compared to voxel grids (N^3 memory)."
+    },
+    {
+        "topic": "3D Face Generator Training",
+        "timestamp": "2025-12-01T00:00:00",
+        "semantic_tags": ["Training", "Dataset", "Hardware", "3DMM"],
+        "content": "Training requires the FFHQ (Flickr-Faces-HQ) dataset (70,000 images) and significant hardware (4-8 high-end GPUs like A100s). 3DMMs are used in the pre-processing stage for Pose Estimation to condition the Generator on camera angles."
+    }
+]

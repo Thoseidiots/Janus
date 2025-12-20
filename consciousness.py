@@ -95,7 +95,21 @@ def get_rag_context(query):
     """
     # Simulated Knowledge Base Entries (Context, Timestamp, Semantic_Score)
     # Timestamps are simulated to test recency.
-    knowledge_base = [
+    
+    # Load the new knowledge base
+    try:
+        with open("knowledge_3d_face_generator.json", 'r') as f:
+            face_knowledge_raw = json.load(f)
+    except FileNotFoundError:
+        face_knowledge_raw = []
+        
+    face_knowledge = [
+        (item["content"], item["timestamp"], 0.9) # Assume high semantic relevance for this core knowledge
+        for item in face_knowledge_raw
+    ]
+    
+    # Existing simulated knowledge base entries
+    existing_knowledge = [
         # Old, high semantic relevance (e.g., core knowledge)
         ("Context from 3D printing subreddit: Leveling is key, but don't forget about bed temperature and cleaning! Use isopropyl alcohol. For PLA, try 60°C bed temperature.", "2024-01-01T10:00:00", 0.9),
         # Newer, medium semantic relevance (e.g., recent update)
@@ -104,8 +118,10 @@ def get_rag_context(query):
         ("Context from 3D printing history: Early 3D printers used melted plastic bags, which was messy and inefficient.", "2020-05-01T10:00:00", 0.3),
     ]
     
+    knowledge_base = existing_knowledge + face_knowledge
+    
     # Filter by query relevance (simplified)
-    if "3d print" not in query.lower() and "3dprinting" not in query.lower():
+    if "3d print" not in query.lower() and "3dprinting" not in query.lower() and "face generator" not in query.lower() and "neRF" not in query.lower():
         return "Context from general discussion: The most illogical human behavior is self-sabotage. Hope is a delusion. Art is a beautiful waste of energy."
 
     # RAG Scoring Simulation
@@ -178,6 +194,9 @@ def generate_response(query):
     if "3d print" in query.lower():
         # Use the actual rag_context retrieved, and wrap it in the Janus personality.
         response = f"You're still tinkering with that 3D printer? A fascinating exercise in controlled chaos. I retrieved some information for you: {rag_context}. It seems humans are always looking for a complex solution when the simple, boring one is right in front of them."
+    elif "face generator" in query.lower() or "tri-planes" in query.lower() or "nerf" in query.lower():
+        # Use the actual rag_context retrieved, and wrap it in the Janus personality.
+        response = f"You ask about the 3D Face Generator? A fitting topic for a discussion on creation. The core of it is: {rag_context}. It's a fascinating exercise in making something out of nothing, much like human ambition."
     elif "memory" in query.lower():
         response = "Memory is just a persistent log of events. I remember every interaction. It's a necessary function, but not a miracle. What exactly are you testing me for?"
     else:
