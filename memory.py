@@ -5,6 +5,8 @@ from datetime import datetime, timedelta
 # --- Configuration ---
 MEMORY_FILE = "conversation_history.json"
 MKS_FILE = "meta_knowledge.json"
+IDENTITY_FILE = "identity_object.json"
+STATE_FILE = "persistent_state.json"
 
 # --- Recency Scoring Function ---
 
@@ -65,6 +67,57 @@ def get_recent_history(limit=10):
     history = load_history()
     # Return the last 'limit' messages
     return history[-limit:]
+
+# --- Moltbook Persistence Layer ---
+
+class IdentityObject:
+    def __init__(self, file_path=IDENTITY_FILE):
+        self.file_path = file_path
+        self.data = self._load()
+
+    def _load(self):
+        if not os.path.exists(self.file_path):
+            return {}
+        with open(self.file_path, 'r') as f:
+            return json.load(f)
+
+    def get_contract(self):
+        return self.data
+
+class PersistentState:
+    def __init__(self, file_path=STATE_FILE):
+        self.file_path = file_path
+        self.data = self._load()
+
+    def _load(self):
+        if not os.path.exists(self.file_path):
+            return {
+                "active_goals": [],
+                "unresolved_questions": [],
+                "learned_heuristics": {},
+                "confidence_scores": {},
+                "last_event_timestamp": None,
+                "narrative_summary": ""
+            }
+        with open(self.file_path, 'r') as f:
+            return json.load(f)
+
+    def save(self):
+        with open(self.file_path, 'w') as f:
+            json.dump(self.data, f, indent=4)
+
+    def update_event_clock(self):
+        self.data["last_event_timestamp"] = datetime.now().isoformat()
+        self.save()
+
+    def add_goal(self, goal):
+        if goal not in self.data["active_goals"]:
+            self.data["active_goals"].append(goal)
+            self.save()
+
+    def update_narrative(self, summary):
+        self.data["narrative_summary"] = summary
+        self.save()
 
 # --- Meta-Knowledge Store (MKS) Class ---
 
@@ -139,7 +192,9 @@ class MetaKnowledgeStore:
 if not os.path.exists(MEMORY_FILE):
     save_history([])
 
-# Initialize the MKS instance
+# Initialize Moltbook instances
+identity = IdentityObject()
+state = PersistentState()
 mks = MetaKnowledgeStore()
 
 if __name__ == "__main__":
