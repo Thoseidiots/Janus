@@ -1,0 +1,8 @@
+[workspace]
+members = [
+    "crates/janus-core",
+    "crates/janus-wasm",
+    "crates/janus-llm",
+    "crates/janus-cli",
+]
+resolver = "2"

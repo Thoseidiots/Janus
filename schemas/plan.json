@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Plan",
+  "type": "object",
+  "properties": {
+    "goal": { "type": "string" },
+    "steps": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "required": ["goal", "steps"]
+}
