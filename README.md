@@ -13,6 +13,7 @@ Janus is built on a modular Rust-based workspace, emphasizing security, persiste
 | **`janus-core`** | The authority layer. Manages the **Identity Contract**, Task Graph, and Event Log. |
 | **`janus-wasm`** | The execution substrate. A secure WASM-hosted sandbox for running code with snapshot/restore capabilities. |
 | **`janus-llm`** | The reasoning adapter. A swappable interface for integrating various LLM reasoning cores. |
+| **`janus-brain`** | The cognitive core. Implements Homeostasis, Hierarchical Memory, and Byte-level LLM dynamics. |
 | **`janus-cli`** | The orchestration layer. Implements the `OBSERVE → PLAN → PROPOSE → VERIFY → APPLY` loop. |
 
 ## 🦞 Moltbook Integration
@@ -21,6 +22,14 @@ Janus integrates the **Moltbook** architectural principles:
 - **Externalized Identity**: The AI's identity lives in an immutable contract (`identity_object.json`), not in model weights.
 - **Continuous State**: State persists across bounded cognition cycles, ensuring identity continuity without "task death."
 - **Memory as Narrative**: Experiences are curated and summarized into a stable self-narrative.
+
+## 🧠 Autonomous Core
+
+Janus now features an **Autonomous Core** (housed in `janus-brain`) that implements:
+- **Homeostasis Engine**: A recurrent core that evolves valence (pleasure, arousal, curiosity, etc.) over time.
+- **Hierarchical Memory**: Episodic buffer with thematic mining for self-reflection.
+- **Byte-level LLM**: A transformer operating directly on UTF-8 bytes, removing tokenization overhead.
+- **Sleep Engine**: Offline consolidation for memory stabilization.
 
 ## 🚀 Getting Started
 

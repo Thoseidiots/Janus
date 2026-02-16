@@ -79,3 +79,37 @@ impl JanusState {
         id
     }
 }
+
+use std::process::{Command, Stdio, Child};
+use std::io::{Write, BufReader, BufRead};
+
+pub struct BrainBridge {
+    child: Child,
+}
+
+impl BrainBridge {
+    pub fn new() -> anyhow::Result<Self> {
+        let child = Command::new("python3")
+            .arg("-m")
+            .arg("janus_brain.bridge")
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .spawn()?;
+        Ok(Self { child })
+    }
+
+    pub fn send_command(&mut self, cmd: serde_json::Value) -> anyhow::Result<serde_json::Value> {
+        let stdin = self.child.stdin.as_mut().ok_or_else(|| anyhow::anyhow!("Failed to open stdin"))?;
+        let stdout = self.child.stdout.as_mut().ok_or_else(|| anyhow::anyhow!("Failed to open stdout"))?;
+        
+        let cmd_str = serde_json::to_string(&cmd)?;
+        writeln!(stdin, "{}", cmd_str)?;
+        
+        let mut reader = BufReader::new(stdout);
+        let mut response_str = String::new();
+        reader.read_line(&mut response_str)?;
+        
+        let response: serde_json::Value = serde_json::from_str(&response_str)?;
+        Ok(response)
+    }
+}

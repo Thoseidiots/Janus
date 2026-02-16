@@ -1,0 +1,12 @@
+setup.py
+src/janus_brain/__init__.py
+src/janus_brain/bridge.py
+src/janus_brain/core.py
+src/janus_brain/homeostasis.py
+src/janus_brain/llm.py
+src/janus_brain/memory.py
+src/janus_brain.egg-info/PKG-INFO
+src/janus_brain.egg-info/SOURCES.txt
+src/janus_brain.egg-info/dependency_links.txt
+src/janus_brain.egg-info/requires.txt
+src/janus_brain.egg-info/top_level.txt
