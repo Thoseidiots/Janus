@@ -1,0 +1,48 @@
+# Janus Multi-Modal Perception System Requirements
+
+# Install with: pip install -r perception_requirements.txt –break-system-packages
+
+# Computer Vision
+
+opencv-python>=4.8.0         # Core vision processing
+numpy>=1.24.0                # Numerical operations
+
+# Audio Processing
+
+pyaudio>=0.2.13              # Real-time audio I/O
+wave                         # WAV file handling (built-in)
+
+# Optional: Advanced Speech Recognition (uncomment to enable)
+
+# vosk>=0.3.45               # Offline speech recognition
+
+# SpeechRecognition>=3.10.0  # Speech recognition wrapper
+
+# Optional: Advanced Text-to-Speech (uncomment to enable)
+
+# pyttsx3>=2.90              # Cross-platform TTS
+
+# TTS>=0.13.0                # Coqui TTS (neural voices)
+
+# Optional: Enhanced Vision (uncomment to enable)
+
+# torch>=2.0.0               # For neural network models
+
+# torchvision>=0.15.0        # For vision models
+
+# ultralytics>=8.0.0         # YOLO object detection
+
+# Optional: OCR for text detection (uncomment to enable)
+
+# pytesseract>=0.3.10        # OCR engine
+
+# Pillow>=9.5.0              # Image processing
+
+# Data handling
+
+dataclasses                  # Data structures (Python 3.7+)
+typing                       # Type hints (Python 3.5+)
+
+# Existing Janus dependencies (if not already installed)
+
+# Add your existing requirements here
