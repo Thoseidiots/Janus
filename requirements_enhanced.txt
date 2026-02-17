@@ -1,0 +1,42 @@
+# Janus Enhanced Requirements
+# Zero-API-key Voice + Text Interface
+
+# ── Core Dependencies ───────────────────────────────────────────────────────
+numpy>=1.21.0
+pyaudio>=0.2.11
+
+# ── Voice (STT/TTS) ─────────────────────────────────────────────────────────
+# Whisper.cpp - Install separately: https://github.com/ggerganov/whisper.cpp
+# Piper TTS - Install separately: https://github.com/rhasspy/piper
+
+# Optional: WebRTC VAD for better voice activity detection
+webrtcvad>=2.0.10
+
+# ── Messaging Bridges ───────────────────────────────────────────────────────
+# SMS via Twilio (optional)
+twilio>=7.0.0
+
+# Telegram Bot API
+python-telegram-bot>=20.0
+requests>=2.28.0
+
+# WhatsApp (optional - requires additional setup)
+# For unofficial WhatsApp Web: requires Node.js + whatsapp-web.js
+
+# ── Networking & Sync ───────────────────────────────────────────────────────
+# Encryption for state sync
+cryptography>=3.4.8
+
+# ── Tool Discovery ──────────────────────────────────────────────────────────
+# Code generation and validation (built-in, no extra deps)
+
+# ── Optional Enhancements ───────────────────────────────────────────────────
+# Better audio processing
+scipy>=1.7.0
+
+# For GSM modem support (alternative to Twilio)
+# pyserial>=3.5
+
+# For advanced audio features
+# soundfile>=0.10.0
+# librosa>=0.9.0
