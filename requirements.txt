@@ -1,3 +1,0 @@
-requests
-sentence-transformers
-openai # For Ollama/Gemma API calls
