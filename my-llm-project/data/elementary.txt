@@ -1,0 +1,6 @@
+Prompt: Alex shared lunch. How does friend feel?
+Target: Friend was happy because Alex showed kindness.
+
+Prompt: Alex told the truth. How does friend feel?
+Target: Friend was proud because Alex showed honesty.
+
