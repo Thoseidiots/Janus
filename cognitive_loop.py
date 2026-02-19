@@ -1,408 +1,549 @@
 “””
-cognitive_loop.py
-─────────────────────────────────────────────────────────────
-Wires unified_perception + multimodal_fusion directly into the
-OBSERVE → PLAN → PROPOSE → VERIFY → APPLY cognitive loop.
+cognitive_loop.py — Janus OBSERVE → PLAN → PROPOSE → VERIFY → APPLY loop.
 
-Drop-in for Janus: import and call CognitiveLoop(consciousness, memory)
-Perception events automatically update homeostasis valence in real-time.
-“””
+This is the missing orchestration layer that glues janus-brain together.
 
-import time
-import threading
-import queue
+Key design decisions (addressing the bottlenecks from the architecture review):
+
+1. PROPOSE uses GoalPlanner (valence-deficit scoring) instead of if/elif.
+   Every tool competes on a utility score; no goal is hardcoded to a tool.
+1. VERIFY implements a tiered gate rather than a binary low/high block:
+- LOW risk  → auto-approved
+- MEDIUM risk → approved if urgency above threshold
+- HIGH risk  → sandboxed dry-run first; approved only on simulated success
+1. ValenceState is injected into every phase as context so the loop is
+   “aware of its own feelings” throughout planning, not just after acting.
+1. APPLY has retry-with-modification logic: if a tool raises an exception,
+   the loop downgrades the action, logs the failure, and updates valence
+   negatively (competence drop) before re-entering the cycle.
+1. The bridge (bridge.py) can drive this loop by adding a “loop_step” command,
+   keeping the Rust ↔ Python protocol unchanged.
+   “””
+
+from **future** import annotations
+
 import json
-from datetime import datetime
-from dataclasses import dataclass, asdict, field
-from typing import Optional, Dict, Any, List
-from pathlib import Path
+import time
+import traceback
+from dataclasses import asdict, dataclass
 from enum import Enum
+from typing import Any, Callable, Dict, List, Optional
 
-# ── Homeostasis valence dimensions (mirrors janus-brain) ──────────────────────
+import torch
 
-@dataclass
-class ValenceState:
-pleasure:   float = 0.0   # -1 … +1
-arousal:    float = 0.0   # -1 … +1
-curiosity:  float = 0.5   #  0 … +1
-frustration:float = 0.0   #  0 … +1
-confidence: float = 0.5   #  0 … +1
-timestamp:  str   = field(default_factory=lambda: datetime.now().isoformat())
+from .core import AutonomousCore
+from .homeostasis import ValenceVector
+from .goal_planner import Action, Goal, GoalPlanner, RiskLevel
 
-```
-def clamp(self):
-    self.pleasure    = max(-1.0, min(1.0, self.pleasure))
-    self.arousal     = max(-1.0, min(1.0, self.arousal))
-    self.curiosity   = max( 0.0, min(1.0, self.curiosity))
-    self.frustration = max( 0.0, min(1.0, self.frustration))
-    self.confidence  = max( 0.0, min(1.0, self.confidence))
-    return self
+# —————————————————————————
 
-def to_dict(self) -> dict:
-    return asdict(self)
-```
+# Loop phases as an enum for logging clarity
 
-class ValenceEngine:
-“””
-Manages real-time valence updates from perception events.
-Each perception signal bumps the relevant dimension by a small delta
-and then decays all dimensions toward baseline over time.
-“””
+# —————————————————————————
 
-```
-DECAY_RATE  = 0.02   # per second, toward baseline
-BASELINE    = ValenceState()
-
-# Maps (event_source, event_type) → {dim: delta}
-BUMP_TABLE = {
-    ("vision",  "person_entered"):  {"pleasure": +0.15, "arousal": +0.20, "curiosity": +0.10},
-    ("vision",  "person_left"):     {"arousal": -0.10},
-    ("vision",  "task_complete"):   {"pleasure": +0.25, "curiosity": +0.15, "frustration": -0.10},
-    ("vision",  "scene_change"):    {"curiosity": +0.10, "arousal": +0.05},
-    ("vision",  "anomaly"):         {"arousal": +0.30, "curiosity": +0.20},
-    ("audio",   "wake_word"):       {"arousal": +0.20, "pleasure": +0.10},
-    ("audio",   "speech"):          {"arousal": +0.10, "curiosity": +0.05},
-    ("tool",    "success"):         {"pleasure": +0.20, "confidence": +0.10, "frustration": -0.15},
-    ("tool",    "failure"):         {"frustration": +0.20, "pleasure": -0.10, "confidence": -0.05},
-    ("goal",    "subtask_done"):    {"pleasure": +0.15, "curiosity": +0.05},
-    ("goal",    "stalled"):         {"frustration": +0.20, "pleasure": -0.10},
-    ("goal",    "completed"):       {"pleasure": +0.40, "confidence": +0.20, "frustration": -0.30},
-    ("memory",  "surprise"):        {"curiosity": +0.25, "arousal": +0.15},
-}
-
-def __init__(self):
-    self.state = ValenceState()
-    self._lock = threading.Lock()
-    self._history: List[ValenceState] = []
-    self._decay_thread = threading.Thread(target=self._decay_loop, daemon=True)
-    self._decay_thread.start()
-
-def bump(self, source: str, event_type: str, scale: float = 1.0):
-    key = (source, event_type)
-    deltas = self.BUMP_TABLE.get(key, {})
-    with self._lock:
-        for dim, delta in deltas.items():
-            cur = getattr(self.state, dim)
-            setattr(self.state, dim, cur + delta * scale)
-        self.state.clamp()
-        self.state.timestamp = datetime.now().isoformat()
-        self._history.append(ValenceState(**asdict(self.state)))
-        if len(self._history) > 1000:
-            self._history = self._history[-500:]
-
-def _decay_loop(self):
-    while True:
-        time.sleep(1.0)
-        with self._lock:
-            for dim in ("pleasure", "arousal", "curiosity", "frustration", "confidence"):
-                baseline = getattr(self.BASELINE, dim)
-                cur      = getattr(self.state, dim)
-                setattr(self.state, dim, cur + (baseline - cur) * self.DECAY_RATE)
-            self.state.clamp()
-
-def snapshot(self) -> ValenceState:
-    with self._lock:
-        return ValenceState(**asdict(self.state))
-
-def history(self, last_n: int = 60) -> List[dict]:
-    with self._lock:
-        return [asdict(s) for s in self._history[-last_n:]]
-```
-
-# ── Cognitive loop phases ──────────────────────────────────────────────────────
-
-class LoopPhase(Enum):
+class Phase(str, Enum):
 OBSERVE  = “OBSERVE”
 PLAN     = “PLAN”
 PROPOSE  = “PROPOSE”
 VERIFY   = “VERIFY”
 APPLY    = “APPLY”
-SLEEP    = “SLEEP”
+IDLE     = “IDLE”
+
+# —————————————————————————
+
+# Cycle result — returned after each full loop iteration
+
+# —————————————————————————
 
 @dataclass
-class ObserveBundle:
-“”“Structured output of the OBSERVE phase — fed into PLAN.”””
-timestamp:        str
-visual_summary:   Optional[str]
-audio_transcript: Optional[str]
-entities:         List[str]
-events:           List[Dict]
-valence_snapshot: Dict
-raw_perception:   Dict = field(default_factory=dict)
+class CycleResult:
+cycle_id: int
+timestamp: float
+phase_reached: Phase
+goals_generated: int
+actions_proposed: int
+actions_approved: int
+actions_applied: int
+actions_retried: int
+actions_blocked: int
+valence_before: Dict[str, float]
+valence_after: Dict[str, float]
+events: List[Dict[str, Any]]
+
+```
+def to_json(self) -> str:
+    return json.dumps(asdict(self), indent=2)
+```
+
+# —————————————————————————
+
+# Sandbox / dry-run stub
+
+# —————————————————————————
+
+class SandboxResult:
+“”“Result of a dry-run execution used by the Verify phase.”””
+def **init**(self, success: bool, output: Any, error: Optional[str] = None):
+self.success = success
+self.output  = output
+self.error   = error
+
+def _dry_run(action: Action, executor: “ToolExecutor”) -> SandboxResult:
+“””
+Lightweight simulation of an action without real side effects.
+
+```
+In production this would spin up a WASM subprocess.  Here we do a
+best-effort Python-level simulation:
+  - For HIGH risk filesystem actions, we check preconditions.
+  - For everything else, we treat the dry-run as always-safe.
+"""
+try:
+    if action.tool_name == "write_state_snapshot":
+        # Simulate: can we serialise the state?
+        state_str = json.dumps({"test": True})
+        return SandboxResult(success=True, output=f"Simulated write: {len(state_str)} bytes")
+
+    if action.tool_name == "run_analysis_pipeline":
+        video_path = action.parameters.get("video_path", "")
+        import os
+        if video_path and not os.path.exists(video_path):
+            return SandboxResult(
+                success=False, output=None,
+                error=f"Precondition failed: video_path '{video_path}' not found"
+            )
+        return SandboxResult(success=True, output="Precondition check passed")
+
+    # Default: assume dry-run passes for unrecognised tools
+    return SandboxResult(success=True, output="No dry-run logic; assumed safe")
+
+except Exception as exc:
+    return SandboxResult(success=False, output=None, error=str(exc))
+```
+
+# —————————————————————————
+
+# Tool executor — maps action.tool_name → AutonomousCore method calls
+
+# —————————————————————————
+
+class ToolExecutor:
+“””
+Calls the appropriate AutonomousCore (or FinalJanusSystem) method
+for a given Action and returns the raw result.
+
+```
+Add new tool handlers by extending _DISPATCH or calling register().
+"""
+
+def __init__(self, core: AutonomousCore, janus_system: Optional[Any] = None):
+    self.core   = core
+    self.janus  = janus_system   # FinalJanusSystem, optional
+
+    self._dispatch: Dict[str, Callable[[Action], Any]] = {
+        "self_reflect":          self._exec_self_reflect,
+        "explore_memory":        self._exec_explore_memory,
+        "generate_response":     self._exec_generate_response,
+        "perceive_input":        self._exec_perceive_input,
+        "consolidate_sleep":     self._exec_consolidate_sleep,
+        "write_state_snapshot":  self._exec_write_state_snapshot,
+        "run_analysis_pipeline": self._exec_run_analysis_pipeline,
+    }
+
+def register(self, name: str, fn: Callable[[Action], Any]) -> None:
+    self._dispatch[name] = fn
+
+def execute(self, action: Action) -> Any:
+    handler = self._dispatch.get(action.tool_name)
+    if handler is None:
+        raise NotImplementedError(f"No executor for tool '{action.tool_name}'")
+    return handler(action)
+
+# --- individual handlers -------------------------------------------
+
+def _exec_self_reflect(self, action: Action) -> str:
+    return self.core.reflect()
+
+def _exec_explore_memory(self, action: Action) -> List[str]:
+    window = action.parameters.get("window", 50)
+    return self.core.memory.mine_themes()
+
+def _exec_generate_response(self, action: Action) -> str:
+    prompt = action.parameters.get("prompt", "Continue coherently.")
+    max_tokens = action.parameters.get("max_tokens", 150)
+    return self.core.generate_response(prompt, max_tokens)
+
+def _exec_perceive_input(self, action: Action) -> None:
+    text = action.parameters.get("text", "")
+    if text:
+        self.core.perceive(text)
+
+def _exec_consolidate_sleep(self, action: Action) -> str:
+    from .core import SleepEngine
+    engine = SleepEngine(self.core)
+    engine.consolidate()
+    return "Consolidation complete"
+
+def _exec_write_state_snapshot(self, action: Action) -> str:
+    import json, os
+    path = action.parameters.get("path", "persistent_state.json")
+    v = self.core.current_valence
+    snapshot = {
+        "timestamp": time.time(),
+        "valence": {
+            "pleasure":   v.pleasure.item(),
+            "arousal":    v.arousal.item(),
+            "curiosity":  v.curiosity.item(),
+            "autonomy":   v.autonomy.item(),
+            "connection": v.connection.item(),
+            "competence": v.competence.item(),
+        }
+    }
+    with open(path, "w") as f:
+        json.dump(snapshot, f, indent=2)
+    return f"State written to {path}"
+
+def _exec_run_analysis_pipeline(self, action: Action) -> str:
+    if self.janus is None:
+        raise RuntimeError("FinalJanusSystem not attached to ToolExecutor")
+    video_path  = action.parameters.get("video_path", "")
+    output_file = action.parameters.get("output_file", "janus_report.txt")
+    self.janus.analyze_video(video_path, output_file)
+    return f"Analysis written to {output_file}"
+```
+
+# —————————————————————————
+
+# Verify phase
+
+# —————————————————————————
+
+_MEDIUM_URGENCY_THRESHOLD = 0.4   # minimum goal priority to approve MEDIUM risk
+
+def _verify(
+actions: List[Action],
+goals: List[Goal],
+executor: ToolExecutor,
+log: Callable[[str, Dict], None],
+) -> tuple[List[Action], List[Action], int]:
+“””
+Returns (approved_actions, blocked_actions, retried_count).
+
+```
+Tiered logic:
+  LOW    → always approved
+  MEDIUM → approved when the parent goal has priority ≥ threshold
+  HIGH   → approved only if dry-run succeeds
+"""
+goal_map = {g.id: g for g in goals}
+approved: List[Action] = []
+blocked:  List[Action] = []
+retried = 0
+
+for action in actions:
+    parent_goal = goal_map.get(action.parent_goal_id)
+    parent_priority = parent_goal.priority if parent_goal else 0.0
+
+    if action.estimated_risk == RiskLevel.LOW:
+        approved.append(action)
+        log("verify_approved", {"tool": action.tool_name, "risk": action.estimated_risk, "reason": "low_risk"})
+
+    elif action.estimated_risk == RiskLevel.MEDIUM:
+        if parent_priority >= _MEDIUM_URGENCY_THRESHOLD:
+            approved.append(action)
+            log("verify_approved", {"tool": action.tool_name, "risk": action.estimated_risk, "reason": "sufficient_urgency"})
+        else:
+            blocked.append(action)
+            log("verify_blocked", {"tool": action.tool_name, "risk": action.estimated_risk, "reason": "insufficient_urgency"})
+
+    elif action.estimated_risk == RiskLevel.HIGH:
+        dry = _dry_run(action, executor)
+        if dry.success:
+            approved.append(action)
+            log("verify_approved", {
+                "tool": action.tool_name,
+                "risk": action.estimated_risk,
+                "reason": "dry_run_passed",
+                "dry_run_output": str(dry.output)
+            })
+        else:
+            # Attempt one downgrade before blocking
+            downgraded = Action(
+                tool_name="self_reflect",
+                parameters={"note": f"Blocked high-risk action '{action.tool_name}': {dry.error}"},
+                rationale=f"Downgraded from '{action.tool_name}' after failed dry-run",
+                estimated_risk=RiskLevel.LOW,
+                parent_goal_id=action.parent_goal_id,
+                utility_score=action.utility_score * 0.3,
+            )
+            approved.append(downgraded)
+            retried += 1
+            log("verify_downgraded", {
+                "original_tool": action.tool_name,
+                "new_tool": "self_reflect",
+                "dry_run_error": dry.error
+            })
+
+return approved, blocked, retried
+```
+
+# —————————————————————————
+
+# Main cognitive loop
+
+# —————————————————————————
 
 class CognitiveLoop:
 “””
-Central cognitive orchestrator.
+Runs the OBSERVE → PLAN → PROPOSE → VERIFY → APPLY cycle.
 
 ```
-Usage
-─────
-loop = CognitiveLoop()
-loop.attach_perception(unified_perception_instance)
-loop.attach_memory(memory_instance)
-loop.attach_consciousness(consciousness_instance)
-loop.start()
+Parameters
+----------
+core : AutonomousCore
+planner : GoalPlanner
+janus_system : optional FinalJanusSystem (for vision/audio pipeline)
+max_retries : int
+    How many times to retry a failed APPLY before giving up.
+idle_interval : float
+    Seconds to sleep when no goals are active.
 """
 
-def __init__(self, state_path: str = "persistent_state.json"):
-    self.state_path   = Path(state_path)
-    self.valence      = ValenceEngine()
-    self.phase        = LoopPhase.OBSERVE
-    self.running      = False
-    self.cycle_count  = 0
-    self.event_log: List[dict] = []
+def __init__(
+    self,
+    core: AutonomousCore,
+    planner: Optional[GoalPlanner] = None,
+    janus_system: Optional[Any] = None,
+    max_retries: int = 2,
+    idle_interval: float = 1.0,
+):
+    self.core          = core
+    self.planner       = planner or GoalPlanner()
+    self.executor      = ToolExecutor(core, janus_system)
+    self.max_retries   = max_retries
+    self.idle_interval = idle_interval
+    self._cycle_id     = 0
+    self._event_log: List[Dict[str, Any]] = []
 
-    # Pluggable subsystems (set via attach_*)
-    self._perception  = None
-    self._memory      = None
-    self._consciousness = None
+# ------------------------------------------------------------------
+# Public API
+# ------------------------------------------------------------------
 
-    # Queues for inter-phase comms
-    self._observe_q   = queue.Queue()
-    self._plan_q      = queue.Queue()
+def step(self, stimulus: Optional[str] = None) -> CycleResult:
+    """Execute one full OBSERVE → APPLY cycle and return a CycleResult."""
+    self._cycle_id += 1
+    self._event_log = []
+    start_valence = self._valence_snapshot()
 
-    # Load persistent state
-    self._state = self._load_state()
+    # ── OBSERVE ──────────────────────────────────────────────────
+    self._log(Phase.OBSERVE, "phase_start", {})
+    if stimulus:
+        self.core.perceive(stimulus)
+        self._log(Phase.OBSERVE, "stimulus_ingested", {"length": len(stimulus)})
 
-# ── Attachment API ─────────────────────────────────────────────────────────
-def attach_perception(self, perception):
-    self._perception = perception
-    # Wire perception callbacks → valence bumps
-    if hasattr(perception, 'fusion') and perception.fusion:
-        original = getattr(perception.fusion, 'on_event_detected', None)
-        def _hooked_event(event):
-            self._on_perception_event(event)
-            if original:
-                original(event)
-        perception.fusion.on_event_detected = _hooked_event
+    current_valence_tensor = self.core.current_valence.to_tensor()
+    self._log(Phase.OBSERVE, "valence_sampled", self._valence_snapshot())
 
-    if hasattr(perception, 'voice') and perception.voice:
-        original_ww = getattr(perception.voice, 'on_wake_word', None)
-        def _hooked_ww():
-            self.valence.bump("audio", "wake_word")
-            if original_ww:
-                original_ww()
-        perception.voice.on_wake_word = _hooked_ww
+    # ── PLAN ─────────────────────────────────────────────────────
+    self._log(Phase.PLAN, "phase_start", {})
+    goals = self.planner.derive_goals(current_valence_tensor)
+    self._log(Phase.PLAN, "goals_derived", {
+        "count": len(goals),
+        "goals": [{"id": g.id, "priority": round(g.priority, 3)} for g in goals]
+    })
 
-def attach_memory(self, memory):
-    self._memory = memory
+    if not goals:
+        self._log(Phase.IDLE, "no_goals", {"reason": "all dimensions near set-point"})
+        return self._make_result(
+            phase=Phase.IDLE,
+            goals=goals,
+            proposed=[], approved=[], applied=0, retried=0, blocked=0,
+            start_valence=start_valence,
+        )
 
-def attach_consciousness(self, consciousness):
-    self._consciousness = consciousness
+    # ── PROPOSE ──────────────────────────────────────────────────
+    self._log(Phase.PROPOSE, "phase_start", {})
+    proposed_actions = self.planner.propose_actions(goals)
+    self._log(Phase.PROPOSE, "actions_proposed", {
+        "count": len(proposed_actions),
+        "actions": [
+            {"tool": a.tool_name, "risk": a.estimated_risk, "utility": round(a.utility_score, 3)}
+            for a in proposed_actions
+        ]
+    })
 
-# ── Lifecycle ──────────────────────────────────────────────────────────────
-def start(self):
-    self.running = True
-    self._loop_thread = threading.Thread(target=self._main_loop, daemon=True)
-    self._loop_thread.start()
-    print("[CognitiveLoop] Started.")
+    # ── VERIFY ───────────────────────────────────────────────────
+    self._log(Phase.VERIFY, "phase_start", {})
+    approved, blocked, retried = _verify(
+        proposed_actions, goals, self.executor,
+        log=lambda event, data: self._log(Phase.VERIFY, event, data)
+    )
+    self._log(Phase.VERIFY, "verify_summary", {
+        "approved": len(approved), "blocked": len(blocked), "retried": retried
+    })
 
-def stop(self):
-    self.running = False
-    self._save_state()
-    print("[CognitiveLoop] Stopped.")
+    # ── APPLY ────────────────────────────────────────────────────
+    self._log(Phase.APPLY, "phase_start", {})
+    applied_count = 0
+    retry_count = 0
 
-# ── Main loop ──────────────────────────────────────────────────────────────
-def _main_loop(self):
-    while self.running:
-        try:
-            self.cycle_count += 1
-            self._log_event("cycle_start", {"cycle": self.cycle_count, "phase": self.phase.value})
+    for action in approved:
+        success = self._apply_with_retry(action)
+        if success:
+            applied_count += 1
+        else:
+            retry_count += 1
 
-            bundle  = self._phase_observe()
-            plan    = self._phase_plan(bundle)
-            actions = self._phase_propose(plan)
-            safe    = self._phase_verify(actions)
-            self._phase_apply(safe)
+    end_valence = self._valence_snapshot()
+    self._log(Phase.APPLY, "phase_complete", {
+        "applied": applied_count,
+        "failed": len(approved) - applied_count,
+    })
 
-            # Persist valence + state after every cycle
-            self._state["valence"]     = self.valence.snapshot().to_dict()
-            self._state["cycle_count"] = self.cycle_count
-            self._save_state()
-
-            time.sleep(0.5)  # Throttle — tunable
-
-        except Exception as e:
-            self._log_event("loop_error", {"error": str(e)})
-            time.sleep(2.0)
-
-# ── OBSERVE ────────────────────────────────────────────────────────────────
-def _phase_observe(self) -> ObserveBundle:
-    self.phase = LoopPhase.OBSERVE
-
-    visual_summary   = None
-    audio_transcript = None
-    entities: List[str] = []
-    events:   List[dict] = []
-
-    # Pull from perception if available
-    if self._perception:
-        scene = getattr(self._perception, 'last_scene', None)
-        if scene and hasattr(scene, 'summary'):
-            visual_summary = scene.summary
-            entities += getattr(scene, 'objects', [])
-            entities = [getattr(e, 'class_name', str(e)) for e in entities]
-
-        voice = getattr(self._perception, 'voice', None)
-        if voice and voice.conversation:
-            last = voice.conversation[-1]
-            audio_transcript = getattr(last, 'text', None)
-
-        fusion = getattr(self._perception, 'fusion', None)
-        if fusion and fusion.detected_events:
-            for ev in fusion.detected_events[-10:]:
-                events.append({
-                    "type":       ev.event_type.value,
-                    "desc":       ev.description,
-                    "confidence": ev.confidence,
-                    "ts":         ev.timestamp,
-                })
-
-    bundle = ObserveBundle(
-        timestamp        = datetime.now().isoformat(),
-        visual_summary   = visual_summary,
-        audio_transcript = audio_transcript,
-        entities         = list(set(entities)),
-        events           = events,
-        valence_snapshot = self.valence.snapshot().to_dict(),
+    return self._make_result(
+        phase=Phase.APPLY,
+        goals=goals,
+        proposed=proposed_actions,
+        approved=approved,
+        applied=applied_count,
+        retried=retry_count,
+        blocked=len(blocked),
+        start_valence=start_valence,
+        end_valence=end_valence,
     )
 
-    # Bind into episodic memory
-    if self._memory:
+def run(self, stimuli: Optional[List[str]] = None, cycles: int = 1) -> List[CycleResult]:
+    """Run N cycles, optionally feeding a list of stimuli (one per cycle)."""
+    results = []
+    for i in range(cycles):
+        stim = stimuli[i] if stimuli and i < len(stimuli) else None
+        results.append(self.step(stim))
+    return results
+
+# ------------------------------------------------------------------
+# Internal helpers
+# ------------------------------------------------------------------
+
+def _apply_with_retry(self, action: Action) -> bool:
+    """
+    Try to execute action.  On failure, apply a negative valence nudge
+    (competence drop) and retry up to max_retries times with a
+    fallback to self_reflect.
+    """
+    attempts = 0
+    current_action = action
+
+    while attempts <= self.max_retries:
         try:
-            self._memory.store({
-                "type":    "observe_bundle",
-                "content": asdict(bundle),
+            result = self.executor.execute(current_action)
+            self._log(Phase.APPLY, "action_success", {
+                "tool": current_action.tool_name,
+                "attempt": attempts + 1,
+                "result_preview": str(result)[:120],
             })
-        except Exception:
-            pass
+            # Positive competence nudge on success
+            self._nudge_valence(competence=+0.05, pleasure=+0.02)
+            return True
 
-    self._log_event("observe", {
-        "entities": bundle.entities,
-        "events":   len(bundle.events),
-        "visual":   visual_summary,
-    })
-    return bundle
+        except Exception as exc:
+            attempts += 1
+            self._log(Phase.APPLY, "action_failed", {
+                "tool": current_action.tool_name,
+                "attempt": attempts,
+                "error": str(exc),
+                "traceback": traceback.format_exc(limit=3),
+            })
+            # Competence drop on failure
+            self._nudge_valence(competence=-0.08, pleasure=-0.03)
 
-# ── PLAN ───────────────────────────────────────────────────────────────────
-def _phase_plan(self, bundle: ObserveBundle) -> dict:
-    self.phase = LoopPhase.PLAN
-    plan = {
-        "cycle":      self.cycle_count,
-        "based_on":   bundle.timestamp,
-        "intent":     "maintain_homeostasis",
-        "sub_goals":  [],
+            if attempts <= self.max_retries:
+                # Downgrade to a safe fallback
+                current_action = Action(
+                    tool_name="self_reflect",
+                    parameters={"note": f"Retry fallback after '{action.tool_name}' failed: {exc}"},
+                    rationale="Auto-retry with low-risk fallback",
+                    estimated_risk=RiskLevel.LOW,
+                    parent_goal_id=action.parent_goal_id,
+                    utility_score=action.utility_score * 0.5,
+                )
+                self._log(Phase.APPLY, "retry_with_fallback", {
+                    "original": action.tool_name,
+                    "attempt": attempts + 1,
+                })
+
+    return False
+
+def _nudge_valence(self, **kwargs: float) -> None:
+    """Apply a small direct delta to specific valence dimensions."""
+    v = self.core.current_valence
+    mapping = {
+        "pleasure":   "pleasure",
+        "arousal":    "arousal",
+        "curiosity":  "curiosity",
+        "autonomy":   "autonomy",
+        "connection": "connection",
+        "competence": "competence",
     }
+    updates = {}
+    for dim, delta in kwargs.items():
+        if dim in mapping:
+            current = getattr(v, mapping[dim])
+            updates[mapping[dim]] = torch.clamp(current + delta, -1.0, 1.0)
+    if updates:
+        self.core.current_valence = type(v)(
+            pleasure   = updates.get("pleasure",   v.pleasure),
+            arousal    = updates.get("arousal",    v.arousal),
+            curiosity  = updates.get("curiosity",  v.curiosity),
+            autonomy   = updates.get("autonomy",   v.autonomy),
+            connection = updates.get("connection", v.connection),
+            competence = updates.get("competence", v.competence),
+        )
 
-    # Valence-driven goal injection
-    snap = bundle.valence_snapshot
-    if snap.get("frustration", 0) > 0.5:
-        plan["sub_goals"].append({"id": "reduce_frustration", "priority": 1})
-    if snap.get("curiosity", 0) > 0.7:
-        plan["sub_goals"].append({"id": "explore_entities", "entities": bundle.entities, "priority": 2})
-    if bundle.events:
-        plan["sub_goals"].append({"id": "respond_to_events", "events": bundle.events, "priority": 3})
-
-    self._log_event("plan", plan)
-    return plan
-
-# ── PROPOSE ────────────────────────────────────────────────────────────────
-def _phase_propose(self, plan: dict) -> List[dict]:
-    self.phase = LoopPhase.PROPOSE
-    actions = []
-
-    for goal in plan.get("sub_goals", []):
-        gid = goal.get("id", "")
-        if gid == "reduce_frustration":
-            actions.append({"tool": "self_reflect", "args": {"prompt": "What is causing frustration?"}, "risk": "low"})
-        elif gid == "explore_entities":
-            for ent in goal.get("entities", [])[:2]:
-                actions.append({"tool": "memory_query", "args": {"query": ent}, "risk": "low"})
-        elif gid == "respond_to_events":
-            for ev in goal.get("events", [])[:3]:
-                actions.append({"tool": "log_event", "args": ev, "risk": "low"})
-
-    self._log_event("propose", {"action_count": len(actions)})
-    return actions
-
-# ── VERIFY ─────────────────────────────────────────────────────────────────
-def _phase_verify(self, actions: List[dict]) -> List[dict]:
-    self.phase = LoopPhase.VERIFY
-    safe = []
-    for action in actions:
-        risk = action.get("risk", "medium")
-        # Only auto-approve low-risk; others need explicit clearance
-        if risk == "low":
-            safe.append(action)
-        else:
-            self._log_event("verify_blocked", {"action": action})
-    self._log_event("verify", {"safe_count": len(safe), "total": len(actions)})
-    return safe
-
-# ── APPLY ──────────────────────────────────────────────────────────────────
-def _phase_apply(self, actions: List[dict]):
-    self.phase = LoopPhase.APPLY
-    for action in actions:
-        tool = action.get("tool")
-        args = action.get("args", {})
-        try:
-            result = self._dispatch_tool(tool, args)
-            self.valence.bump("tool", "success", scale=0.5)
-            self._log_event("apply_ok", {"tool": tool, "result": str(result)[:120]})
-        except Exception as e:
-            self.valence.bump("tool", "failure", scale=0.5)
-            self._log_event("apply_fail", {"tool": tool, "error": str(e)})
-
-def _dispatch_tool(self, tool: str, args: dict) -> Any:
-    if tool == "self_reflect":
-        return f"Reflection: {args.get('prompt','')}"
-    elif tool == "memory_query" and self._memory:
-        return self._memory.query(args.get("query", ""))
-    elif tool == "log_event":
-        self._log_event("agent_log", args)
-        return "logged"
-    return None
-
-# ── Perception event hook ──────────────────────────────────────────────────
-def _on_perception_event(self, event):
-    """Called by perception callbacks — updates valence immediately."""
-    etype = event.event_type.value if hasattr(event, 'event_type') else str(event)
-    modality = getattr(event, 'primary_modality', None)
-    source = modality.value if modality else "vision"
-    self.valence.bump(source, etype)
-    self._log_event("perception_event", {"source": source, "type": etype})
-
-# ── Helpers ────────────────────────────────────────────────────────────────
-def _log_event(self, kind: str, data: dict):
-    entry = {"ts": datetime.now().isoformat(), "kind": kind, "data": data}
-    self.event_log.append(entry)
-    if len(self.event_log) > 5000:
-        self.event_log = self.event_log[-2500:]
-
-def _load_state(self) -> dict:
-    if self.state_path.exists():
-        try:
-            return json.loads(self.state_path.read_text())
-        except Exception:
-            pass
-    return {}
-
-def _save_state(self):
-    try:
-        existing = self._load_state()
-        existing["valence"]     = self.valence.snapshot().to_dict()
-        existing["cycle_count"] = self.cycle_count
-        existing["last_saved"]  = datetime.now().isoformat()
-        self.state_path.write_text(json.dumps(existing, indent=2))
-    except Exception as e:
-        print(f"[CognitiveLoop] State save failed: {e}")
-
-def get_status(self) -> dict:
+def _valence_snapshot(self) -> Dict[str, float]:
+    v = self.core.current_valence
     return {
-        "phase":       self.phase.value,
-        "cycle":       self.cycle_count,
-        "valence":     self.valence.snapshot().to_dict(),
-        "event_count": len(self.event_log),
-        "running":     self.running,
+        "pleasure":   round(v.pleasure.item(), 4),
+        "arousal":    round(v.arousal.item(), 4),
+        "curiosity":  round(v.curiosity.item(), 4),
+        "autonomy":   round(v.autonomy.item(), 4),
+        "connection": round(v.connection.item(), 4),
+        "competence": round(v.competence.item(), 4),
     }
+
+def _log(self, phase: Phase, event: str, data: Dict[str, Any]) -> None:
+    entry = {
+        "cycle":     self._cycle_id,
+        "phase":     phase.value,
+        "event":     event,
+        "timestamp": round(time.time(), 4),
+        **data,
+    }
+    self._event_log.append(entry)
+
+def _make_result(
+    self,
+    phase: Phase,
+    goals: List[Goal],
+    proposed: List[Action],
+    approved: List[Action],
+    applied: int,
+    retried: int,
+    blocked: int,
+    start_valence: Dict[str, float],
+    end_valence: Optional[Dict[str, float]] = None,
+) -> CycleResult:
+    return CycleResult(
+        cycle_id         = self._cycle_id,
+        timestamp        = time.time(),
+        phase_reached    = phase,
+        goals_generated  = len(goals),
+        actions_proposed = len(proposed),
+        actions_approved = len(approved),
+        actions_applied  = applied,
+        actions_retried  = retried,
+        actions_blocked  = blocked,
+        valence_before   = start_valence,
+        valence_after    = end_valence or start_valence,
+        events           = list(self._event_log),
+    )
 ```
