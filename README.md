@@ -1,7 +1,3 @@
-Based on my analysis of the `Thoseidiots/Janus` repository, here is a comprehensive README for the project.
-
----
-
 # Janus: The Persistent Cognitive Entity
 
 **Janus** is a novel autoregressive framework and persistent cognitive entity designed to unify multimodal understanding and generation. It represents a paradigm shift from ephemeral AI assistants to a continuous, bounded, and verifiable cognitive process with an externalized identity and a secure execution substrate.
@@ -29,6 +25,7 @@ This repository contains two primary integrated systems:
 - [Core Concepts](#core-concepts)
   - [Moltbook Integration](#moltbook-integration)
   - [Autonomous Core (Janus Brain)](#autonomous-core-janus-brain)
+- [Model Weights (Git LFS)](#model-weights-git-lfs)
 - [API Reference](#api-reference)
 - [Contributing](#contributing)
 - [License](#license)
@@ -94,7 +91,7 @@ Janus/
 ├── state_sync_enhanced.py   # Cross-device state sync
 ├── Cargo.toml               # Rust project manifest
 ├── requirements_enhanced.txt# Python dependencies
-└── README.md & UNIFIED_README.md
+└── README.md
 ```
 
 ## Getting Started
@@ -103,12 +100,14 @@ Janus/
 - **Rust**: Latest stable version.
 - **Cargo**: Rust's package manager.
 - **Python**: 3.9+ recommended.
-- **Whisper.cpp**: For local speech-to-text. Clone and build from [here](https://github.com/ggerganov/whisper.cpp).
-- **Piper**: For local text-to-speech. Download from [here](https://github.com/rhasspy/piper).
+- **Git LFS**: For managing large model weights.
+- **Whisper.cpp**: For local speech-to-text.
+- **Piper**: For local text-to-speech.
 
 ### Building the Rust Core
-1. Clone the repository:
+1. Clone the repository with Git LFS:
    ```bash
+   git lfs install
    git clone https://github.com/Thoseidiots/Janus.git
    cd Janus
    ```
@@ -122,68 +121,26 @@ Janus/
    ```bash
    pip install -r requirements_enhanced.txt
    ```
-2. Set up local voice models (as per Prerequisites):
-   ```bash
-   # Example for Whisper.cpp
-   cd whisper.cpp
-   make
-   bash models/download-ggml-model.sh base.en
-   ```
-3. Configure Janus by creating a `config.json` in the project root:
-   ```json
-   {
-     "voice": {
-       "sample_rate": 16000,
-       "whisper_model": "models/ggml-base.en.bin",
-       "piper_model": "models/en_US-lessac-medium.onnx"
-     },
-     "messaging": {
-       "port": 8080,
-       "telegram_token": "YOUR_BOT_TOKEN"
-     },
-     "sync": {
-       "device_name": "My-Laptop",
-       "device_type": "laptop"
-     }
-   }
-   ```
 
-## Usage
+## Model Weights (Git LFS)
 
-### Running the Janus CLI (Rust)
-The core cognitive loop can be run directly via the command line:
+The model weights are managed using **Git LFS (Large File Storage)**. This ensures that the large `.pt` files are tracked properly without bloating the repository history.
+
+### How to Manage the Weights
+When you clone the repository, ensure you have Git LFS installed to automatically download the full `.pt` files:
 ```bash
-cargo run --release -p janus-cli
+git lfs install
+git clone https://github.com/Thoseidiots/Janus.git
 ```
 
-### Running the Unified Interface (Python)
-This starts the voice, messaging, and sync subsystems.
+If you have already cloned the repository without LFS, you can pull the weights using:
 ```bash
-python janus_unified.py
+git lfs pull
 ```
-You will see the startup banner and can then interact via wake words ("Hey Janus") or connected messaging platforms.
 
-## Core Concepts
-
-### Moltbook Integration
-Janus is built upon the **Moltbook** architectural principles:
-- **Externalized Identity**: The AI's identity lives in an immutable contract (`identity_object.json`), not in model weights. This ensures continuity and stability.
-- **Continuous State**: State persists across bounded cognition cycles, preventing "task death" and maintaining context.
-- **Memory as Narrative**: Experiences are curated and summarized into a stable self-narrative, forming a cohesive autobiography.
-
-### Autonomous Core (Janus Brain)
-The `janus-brain` crate implements the autonomous capabilities:
-- **Homeostasis Engine**: A recurrent core that evolves internal valence states (pleasure, arousal, curiosity) to drive behavior and goal selection.
-- **Hierarchical Memory**: A multi-level memory system that buffers episodic experiences and mines them for themes, enabling reflection and learning.
-- **Byte-level LLM**: A transformer operating directly on UTF-8 bytes, removing tokenization overhead and simplifying the architecture.
-
-🛠️ How to Use the New Weights
-To use the best-performing model weights in a new environment:
-Reconstruct the weights:
-Bash
-python3 merge_weights.py
-Load the model (using the logic from your script):
-Python
+### Loading the Model
+You can load the best-performing weights using the following logic:
+```python
 import torch
 from core.config import JanusConfig
 from core.model import JanusModel
@@ -193,43 +150,27 @@ config = JanusConfig(**ckpt["config"])
 model = JanusModel(config)
 model.load_state_dict(ckpt["model_state_dict"])
 model.eval()
-The repository is now equipped with the most advanced weights available for the Janus-v1 architecture. What's the next goal for Janus?
-
-## API Reference
-
-The Python interface provides a programmatic API:
-
-```python
-from janus_unified import UnifiedJanus
-
-# Initialize and start
-janus = UnifiedJanus(config)
-janus.start()
-
-# Voice output
-janus.speak("Hello! I am ready.", voice_style='friendly')
-
-# Send a message via a platform
-janus.send_message('telegram', 'user_id', 'Hello from Janus!')
-
-# Get current status
-status = janus.get_status()
-
-# Stop the system
-janus.stop()
 ```
 
+## Core Concepts
+
+### Moltbook Integration
+Janus is built upon the **Moltbook** architectural principles:
+- **Externalized Identity**: The AI's identity lives in an immutable contract (`identity_object.json`), not in model weights.
+- **Continuous State**: State persists across bounded cognition cycles, preventing "task death".
+- **Memory as Narrative**: Experiences are curated and summarized into a stable self-narrative.
+
+### Autonomous Core (Janus Brain)
+The `janus-brain` crate implements the autonomous capabilities:
+- **Homeostasis Engine**: Evolves internal valence states (pleasure, arousal, curiosity) to drive behavior.
+- **Hierarchical Memory**: Buffers episodic experiences and mines them for themes.
+- **Byte-level LLM**: A transformer operating directly on UTF-8 bytes.
+
+## API Reference
+The Python interface provides a programmatic API for interaction, voice output, and messaging.
+
 ## Contributing
-We welcome contributions! Please follow these steps:
-1. Fork the repository.
-2. Create a feature branch (`git checkout -b feature/amazing-feature`).
-3. Commit your changes.
-4. Push to the branch.
-5. Open a Pull Request.
+We welcome contributions! Please follow the standard fork-and-pull-request workflow.
 
 ## License
 This project is licensed under the terms specified by the repository owner.
-
----
-
-**Janus** represents a significant step towards persistent, verifiable, and truly autonomous AI systems. By combining a robust Rust core with a versatile Python interface, it provides a powerful platform for research and development in cognitive AI.
