@@ -177,6 +177,24 @@ The `janus-brain` crate implements the autonomous capabilities:
 - **Hierarchical Memory**: A multi-level memory system that buffers episodic experiences and mines them for themes, enabling reflection and learning.
 - **Byte-level LLM**: A transformer operating directly on UTF-8 bytes, removing tokenization overhead and simplifying the architecture.
 
+🛠️ How to Use the New Weights
+To use the best-performing model weights in a new environment:
+Reconstruct the weights:
+Bash
+python3 merge_weights.py
+Load the model (using the logic from your script):
+Python
+import torch
+from core.config import JanusConfig
+from core.model import JanusModel
+
+ckpt = torch.load("weights/janus_best.pt", map_location="cpu")
+config = JanusConfig(**ckpt["config"])
+model = JanusModel(config)
+model.load_state_dict(ckpt["model_state_dict"])
+model.eval()
+The repository is now equipped with the most advanced weights available for the Janus-v1 architecture. What's the next goal for Janus?
+
 ## API Reference
 
 The Python interface provides a programmatic API:
