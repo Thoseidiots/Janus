@@ -1,0 +1,286 @@
+{
+  "model_type": "janus-v1",
+  "architecture": "GPT-2-style decoder-only transformer",
+  "total_params": 49330176,
+  "config": {
+    "block_size": 128,
+    "vocab_size": 50304,
+    "n_layer": 6,
+    "n_head": 6,
+    "n_embd": 384,
+    "dropout": 0.1,
+    "model_type": "janus-v1"
+  },
+  "training": {
+    "epochs": 200,
+    "batch_size": 4,
+    "block_size": 128,
+    "learning_rate": 0.0003,
+    "weight_decay": 0.1,
+    "optimizer": "AdamW",
+    "scheduler": "CosineAnnealingLR",
+    "device": "cpu",
+    "final_train_loss": 0.24300962686538696,
+    "best_val_loss": 0.67034912109375
+  },
+  "layer_shapes": {
+    "transformer.wte.weight": [
+      50304,
+      384
+    ],
+    "transformer.wpe.weight": [
+      128,
+      384
+    ],
+    "transformer.h.0.ln_1.weight": [
+      384
+    ],
+    "transformer.h.0.ln_1.bias": [
+      384
+    ],
+    "transformer.h.0.attn.c_attn.weight": [
+      1152,
+      384
+    ],
+    "transformer.h.0.attn.c_attn.bias": [
+      1152
+    ],
+    "transformer.h.0.attn.c_proj.weight": [
+      384,
+      384
+    ],
+    "transformer.h.0.attn.c_proj.bias": [
+      384
+    ],
+    "transformer.h.0.ln_2.weight": [
+      384
+    ],
+    "transformer.h.0.ln_2.bias": [
+      384
+    ],
+    "transformer.h.0.mlp.0.weight": [
+      1536,
+      384
+    ],
+    "transformer.h.0.mlp.0.bias": [
+      1536
+    ],
+    "transformer.h.0.mlp.2.weight": [
+      384,
+      1536
+    ],
+    "transformer.h.0.mlp.2.bias": [
+      384
+    ],
+    "transformer.h.1.ln_1.weight": [
+      384
+    ],
+    "transformer.h.1.ln_1.bias": [
+      384
+    ],
+    "transformer.h.1.attn.c_attn.weight": [
+      1152,
+      384
+    ],
+    "transformer.h.1.attn.c_attn.bias": [
+      1152
+    ],
+    "transformer.h.1.attn.c_proj.weight": [
+      384,
+      384
+    ],
+    "transformer.h.1.attn.c_proj.bias": [
+      384
+    ],
+    "transformer.h.1.ln_2.weight": [
+      384
+    ],
+    "transformer.h.1.ln_2.bias": [
+      384
+    ],
+    "transformer.h.1.mlp.0.weight": [
+      1536,
+      384
+    ],
+    "transformer.h.1.mlp.0.bias": [
+      1536
+    ],
+    "transformer.h.1.mlp.2.weight": [
+      384,
+      1536
+    ],
+    "transformer.h.1.mlp.2.bias": [
+      384
+    ],
+    "transformer.h.2.ln_1.weight": [
+      384
+    ],
+    "transformer.h.2.ln_1.bias": [
+      384
+    ],
+    "transformer.h.2.attn.c_attn.weight": [
+      1152,
+      384
+    ],
+    "transformer.h.2.attn.c_attn.bias": [
+      1152
+    ],
+    "transformer.h.2.attn.c_proj.weight": [
+      384,
+      384
+    ],
+    "transformer.h.2.attn.c_proj.bias": [
+      384
+    ],
+    "transformer.h.2.ln_2.weight": [
+      384
+    ],
+    "transformer.h.2.ln_2.bias": [
+      384
+    ],
+    "transformer.h.2.mlp.0.weight": [
+      1536,
+      384
+    ],
+    "transformer.h.2.mlp.0.bias": [
+      1536
+    ],
+    "transformer.h.2.mlp.2.weight": [
+      384,
+      1536
+    ],
+    "transformer.h.2.mlp.2.bias": [
+      384
+    ],
+    "transformer.h.3.ln_1.weight": [
+      384
+    ],
+    "transformer.h.3.ln_1.bias": [
+      384
+    ],
+    "transformer.h.3.attn.c_attn.weight": [
+      1152,
+      384
+    ],
+    "transformer.h.3.attn.c_attn.bias": [
+      1152
+    ],
+    "transformer.h.3.attn.c_proj.weight": [
+      384,
+      384
+    ],
+    "transformer.h.3.attn.c_proj.bias": [
+      384
+    ],
+    "transformer.h.3.ln_2.weight": [
+      384
+    ],
+    "transformer.h.3.ln_2.bias": [
+      384
+    ],
+    "transformer.h.3.mlp.0.weight": [
+      1536,
+      384
+    ],
+    "transformer.h.3.mlp.0.bias": [
+      1536
+    ],
+    "transformer.h.3.mlp.2.weight": [
+      384,
+      1536
+    ],
+    "transformer.h.3.mlp.2.bias": [
+      384
+    ],
+    "transformer.h.4.ln_1.weight": [
+      384
+    ],
+    "transformer.h.4.ln_1.bias": [
+      384
+    ],
+    "transformer.h.4.attn.c_attn.weight": [
+      1152,
+      384
+    ],
+    "transformer.h.4.attn.c_attn.bias": [
+      1152
+    ],
+    "transformer.h.4.attn.c_proj.weight": [
+      384,
+      384
+    ],
+    "transformer.h.4.attn.c_proj.bias": [
+      384
+    ],
+    "transformer.h.4.ln_2.weight": [
+      384
+    ],
+    "transformer.h.4.ln_2.bias": [
+      384
+    ],
+    "transformer.h.4.mlp.0.weight": [
+      1536,
+      384
+    ],
+    "transformer.h.4.mlp.0.bias": [
+      1536
+    ],
+    "transformer.h.4.mlp.2.weight": [
+      384,
+      1536
+    ],
+    "transformer.h.4.mlp.2.bias": [
+      384
+    ],
+    "transformer.h.5.ln_1.weight": [
+      384
+    ],
+    "transformer.h.5.ln_1.bias": [
+      384
+    ],
+    "transformer.h.5.attn.c_attn.weight": [
+      1152,
+      384
+    ],
+    "transformer.h.5.attn.c_attn.bias": [
+      1152
+    ],
+    "transformer.h.5.attn.c_proj.weight": [
+      384,
+      384
+    ],
+    "transformer.h.5.attn.c_proj.bias": [
+      384
+    ],
+    "transformer.h.5.ln_2.weight": [
+      384
+    ],
+    "transformer.h.5.ln_2.bias": [
+      384
+    ],
+    "transformer.h.5.mlp.0.weight": [
+      1536,
+      384
+    ],
+    "transformer.h.5.mlp.0.bias": [
+      1536
+    ],
+    "transformer.h.5.mlp.2.weight": [
+      384,
+      1536
+    ],
+    "transformer.h.5.mlp.2.bias": [
+      384
+    ],
+    "transformer.ln_f.weight": [
+      384
+    ],
+    "transformer.ln_f.bias": [
+      384
+    ],
+    "lm_head.weight": [
+      50304,
+      384
+    ]
+  }
+}
