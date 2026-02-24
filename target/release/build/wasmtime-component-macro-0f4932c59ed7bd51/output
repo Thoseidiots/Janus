@@ -1,0 +1,2 @@
+cargo:rerun-if-changed=build.rs
+cargo:rustc-env=DEBUG_OUTPUT_DIR=/home/ubuntu/Janus/target/release/build/wasmtime-component-macro-0f4932c59ed7bd51/out

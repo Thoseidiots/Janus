@@ -1,0 +1,15 @@
+/home/ubuntu/Janus/target/release/deps/target_lexicon-2512492a92387436.d: /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.4/src/lib.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.4/src/data_model.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.4/src/host.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.4/src/parse_error.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.4/src/targets.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.4/src/triple.rs /home/ubuntu/Janus/target/release/build/target-lexicon-1969363c76606446/out/host.rs
+
+/home/ubuntu/Janus/target/release/deps/libtarget_lexicon-2512492a92387436.rlib: /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.4/src/lib.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.4/src/data_model.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.4/src/host.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.4/src/parse_error.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.4/src/targets.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.4/src/triple.rs /home/ubuntu/Janus/target/release/build/target-lexicon-1969363c76606446/out/host.rs
+
+/home/ubuntu/Janus/target/release/deps/libtarget_lexicon-2512492a92387436.rmeta: /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.4/src/lib.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.4/src/data_model.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.4/src/host.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.4/src/parse_error.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.4/src/targets.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.4/src/triple.rs /home/ubuntu/Janus/target/release/build/target-lexicon-1969363c76606446/out/host.rs
+
+/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.4/src/lib.rs:
+/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.4/src/data_model.rs:
+/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.4/src/host.rs:
+/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.4/src/parse_error.rs:
+/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.4/src/targets.rs:
+/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/target-lexicon-0.13.4/src/triple.rs:
+/home/ubuntu/Janus/target/release/build/target-lexicon-1969363c76606446/out/host.rs:
+
+# env-dep:OUT_DIR=/home/ubuntu/Janus/target/release/build/target-lexicon-1969363c76606446/out

@@ -1,0 +1,18 @@
+Writing generated file: /home/ubuntu/Janus/target/release/build/cranelift-codegen-f374cc7157d33ccd/out/settings.rs
+Writing generated file: /home/ubuntu/Janus/target/release/build/cranelift-codegen-f374cc7157d33ccd/out/types.rs
+Writing generated file: /home/ubuntu/Janus/target/release/build/cranelift-codegen-f374cc7157d33ccd/out/opcodes.rs
+Writing generated file: /home/ubuntu/Janus/target/release/build/cranelift-codegen-f374cc7157d33ccd/out/inst_builder.rs
+Writing generated file: /home/ubuntu/Janus/target/release/build/cranelift-codegen-f374cc7157d33ccd/out/settings-x86.rs
+Writing generated file: /home/ubuntu/Janus/target/release/build/cranelift-codegen-f374cc7157d33ccd/out/clif_opt.isle
+Writing generated file: /home/ubuntu/Janus/target/release/build/cranelift-codegen-f374cc7157d33ccd/out/clif_lower.isle
+Rebuilding /home/ubuntu/Janus/target/release/build/cranelift-codegen-f374cc7157d33ccd/out/isle_opt.rs
+Writing ISLE-generated Rust code to /home/ubuntu/Janus/target/release/build/cranelift-codegen-f374cc7157d33ccd/out/isle_opt.rs
+Rebuilding /home/ubuntu/Janus/target/release/build/cranelift-codegen-f374cc7157d33ccd/out/isle_x64.rs
+Writing ISLE-generated Rust code to /home/ubuntu/Janus/target/release/build/cranelift-codegen-f374cc7157d33ccd/out/isle_x64.rs
+Rebuilding /home/ubuntu/Janus/target/release/build/cranelift-codegen-f374cc7157d33ccd/out/isle_aarch64.rs
+Writing ISLE-generated Rust code to /home/ubuntu/Janus/target/release/build/cranelift-codegen-f374cc7157d33ccd/out/isle_aarch64.rs
+Rebuilding /home/ubuntu/Janus/target/release/build/cranelift-codegen-f374cc7157d33ccd/out/isle_s390x.rs
+Writing ISLE-generated Rust code to /home/ubuntu/Janus/target/release/build/cranelift-codegen-f374cc7157d33ccd/out/isle_s390x.rs
+Rebuilding /home/ubuntu/Janus/target/release/build/cranelift-codegen-f374cc7157d33ccd/out/isle_riscv64.rs
+Writing ISLE-generated Rust code to /home/ubuntu/Janus/target/release/build/cranelift-codegen-f374cc7157d33ccd/out/isle_riscv64.rs
+fatal: not a git repository (or any of the parent directories): .git
