@@ -107,11 +107,20 @@ impl NexusService for MyNexusService {
                 let target_node = self.las.schedule_task(&task_desc).map_err(|e| Status::internal(format!("Scheduling failed: {}", e)))?;
                 
                 if target_node == self.jce.node_id() {
-                    let task = WasmTask { id: task_id, wasm_binary, initial_snapshot: None };
+                    let task = WasmTask { id: task_id, wasm_binary: wasm_binary.clone(), initial_snapshot: None };
                     self.wasm_dispatcher.spawn_task(task).map_err(|e| Status::internal(format!("Failed to spawn WASM task: {}", e)))?;
                 } else {
-                    // In a real implementation, forward the command to the target node via JUMF RPC.
-                    info!("Forwarding WASM task {} to Node {}", task_id, target_node);
+                    // Simulate migration: take a snapshot, send it, and resume on target.
+                    // In a real system, this would involve JUMF RPC to the target node.
+                    info!("Simulating WASM task migration: {} from Node {} to Node {}", task_id, self.jce.node_id(), target_node);
+                    // For demonstration, we'll just simulate the transfer and resume locally.
+                    // In a real scenario, the snapshot would be sent over JUMF RPC.
+                    let snapshot = self.wasm_dispatcher.transfer_task_snapshot(task_id).unwrap_or_else(|_| {
+                        // If task wasn't found (e.g., first spawn), create a dummy snapshot.
+                        janus_wasm::WasmSnapshot { memory: vec![], registers: HashMap::new() }
+                    });
+                    // This would be called on the *target* node's dispatcher.
+                    self.wasm_dispatcher.resume_task_from_snapshot(task_id, wasm_binary.clone(), snapshot).map_err(|e| Status::internal(format!("Failed to resume WASM task on target: {}", e)))?;
                 }
                 
                 let reply = NexusResponse {
@@ -205,7 +214,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Arc::new(Mutex::new(JumfMemoryWindow::map("/dev/ntb0", 1024 * 1024 * 1024).unwrap_or_else(|_| JumfMemoryWindow::map("/dev/null", 0).unwrap()))), 
         node_id as u8, 
         1024 * 1024 * 1024, 
-        4096
+        4096,
+        500 // 500 microseconds lease duration
     ));
     let las = Arc::new(LocalityAwareScheduler::new(jce.clone()));
 

@@ -49,4 +49,20 @@ impl DistributedWasmDispatcher {
         let mut hosts = self.hosts.lock().unwrap();
         hosts.remove(&task_id);
     }
-}
+
+    /// Transfers a task by returning its snapshot and removing it from the current dispatcher.
+    pub fn transfer_task_snapshot(&self, task_id: Uuid) -> Result<WasmSnapshot> {
+        let mut hosts = self.hosts.lock().unwrap();
+        let host = hosts.remove(&task_id).ok_or_else(|| anyhow::anyhow!("Task not found for transfer"))?;
+        Ok(host.get_snapshot())
+    }
+
+    /// Resumes a task from a snapshot, effectively migrating it to this dispatcher.
+    pub fn resume_task_from_snapshot(&self, task_id: Uuid, wasm_binary: Vec<u8>, snapshot: WasmSnapshot) -> Result<Uuid> {
+        let mut host = JanusWasmHost::new(&wasm_binary)?;
+        host.restore_snapshot(snapshot);
+        let mut hosts = self.hosts.lock().unwrap();
+        hosts.insert(task_id, host);
+        Ok(task_id)
+    }
+
