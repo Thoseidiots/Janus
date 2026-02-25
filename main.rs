@@ -22,6 +22,9 @@ mod dispatcher;
 use dispatcher::{DistributedWasmDispatcher, WasmTask};
 use uuid::Uuid;
 
+mod jumf;
+use jumf::{JumfMemoryWindow, JumfRpcHandler, JumfUnifiedAllocator};
+
 #[derive(Debug)]
 pub struct MyNexusService {
     janus_state: Arc<Mutex<JanusState>>,
