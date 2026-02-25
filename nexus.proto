@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package nexus;
+
+import "google/protobuf/empty.proto";
+
+// Represents a command to be executed by a Janus node
+message NexusCommand {
+  string command_type = 1;
+  string payload = 2; // JSON string of the command data
+}
+
+// Represents the response from a command execution
+message NexusResponse {
+  bool success = 1;
+  string message = 2;
+  string result_payload = 3; // JSON string of the result data
+}
+
+// Represents a state update from a Janus node
+message NexusStateUpdate {
+  string update_type = 1;
+  string state_payload = 2; // JSON string of the updated state data
+}
+
+// The Nexus service definition
+service NexusService {
+  // Sends a command to a Janus node and receives a response
+  rpc ExecuteCommand (NexusCommand) returns (NexusResponse);
+  // Streams state updates from a Janus node
+  rpc StreamStateUpdates (google.protobuf.Empty) returns (stream NexusStateUpdate);
+}
+
+// A generic empty message for RPCs that don't require any parameters
+message Empty {}

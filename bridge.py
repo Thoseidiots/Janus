@@ -1,98 +1,94 @@
-“””
-bridge.py — Janus Brain Bridge (patched)
-
-Changes vs original:
-
-- Added “loop_step” command: runs one cognitive loop cycle and returns
-  the CycleResult as JSON.  This is what the Rust janus-cli should call
-  on each tick instead of driving perceive/generate manually.
-- Added “valence” command: returns the current ValenceState so the Rust
-  layer can inject it into cloud LLM system prompts (bottleneck 3 fix).
-- Error responses now include a stack trace field for easier debugging.
-  “””
-
 import sys
 import json
-import traceback
-import torch
+import asyncio
+import ray
+import uuid
+from datetime import datetime
 
 from .core import AutonomousCore
-from .cognitive_loop import CognitiveLoop
-from .goal_planner import GoalPlanner
+from .nexus_client import NexusClient
+# Assuming janus_core types are represented as dictionaries for now
+# In a full implementation, a proper FFI or serialization layer would be needed
+# from janus_core import Event, Task, IdentityContract 
 
-class JanusBrainBridge:
-def **init**(self):
-self.core  = AutonomousCore()
-self.loop  = CognitiveLoop(
-core=self.core,
-planner=GoalPlanner(),
-)
+# Initialize Ray if not already initialized
+if not ray.is_initialized():
+    ray.init()
 
-```
-def handle_request(self, request_json: str) -> str:
-    try:
-        request = json.loads(request_json)
-        cmd = request.get("cmd")
+@ray.remote
+class DistributedBrainBridge:
+    def __init__(self, nexus_host: str = "localhost", nexus_port: int = 50051):
+        self.core = AutonomousCore.remote() # Instantiate AutonomousCore as a Ray actor
+        self.nexus_client = NexusClient(nexus_host, nexus_port)
 
-        # ── Original commands (unchanged) ────────────────────────
-        if cmd == "perceive":
-            self.core.perceive(request["text"])
-            return json.dumps({"status": "ok"})
+    async def handle_request(self, request_json: str) -> str:
+        try:
+            request = json.loads(request_json)
+            cmd = request.get("cmd")
+            
+            if cmd == "perceive":
+                text = request["text"]
+                await self.core.perceive.remote(text)
+                
+                # Also send an event to the Nexus Core
+                event_payload = {
+                    "id": str(uuid.uuid4()),
+                    "timestamp": datetime.utcnow().isoformat() + "Z",
+                    "event_type": "perception",
+                    "data": {"stimulus": text}
+                }
+                await self.nexus_client.execute_command("add_event", event_payload)
 
-        elif cmd == "generate":
-            response = self.core.generate_response(request["prompt"])
-            return json.dumps({"status": "ok", "response": response})
+                return json.dumps({"status": "ok"})
+            
+            elif cmd == "generate":
+                prompt = request["prompt"]
+                response = await self.core.generate_response.remote(prompt)
+                
+                # Also send an event to the Nexus Core
+                event_payload = {
+                    "id": str(uuid.uuid4()),
+                    "timestamp": datetime.utcnow().isoformat() + "Z",
+                    "event_type": "generation",
+                    "data": {"prompt": prompt, "response": response}
+                }
+                await self.nexus_client.execute_command("add_event", event_payload)
 
-        elif cmd == "reflect":
-            reflection = self.core.reflect()
-            return json.dumps({"status": "ok", "reflection": reflection})
+                return json.dumps({"status": "ok", "response": response})
+            
+            elif cmd == "reflect":
+                reflection = await self.core.reflect.remote()
+                
+                # Also send an event to the Nexus Core
+                event_payload = {
+                    "id": str(uuid.uuid4()),
+                    "timestamp": datetime.utcnow().isoformat() + "Z",
+                    "event_type": "reflection",
+                    "data": {"reflection_summary": reflection}
+                }
+                await self.nexus_client.execute_command("add_event", event_payload)
 
-        # ── New: single cognitive cycle ──────────────────────────
-        elif cmd == "loop_step":
-            stimulus = request.get("stimulus")   # optional
-            result   = self.loop.step(stimulus)
-            return json.dumps({"status": "ok", "cycle": json.loads(result.to_json())})
+                return json.dumps({"status": "ok", "reflection": reflection})
+            
+            elif cmd == "update_identity":
+                identity_payload = request["identity"]
+                await self.nexus_client.execute_command("update_identity", identity_payload)
+                return json.dumps({"status": "ok"})
 
-        # ── New: current valence for system prompt injection ──────
-        elif cmd == "valence":
-            v = self.core.current_valence
-            return json.dumps({
-                "status": "ok",
-                "valence": {
-                    "pleasure":   v.pleasure.item(),
-                    "arousal":    v.arousal.item(),
-                    "curiosity":  v.curiosity.item(),
-                    "autonomy":   v.autonomy.item(),
-                    "connection": v.connection.item(),
-                    "competence": v.competence.item(),
-                },
-                "context_string": self.core.valence_context_string(),
-            })
+            else:
+                return json.dumps({"status": "error", "message": f"Unknown command: {cmd}"})
+        
+        except Exception as e:
+            return json.dumps({"status": "error", "message": str(e)})
 
-        # ── New: run N loop cycles ────────────────────────────────
-        elif cmd == "loop_run":
-            cycles   = request.get("cycles", 1)
-            stimuli  = request.get("stimuli")     # optional list
-            results  = self.loop.run(stimuli=stimuli, cycles=cycles)
-            return json.dumps({
-                "status": "ok",
-                "cycles": [json.loads(r.to_json()) for r in results]
-            })
+# This part would typically be run as a separate process or service
+# For demonstration, we will keep the actor alive.
+async def main_bridge_server():
+    bridge_actor = DistributedBrainBridge.remote()
+    print("DistributedBrainBridge Ray actor started.")
+    # Keep the actor alive indefinitely
+    while True:
+        await asyncio.sleep(3600) 
 
-        else:
-            return json.dumps({"status": "error", "message": f"Unknown command: {cmd}"})
-
-    except Exception as e:
-        return json.dumps({
-            "status": "error",
-            "message": str(e),
-            "traceback": traceback.format_exc(limit=5),
-        })
-```
-
-if **name** == “**main**”:
-bridge = JanusBrainBridge()
-for line in sys.stdin:
-if not line.strip():
-continue
-print(bridge.handle_request(line.strip()), flush=True)
+if __name__ == "__main__":
+    asyncio.run(main_bridge_server())

@@ -1,8 +1,21 @@
-[workspace]
-members = [
-    "crates/janus-core",
-    "crates/janus-wasm",
-    "crates/janus-llm",
-    "crates/janus-cli",
-]
-resolver = "2"
+[package]
+name = "nexus-core"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+tonic = "0.11"
+prost = "0.12"
+prost-derive = "0.12"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+anyhow = "1.0"
+async-trait = "0.1"
+janus-core = { path = "../janus-core" }
+janus-wasm = { path = "../janus-wasm" }
+
+# Raft related dependencies
+openraft = "0.8"
+log = "0.4"
+env_logger = "0.10"
