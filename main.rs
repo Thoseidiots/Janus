@@ -25,21 +25,37 @@ use uuid::Uuid;
 mod jumf;
 use jumf::{JumfMemoryWindow, JumfRpcHandler, JumfUnifiedAllocator};
 
+mod jce;
+use jce::JanusCoherencyEngine;
+
+mod las;
+use las::{LocalityAwareScheduler, TaskDescriptor, NodeMetrics};
+
 #[derive(Debug)]
 pub struct MyNexusService {
     janus_state: Arc<Mutex<JanusState>>,
     state_update_senders: Arc<Mutex<Vec<mpsc::Sender<NexusStateUpdate>>>>,
     raft: Arc<Raft<TypeConfig>>,
     wasm_dispatcher: Arc<DistributedWasmDispatcher>,
+    jce: Arc<JanusCoherencyEngine>,
+    las: Arc<LocalityAwareScheduler>,
 }
 
 impl MyNexusService {
-    pub fn new(janus_state: JanusState, raft: Arc<Raft<TypeConfig>>, wasm_dispatcher: Arc<DistributedWasmDispatcher>) -> Self {
+    pub fn new(
+        janus_state: JanusState, 
+        raft: Arc<Raft<TypeConfig>>, 
+        wasm_dispatcher: Arc<DistributedWasmDispatcher>,
+        jce: Arc<JanusCoherencyEngine>,
+        las: Arc<LocalityAwareScheduler>
+    ) -> Self {
         MyNexusService {
             janus_state: Arc::new(Mutex::new(janus_state)),
             state_update_senders: Arc::new(Mutex::new(Vec::new())),
             raft,
             wasm_dispatcher,
+            jce,
+            las,
         }
     }
 
@@ -79,18 +95,29 @@ impl NexusService for MyNexusService {
                 AppData::UpdateIdentity { identity }
             },
             "spawn_wasm_task" => {
-                // Special handling for WASM tasks (could also be a Raft command)
                 let task_id = Uuid::new_v4();
-                // For demonstration, we'll assume the payload contains the WASM binary (base64 encoded)
-                // In a real scenario, this would be more complex.
                 let wasm_binary = vec![]; // Placeholder
-                let task = WasmTask { id: task_id, wasm_binary, initial_snapshot: None };
-                self.wasm_dispatcher.spawn_task(task).map_err(|e| Status::internal(format!("Failed to spawn WASM task: {}", e)))?;
+                
+                // Invoke Locality-Aware Scheduler (LAS) to find the best node.
+                let task_desc = TaskDescriptor {
+                    task_id,
+                    required_memory_regions: vec![0, 1], // Example regions
+                    estimated_compute_cost: 1000,
+                };
+                let target_node = self.las.schedule_task(&task_desc).map_err(|e| Status::internal(format!("Scheduling failed: {}", e)))?;
+                
+                if target_node == self.jce.node_id() {
+                    let task = WasmTask { id: task_id, wasm_binary, initial_snapshot: None };
+                    self.wasm_dispatcher.spawn_task(task).map_err(|e| Status::internal(format!("Failed to spawn WASM task: {}", e)))?;
+                } else {
+                    // In a real implementation, forward the command to the target node via JUMF RPC.
+                    info!("Forwarding WASM task {} to Node {}", task_id, target_node);
+                }
                 
                 let reply = NexusResponse {
                     success: true,
-                    message: format!("WASM task spawned with ID: {}", task_id),
-                    result_payload: serde_json::json!({ "task_id": task_id.to_string() }).to_string(),
+                    message: format!("WASM task {} scheduled on Node {}", task_id, target_node),
+                    result_payload: serde_json::json!({ "task_id": task_id.to_string(), "node": target_node }).to_string(),
                 };
                 return Ok(Response::new(reply));
             },
@@ -172,8 +199,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let raft = Arc::new(Raft::new(node_id, config, network, storage));
     let wasm_dispatcher = Arc::new(DistributedWasmDispatcher::new());
+    
+    // Initialize JCE and LAS for the "Stability" stack.
+    let jce = Arc::new(JanusCoherencyEngine::new(
+        Arc::new(Mutex::new(JumfMemoryWindow::map("/dev/ntb0", 1024 * 1024 * 1024).unwrap_or_else(|_| JumfMemoryWindow::map("/dev/null", 0).unwrap()))), 
+        node_id as u8, 
+        1024 * 1024 * 1024, 
+        4096
+    ));
+    let las = Arc::new(LocalityAwareScheduler::new(jce.clone()));
 
-    let nexus_service = MyNexusService::new(janus_state, raft.clone(), wasm_dispatcher);
+    let nexus_service = MyNexusService::new(janus_state, raft.clone(), wasm_dispatcher, jce, las);
 
     info!("NexusService listening on {}", addr);
 
