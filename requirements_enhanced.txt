@@ -1,42 +1,46 @@
-# Janus Enhanced Requirements
-# Zero-API-key Voice + Text Interface
+# Janus Enhanced Requirements - Local Only, No APIs
+# Zero-API-key, fully offline capable
 
 # ── Core Dependencies ───────────────────────────────────────────────────────
 numpy>=1.21.0
+opencv-python>=4.5.0
+Pillow>=8.0.0
+
+# ── Computer Vision (Local) ─────────────────────────────────────────────────
+# YOLO for object detection (optional)
+# ultralytics>=8.0.0  # Uncomment if you want YOLO
+
+# Tesseract OCR (local text recognition)
+pytesseract>=0.3.10
+# Note: Also install Tesseract binary from: https://github.com/UB-Mannheim/tesseract/wiki
+
+# ── Browser Automation ──────────────────────────────────────────────────────
+selenium>=4.0.0
+webdriver-manager>=3.8.0  # Auto-manages ChromeDriver
+Playwright>=1.40.0  # Alternative to Selenium
+
+# ── Audio (Voice I/O) ───────────────────────────────────────────────────────
 pyaudio>=0.2.11
-
-# ── Voice (STT/TTS) ─────────────────────────────────────────────────────────
-# Whisper.cpp - Install separately: https://github.com/ggerganov/whisper.cpp
-# Piper TTS - Install separately: https://github.com/rhasspy/piper
-
-# Optional: WebRTC VAD for better voice activity detection
 webrtcvad>=2.0.10
-
-# ── Messaging Bridges ───────────────────────────────────────────────────────
-# SMS via Twilio (optional)
-twilio>=7.0.0
-
-# Telegram Bot API
-python-telegram-bot>=20.0
-requests>=2.28.0
-
-# WhatsApp (optional - requires additional setup)
-# For unofficial WhatsApp Web: requires Node.js + whatsapp-web.js
-
-# ── Networking & Sync ───────────────────────────────────────────────────────
-# Encryption for state sync
-cryptography>=3.4.8
-
-# ── Tool Discovery ──────────────────────────────────────────────────────────
-# Code generation and validation (built-in, no extra deps)
-
-# ── Optional Enhancements ───────────────────────────────────────────────────
-# Better audio processing
 scipy>=1.7.0
 
-# For GSM modem support (alternative to Twilio)
-# pyserial>=3.5
+# ── Task Management ─────────────────────────────────────────────────────────
+arq>=1.11.0  # Job queue (uses Redis)
+rq>=1.10.0   # Redis queue
+redis>=4.0.0
 
-# For advanced audio features
-# soundfile>=0.10.0
-# librosa>=0.9.0
+# ── Data & Utilities ───────────────────────────────────────────────────────
+requests>=2.28.0
+aiohttp>=3.8.0
+python-dotenv>=0.19.0
+
+# ── Storage & State ────────────────────────────────────────────────────────
+sqlite3  # Built-in, no install needed
+# Optional: peewee  # Lightweight ORM
+
+# ── Logging & Monitoring ───────────────────────────────────────────────────
+coloredlogs>=15.0
+
+# ── Testing ────────────────────────────────────────────────────────────────
+pytest>=7.0.0
+pytest-asyncio>=0.18.0

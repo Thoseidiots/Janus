@@ -1,0 +1,79 @@
+version: '3.9'
+
+services:
+  janus-agent:
+    image: janus-agent:latest
+    container_name: janus-autonomous-agent
+    
+    # Enable GUI support (X11)
+    environment:
+      - DISPLAY=:99
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=INFO
+      # Add your API keys here (or use .env file)
+      # - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      # - OPENAI_API_KEY=${OPENAI_API_KEY}
+    
+    # Mount for screen access (if using Xvfb)
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./tasks:/app/tasks
+      - ./vision_automation.py:/app/vision_automation.py:ro
+    
+    # Run with privileged mode for screen/audio access
+    privileged: true
+    
+    # Port mappings
+    ports:
+      - "8000:8000"  # Janus API
+      - "8081:8080"  # Web interface
+      - "9000:9000"  # Debug port
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+    
+    # Restart policy
+    restart: unless-stopped
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        labels: "service=janus"
+
+  # Optional: Redis for state management
+  redis:
+    image: redis:7-alpine
+    container_name: janus-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+
+volumes:
+  redis-data:
+
+networks:
+  default:
+    name: janus-network
