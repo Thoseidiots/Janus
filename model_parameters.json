@@ -1,0 +1,851 @@
+{
+  "tiny_model": {
+    "total_parameters": 232192,
+    "config": {
+      "block_size": 64,
+      "vocab_size": 1000,
+      "n_layer": 2,
+      "n_head": 2,
+      "n_embd": 64,
+      "dropout": 0.1,
+      "model_type": "janus-v1"
+    },
+    "training": {
+      "epochs": 3,
+      "batch_size": 4,
+      "block_size": 64,
+      "learning_rate": 0.0003,
+      "optimizer": "AdamW",
+      "final_loss": 6.759468936920166,
+      "training_history": [
+        {
+          "epoch": 1,
+          "loss": 6.886936140060425
+        },
+        {
+          "epoch": 2,
+          "loss": 6.810646136601766
+        },
+        {
+          "epoch": 3,
+          "loss": 6.759468936920166
+        }
+      ]
+    },
+    "layer_details": [
+      {
+        "name": "transformer.wte.weight",
+        "shape": [
+          1000,
+          64
+        ],
+        "numel": 64000
+      },
+      {
+        "name": "transformer.wpe.weight",
+        "shape": [
+          64,
+          64
+        ],
+        "numel": 4096
+      },
+      {
+        "name": "transformer.h.0.ln_1.weight",
+        "shape": [
+          64
+        ],
+        "numel": 64
+      },
+      {
+        "name": "transformer.h.0.ln_1.bias",
+        "shape": [
+          64
+        ],
+        "numel": 64
+      },
+      {
+        "name": "transformer.h.0.attn.c_attn.weight",
+        "shape": [
+          192,
+          64
+        ],
+        "numel": 12288
+      },
+      {
+        "name": "transformer.h.0.attn.c_attn.bias",
+        "shape": [
+          192
+        ],
+        "numel": 192
+      },
+      {
+        "name": "transformer.h.0.attn.c_proj.weight",
+        "shape": [
+          64,
+          64
+        ],
+        "numel": 4096
+      },
+      {
+        "name": "transformer.h.0.attn.c_proj.bias",
+        "shape": [
+          64
+        ],
+        "numel": 64
+      },
+      {
+        "name": "transformer.h.0.ln_2.weight",
+        "shape": [
+          64
+        ],
+        "numel": 64
+      },
+      {
+        "name": "transformer.h.0.ln_2.bias",
+        "shape": [
+          64
+        ],
+        "numel": 64
+      },
+      {
+        "name": "transformer.h.0.mlp.0.weight",
+        "shape": [
+          256,
+          64
+        ],
+        "numel": 16384
+      },
+      {
+        "name": "transformer.h.0.mlp.0.bias",
+        "shape": [
+          256
+        ],
+        "numel": 256
+      },
+      {
+        "name": "transformer.h.0.mlp.2.weight",
+        "shape": [
+          64,
+          256
+        ],
+        "numel": 16384
+      },
+      {
+        "name": "transformer.h.0.mlp.2.bias",
+        "shape": [
+          64
+        ],
+        "numel": 64
+      },
+      {
+        "name": "transformer.h.1.ln_1.weight",
+        "shape": [
+          64
+        ],
+        "numel": 64
+      },
+      {
+        "name": "transformer.h.1.ln_1.bias",
+        "shape": [
+          64
+        ],
+        "numel": 64
+      },
+      {
+        "name": "transformer.h.1.attn.c_attn.weight",
+        "shape": [
+          192,
+          64
+        ],
+        "numel": 12288
+      },
+      {
+        "name": "transformer.h.1.attn.c_attn.bias",
+        "shape": [
+          192
+        ],
+        "numel": 192
+      },
+      {
+        "name": "transformer.h.1.attn.c_proj.weight",
+        "shape": [
+          64,
+          64
+        ],
+        "numel": 4096
+      },
+      {
+        "name": "transformer.h.1.attn.c_proj.bias",
+        "shape": [
+          64
+        ],
+        "numel": 64
+      },
+      {
+        "name": "transformer.h.1.ln_2.weight",
+        "shape": [
+          64
+        ],
+        "numel": 64
+      },
+      {
+        "name": "transformer.h.1.ln_2.bias",
+        "shape": [
+          64
+        ],
+        "numel": 64
+      },
+      {
+        "name": "transformer.h.1.mlp.0.weight",
+        "shape": [
+          256,
+          64
+        ],
+        "numel": 16384
+      },
+      {
+        "name": "transformer.h.1.mlp.0.bias",
+        "shape": [
+          256
+        ],
+        "numel": 256
+      },
+      {
+        "name": "transformer.h.1.mlp.2.weight",
+        "shape": [
+          64,
+          256
+        ],
+        "numel": 16384
+      },
+      {
+        "name": "transformer.h.1.mlp.2.bias",
+        "shape": [
+          64
+        ],
+        "numel": 64
+      },
+      {
+        "name": "transformer.ln_f.weight",
+        "shape": [
+          64
+        ],
+        "numel": 64
+      },
+      {
+        "name": "transformer.ln_f.bias",
+        "shape": [
+          64
+        ],
+        "numel": 64
+      },
+      {
+        "name": "lm_head.weight",
+        "shape": [
+          1000,
+          64
+        ],
+        "numel": 64000
+      }
+    ]
+  },
+  "full_model": {
+    "total_parameters": 49330176,
+    "config": {
+      "block_size": 128,
+      "vocab_size": 50304,
+      "n_layer": 6,
+      "n_head": 6,
+      "n_embd": 384,
+      "dropout": 0.1,
+      "model_type": "janus-v1"
+    },
+    "training": {
+      "epochs": 2,
+      "batch_size": 4,
+      "block_size": 128,
+      "learning_rate": 0.0003,
+      "weight_decay": 0.1,
+      "optimizer": "AdamW",
+      "final_loss": 10.124082660675048,
+      "training_history": [
+        {
+          "epoch": 1,
+          "loss": 10.58752670288086
+        },
+        {
+          "epoch": 2,
+          "loss": 10.124082660675048
+        }
+      ]
+    },
+    "layer_details": [
+      {
+        "name": "transformer.wte.weight",
+        "shape": [
+          50304,
+          384
+        ],
+        "numel": 19316736
+      },
+      {
+        "name": "transformer.wpe.weight",
+        "shape": [
+          128,
+          384
+        ],
+        "numel": 49152
+      },
+      {
+        "name": "transformer.h.0.ln_1.weight",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.h.0.ln_1.bias",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.h.0.attn.c_attn.weight",
+        "shape": [
+          1152,
+          384
+        ],
+        "numel": 442368
+      },
+      {
+        "name": "transformer.h.0.attn.c_attn.bias",
+        "shape": [
+          1152
+        ],
+        "numel": 1152
+      },
+      {
+        "name": "transformer.h.0.attn.c_proj.weight",
+        "shape": [
+          384,
+          384
+        ],
+        "numel": 147456
+      },
+      {
+        "name": "transformer.h.0.attn.c_proj.bias",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.h.0.ln_2.weight",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.h.0.ln_2.bias",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.h.0.mlp.0.weight",
+        "shape": [
+          1536,
+          384
+        ],
+        "numel": 589824
+      },
+      {
+        "name": "transformer.h.0.mlp.0.bias",
+        "shape": [
+          1536
+        ],
+        "numel": 1536
+      },
+      {
+        "name": "transformer.h.0.mlp.2.weight",
+        "shape": [
+          384,
+          1536
+        ],
+        "numel": 589824
+      },
+      {
+        "name": "transformer.h.0.mlp.2.bias",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.h.1.ln_1.weight",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.h.1.ln_1.bias",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.h.1.attn.c_attn.weight",
+        "shape": [
+          1152,
+          384
+        ],
+        "numel": 442368
+      },
+      {
+        "name": "transformer.h.1.attn.c_attn.bias",
+        "shape": [
+          1152
+        ],
+        "numel": 1152
+      },
+      {
+        "name": "transformer.h.1.attn.c_proj.weight",
+        "shape": [
+          384,
+          384
+        ],
+        "numel": 147456
+      },
+      {
+        "name": "transformer.h.1.attn.c_proj.bias",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.h.1.ln_2.weight",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.h.1.ln_2.bias",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.h.1.mlp.0.weight",
+        "shape": [
+          1536,
+          384
+        ],
+        "numel": 589824
+      },
+      {
+        "name": "transformer.h.1.mlp.0.bias",
+        "shape": [
+          1536
+        ],
+        "numel": 1536
+      },
+      {
+        "name": "transformer.h.1.mlp.2.weight",
+        "shape": [
+          384,
+          1536
+        ],
+        "numel": 589824
+      },
+      {
+        "name": "transformer.h.1.mlp.2.bias",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.h.2.ln_1.weight",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.h.2.ln_1.bias",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.h.2.attn.c_attn.weight",
+        "shape": [
+          1152,
+          384
+        ],
+        "numel": 442368
+      },
+      {
+        "name": "transformer.h.2.attn.c_attn.bias",
+        "shape": [
+          1152
+        ],
+        "numel": 1152
+      },
+      {
+        "name": "transformer.h.2.attn.c_proj.weight",
+        "shape": [
+          384,
+          384
+        ],
+        "numel": 147456
+      },
+      {
+        "name": "transformer.h.2.attn.c_proj.bias",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.h.2.ln_2.weight",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.h.2.ln_2.bias",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.h.2.mlp.0.weight",
+        "shape": [
+          1536,
+          384
+        ],
+        "numel": 589824
+      },
+      {
+        "name": "transformer.h.2.mlp.0.bias",
+        "shape": [
+          1536
+        ],
+        "numel": 1536
+      },
+      {
+        "name": "transformer.h.2.mlp.2.weight",
+        "shape": [
+          384,
+          1536
+        ],
+        "numel": 589824
+      },
+      {
+        "name": "transformer.h.2.mlp.2.bias",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.h.3.ln_1.weight",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.h.3.ln_1.bias",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.h.3.attn.c_attn.weight",
+        "shape": [
+          1152,
+          384
+        ],
+        "numel": 442368
+      },
+      {
+        "name": "transformer.h.3.attn.c_attn.bias",
+        "shape": [
+          1152
+        ],
+        "numel": 1152
+      },
+      {
+        "name": "transformer.h.3.attn.c_proj.weight",
+        "shape": [
+          384,
+          384
+        ],
+        "numel": 147456
+      },
+      {
+        "name": "transformer.h.3.attn.c_proj.bias",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.h.3.ln_2.weight",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.h.3.ln_2.bias",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.h.3.mlp.0.weight",
+        "shape": [
+          1536,
+          384
+        ],
+        "numel": 589824
+      },
+      {
+        "name": "transformer.h.3.mlp.0.bias",
+        "shape": [
+          1536
+        ],
+        "numel": 1536
+      },
+      {
+        "name": "transformer.h.3.mlp.2.weight",
+        "shape": [
+          384,
+          1536
+        ],
+        "numel": 589824
+      },
+      {
+        "name": "transformer.h.3.mlp.2.bias",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.h.4.ln_1.weight",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.h.4.ln_1.bias",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.h.4.attn.c_attn.weight",
+        "shape": [
+          1152,
+          384
+        ],
+        "numel": 442368
+      },
+      {
+        "name": "transformer.h.4.attn.c_attn.bias",
+        "shape": [
+          1152
+        ],
+        "numel": 1152
+      },
+      {
+        "name": "transformer.h.4.attn.c_proj.weight",
+        "shape": [
+          384,
+          384
+        ],
+        "numel": 147456
+      },
+      {
+        "name": "transformer.h.4.attn.c_proj.bias",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.h.4.ln_2.weight",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.h.4.ln_2.bias",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.h.4.mlp.0.weight",
+        "shape": [
+          1536,
+          384
+        ],
+        "numel": 589824
+      },
+      {
+        "name": "transformer.h.4.mlp.0.bias",
+        "shape": [
+          1536
+        ],
+        "numel": 1536
+      },
+      {
+        "name": "transformer.h.4.mlp.2.weight",
+        "shape": [
+          384,
+          1536
+        ],
+        "numel": 589824
+      },
+      {
+        "name": "transformer.h.4.mlp.2.bias",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.h.5.ln_1.weight",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.h.5.ln_1.bias",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.h.5.attn.c_attn.weight",
+        "shape": [
+          1152,
+          384
+        ],
+        "numel": 442368
+      },
+      {
+        "name": "transformer.h.5.attn.c_attn.bias",
+        "shape": [
+          1152
+        ],
+        "numel": 1152
+      },
+      {
+        "name": "transformer.h.5.attn.c_proj.weight",
+        "shape": [
+          384,
+          384
+        ],
+        "numel": 147456
+      },
+      {
+        "name": "transformer.h.5.attn.c_proj.bias",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.h.5.ln_2.weight",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.h.5.ln_2.bias",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.h.5.mlp.0.weight",
+        "shape": [
+          1536,
+          384
+        ],
+        "numel": 589824
+      },
+      {
+        "name": "transformer.h.5.mlp.0.bias",
+        "shape": [
+          1536
+        ],
+        "numel": 1536
+      },
+      {
+        "name": "transformer.h.5.mlp.2.weight",
+        "shape": [
+          384,
+          1536
+        ],
+        "numel": 589824
+      },
+      {
+        "name": "transformer.h.5.mlp.2.bias",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.ln_f.weight",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "transformer.ln_f.bias",
+        "shape": [
+          384
+        ],
+        "numel": 384
+      },
+      {
+        "name": "lm_head.weight",
+        "shape": [
+          50304,
+          384
+        ],
+        "numel": 19316736
+      }
+    ]
+  }
+}
