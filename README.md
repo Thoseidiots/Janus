@@ -302,3 +302,125 @@ Notes
 
 License
 See original repository: https://github.com/Thoseidiots/Janus
+Avus Transformer - Trained Models
+
+Overview
+This repository contains trained weights for the Avus Transformer, a modern decoder-only language model with state-of-the-art architectural features.
+
+Architecture Features
+
+- RMSNorm: Root Mean Square Layer Normalization for faster training
+- RoPE (Rotary Position Embeddings): Better relative position encoding
+- SwiGLU Activation: Improved gradient flow over GELU/ReLU
+- Grouped Query Attention (GQA): Efficient attention with fewer KV heads
+- Weight Tying: Shared embeddings between input and output
+
+Models
+Model	Parameters	Vocab Size	Dim	Layers	Heads	KV Heads	File Size
+avus_33m	33.00M	3,000	512	8	8	4	127 MB
+avus_65m	64.01M	4,000	640	10	8	4	245 MB
+avus_100m	107.67M	5,000	768	12	12	4	412 MB
+
+Training Details
+
+All models were trained with:
+- Optimizer: AdamW (lr=3e-4, weight_decay=0.1)
+- Sequence Length: 32
+- Batch Size: 1
+- Dummy Data: Random tokens for demonstration
+
+Training Losses
+Model	Epoch 1	Epoch 2	Epoch 3	Final Loss
+33M	487.52	461.54	342.87	342.87
+65M	578.40	569.10	513.10	513.10
+100M	718.26	642.13	-	642.13
+
+Usage
+
+Loading a Model
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import math
+from dataclasses import dataclass
+
+@dataclass  
+class AvusConfig:
+    vocab_size: int = 3000
+    dim: int = 512
+    n_layers: int = 8
+    n_heads: int = 8
+    n_kv_heads: int = 4
+    max_seq_len: int = 128
+
+# Load model architecture (see model.py for full implementation)
+model = Avus(AvusConfig())
+
+# Load trained weights
+checkpoint = torch.load("avus_33m.pt")
+model.load_state_dict(checkpoint)
+model.eval()
+
+# Generate text
+prompt = torch.randint(0, 3000, (1, 10))  # Random prompt
+output = model.generate(prompt, max_new_tokens=50)
+
+
+Model Configuration
+
+Each model has a corresponding config_*.json file:
+
+{
+  "vocab_size": 3000,
+  "dim": 512,
+  "n_layers": 8,
+  "n_heads": 8,
+  "n_kv_heads": 4,
+  "max_seq_len": 128
+}
+
+
+File Structure
+
+avus_weights/
+├── avus_33m.pt          # 33M parameter model weights
+├── avus_65m.pt          # 65M parameter model weights
+├── avus_100m.pt         # 100M parameter model weights
+├── config_33m.json      # 33M model configuration
+├── config_65m.json      # 65M model configuration
+├── config_100m.json     # 100M model configuration
+├── history_33m.json     # 33M training history
+├── history_65m.json     # 65M training history
+├── history_100m.json    # 100M training history
+├── summary.json         # Summary of all models
+├── model.py             # Full model architecture
+└── README.md            # This file
+
+
+Parameter Count Formula
+
+Total Parameters ≈ vocab_size × dim + n_layers × (
+    4 × dim² +    # Attention Q, K, V, O projections
+    12 × dim²     # FFN (8×dim for fc1, 4×dim for fc2)
+)
+
+
+Future Improvements
+
+- Train on real text data (WikiText, C4, etc.)
+- Implement learning rate scheduling
+- Add gradient accumulation for larger effective batch sizes
+- Use mixed precision training (FP16/BF16)
+- Implement distributed training for even larger models
+
+License
+
+See original repository: https://github.com/Thoseidiots/Janus
+
+Credits
+
+- Architecture: Avus Transformer (based on LLaMA design principles)
+- Training: Custom implementation
+- Date: March 10, 2025
+
