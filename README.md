@@ -174,3 +174,131 @@ We welcome contributions! Please follow the standard fork-and-pull-request workf
 
 ## License
 This project is licensed under the terms specified by the repository owner.
+Janus Model - Trained Weights and Parameters
+
+Overview
+This package contains trained weights and parameters for the Janus AI model, a GPT-2 style decoder-only transformer.
+
+Repository
+- Source: https://github.com/Thoseidiots/Janus.git
+- Cloned and Trained: March 9, 2025
+
+Models
+
+1. Tiny Model (janus_tiny_trained.pt)
+- Total Parameters: 232,192 (0.23M)
+- Architecture: GPT-2 style transformer
+- Configuration:
+    - Block Size: 64
+    - Vocab Size: 1,000
+    - Layers: 2
+    - Attention Heads: 2
+    - Embedding Dimension: 64
+    - Dropout: 0.1
+
+Training Details:
+- Epochs: 3
+- Batch Size: 4
+- Learning Rate: 0.0003
+- Optimizer: AdamW
+- Final Loss: 6.7595
+
+2. Full Model (janus_full)
+- Total Parameters: 49,330,176 (49.33M)
+- Architecture: GPT-2 style transformer
+- Configuration:
+    - Block Size: 128
+    - Vocab Size: 50,304
+    - Layers: 6
+    - Attention Heads: 6
+    - Embedding Dimension: 384
+    - Dropout: 0.1
+
+Training Details:
+- Epochs: 2
+- Batch Size: 4
+- Learning Rate: 0.0003
+- Weight Decay: 0.1
+- Optimizer: AdamW
+- Final Loss: 10.1241
+
+File Structure
+janus_weights/
+├── janus_tiny_trained.pt      # Trained tiny model weights
+├── config.json                 # Model configuration
+├── model_parameters.json       # Detailed parameter information
+└── README.md                   # This file
+
+
+Usage
+
+Loading the Model
+import torch
+from core.config import JanusConfig
+from core.model import JanusModel
+
+# Load config
+config = JanusConfig()
+config.block_size = 64
+config.vocab_size = 1000
+config.n_layer = 2
+config.n_head = 2
+config.n_embd = 64
+
+# Initialize model
+model = JanusModel(config)
+
+# Load trained weights
+model.load_state_dict(torch.load('janus_tiny_trained.pt'))
+model.eval()
+
+
+Training from Scratch
+import torch
+import torch.optim as optim
+from core.config import JanusConfig
+from core.model import JanusModel
+
+# Setup
+config = JanusConfig()
+model = JanusModel(config)
+optimizer = optim.AdamW(model.parameters(), lr=3e-4)
+
+# Training loop
+model.train()
+for epoch in range(epochs):
+    # Your training code here
+    pass
+
+
+Model Architecture Details
+
+Components
+1. Token Embeddings (wte): Maps token IDs to embeddings
+2. Position Embeddings (wpe): Adds positional information
+3. Transformer Blocks:
+    - Layer Normalization
+    - Multi-Head Self-Attention
+    - Feed-Forward Network (MLP)
+4. Output Layer (lm_head): Projects to vocabulary
+
+Layer Breakdown (Tiny Model)
+- transformer.wte.weight: [1000, 64]
+- transformer.wpe.weight: [64, 64]
+- transformer.h.0.ln_1.weight/bias: [64]
+- transformer.h.0.attn.c_attn.weight: [192, 64]
+- transformer.h.0.attn.c_proj.weight: [64, 64]
+- transformer.h.0.mlp.0.weight: [256, 64]
+- transformer.h.0.mlp.2.weight: [64, 256]
+- (and similar for layer 1)
+- transformer.ln_f.weight/bias: [64]
+- lm_head.weight: [1000, 64]
+
+Notes
+- Models were trained on CPU
+- Training used dummy data for demonstration
+- For production use, train on appropriate datasets
+- Original repository includes additional features like vision processing and browser automation
+
+License
+See original repository: https://github.com/Thoseidiots/Janus
