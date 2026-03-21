@@ -1,0 +1,14 @@
+[package]
+name = "engine-runtime"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+engine-core = { path = "../engine-core" }
+engine-renderer = { path = "../engine-renderer" }
+engine-physics = { path = "../engine-physics" }
+engine-audio = { path = "../engine-audio" }
+engine-scripting = { path = "../engine-scripting" }
+engine-assets = { path = "../engine-assets" }
+engine-editor = { path = "../engine-editor" }
+engine-build = { path = "../engine-build" }
