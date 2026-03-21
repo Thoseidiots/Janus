@@ -1,0 +1,322 @@
+# Implementation Plan: OSS Game Engine
+
+## Overview
+
+Incremental implementation of the OSS Game Engine in Rust across 8 workspace crates. Each task builds on the previous, ending with full integration. All code is original — zero external crate dependencies.
+
+## Tasks
+
+- [x] 1. Initialize Cargo workspace and crate skeletons
+  - Create `Cargo.toml` workspace manifest listing all 8 crates
+  - Create `Cargo.toml` for each crate: `engine-core`, `engine-renderer`, `engine-physics`, `engine-audio`, `engine-scripting`, `engine-assets`, `engine-editor`, `engine-build`, `engine-runtime`
+  - Add `lib.rs` stubs for each crate
+  - Verify `cargo build` succeeds with zero external dependencies
+  - _Requirements: 11.1, 11.5_
+
+- [x] 2. Implement ECS core (`engine-core`)
+  - [x] 2.1 Implement `EntityId`, `EntityAllocator`, and generation-tagged recycling
+    - `EntityId(u64)` upper 32 bits = generation, lower 32 bits = index
+    - `EntityAllocator` with free-list recycling
+    - _Requirements: 1.1_
+  - [x] 2.2 Implement `ComponentStorage<T>` with sparse-set layout
+    - Dense `Vec<T>`, dense `Vec<EntityId>`, sparse `Vec<Option<usize>>`
+    - O(1) insert, remove, and lookup
+    - _Requirements: 1.1, 1.3_
+  - [x] 2.3 Write property test for component query completeness
+    - **Property 2: Component Query Completeness**
+    - **Validates: Requirements 1.3**
+  - [x] 2.4 Implement `ComponentRegistry` and `World` struct
+    - `world.spawn()`, `world.despawn(id)`, `world.add_component()`, `world.remove_component()`, `world.query::<T>()`
+    - _Requirements: 1.1, 1.4_
+  - [~]* 2.5 Write property test for entity destruction removing all components
+    - **Property 3: Entity Destruction Removes All Components**
+    - **Validates: Requirements 1.4**
+  - [x] 2.6 Implement `SystemScheduler` with registration-order execution and write-conflict serialization
+    - Systems declare read/write component sets at registration
+    - Conflicting write sets placed in same serial group
+    - _Requirements: 1.2, 1.5_
+  - [x] 2.7 Write property test for system execution order
+    - **Property 1: System Execution Order**
+    - **Validates: Requirements 1.2**
+  - [x] 2.8 Write property test for concurrent write serialization
+    - **Property 4: Concurrent Write Serialization**
+    - **Validates: Requirements 1.5**
+
+- [x] 3. Checkpoint — ECS core
+  - Ensure all ECS tests pass. Ask the user if questions arise.
+
+- [ ] 4. Implement scene serialization (`engine-core`)
+  - [x] 4.1 Implement KiroScene text format serializer and deserializer
+    - Hand-written recursive-descent parser matching the EBNF grammar in the design
+    - `SceneSerializer::serialize(scene) -> String` and `SceneSerializer::deserialize(text) -> Result<Scene, SceneError>`
+    - _Requirements: 2.1, 8.6_
+  - [x] 4.2 Write property test for scene serialization round-trip
+    - **Property 5: Scene Serialization Round-Trip**
+    - **Validates: Requirements 2.1, 8.6**
+  - [x] 4.3 Implement `SceneManager` with load, unload, additive load, and transition logic
+    - `load_replace()`, `load_additive()`, `unload()`, `tick()` applies pending requests
+    - Malformed file produces `SceneError::ParseError`, world left unchanged
+    - _Requirements: 2.2, 2.3, 2.4, 2.5, 2.6_
+  - [x] 4.4 Write property test for scene load instantiates all entities
+    - **Property 6: Scene Load Instantiates All Entities**
+    - **Validates: Requirements 2.2**
+  - [x] 4.5 Write property test for scene unload removes all entities
+    - **Property 7: Scene Unload Removes All Entities**
+    - **Validates: Requirements 2.3**
+  - [x] 4.6 Write property test for scene transition consistency
+    - **Property 8: Scene Transition Consistency**
+    - **Validates: Requirements 2.4**
+- [x] 4.7 Write property test for malformed scene leaves world unchanged
+    - **Property 9: Malformed Scene Leaves World Unchanged**
+    - **Validates: Requirements 2.5**
+
+- [x] 5. Checkpoint — Scene management
+  - Ensure all scene tests pass. Ask the user if questions arise.
+
+- [ ] 6. Implement renderer abstraction and backends (`engine-renderer`)
+  - [x] 6.1 Define `GfxBackend` trait and `DrawCall`, `ShaderId`, `ShaderSource`, `MeshId`, `MaterialId` types
+    - `begin_frame`, `submit_draw_call`, `end_frame`, `resize_viewport`, `compile_shader`
+    - _Requirements: 3.1, 3.6_
+  - [x] 6.2 Implement draw call sorting by `material_id` before GPU submission
+    - _Requirements: 3.2_
+  - [x] 6.3 Write property test for draw calls sorted by material
+    - **Property 10: Draw Calls Sorted by Material**
+    - **Validates: Requirements 3.2**
+  - [x] 6.4 Implement deferred vs. forward pipeline selection based on dynamic light count
+    - Select deferred if active dynamic lights > 8, forward otherwise
+    - _Requirements: 3.4_
+  - [x]* 6.5 Write property test for deferred pipeline selection
+    - **Property 11: Deferred Pipeline Selected for High Light Count**
+    - **Validates: Requirements 3.4**
+  - [x] 6.6 Implement viewport resize handling: update stored dimensions and projection matrix
+    - _Requirements: 3.5_
+  - [x]* 6.7 Write property test for viewport updated on resize
+    - **Property 12: Viewport Updated on Resize**
+    - **Validates: Requirements 3.5**
+  - [x] 6.8 Implement `VulkanBackend` with shader compile-error fallback shader logic
+    - Shader compile failure: log error with path/line, substitute fallback shader
+    - _Requirements: 3.7_
+  - [x] 6.9 Embed original PBR shader source (Cook-Torrance BRDF, GGX NDF, Smith G, Fresnel-Schlick) as `&'static str` constants
+    - GLSL/WGSL/HLSL/MSL variants
+    - _Requirements: 3.1, 3.3_
+  - [x] 6.10 Add `MetalBackend`, `Dx12Backend`, `WebGpuBackend` stubs with `#[cfg(target_os)]` guards
+    - _Requirements: 3.6_
+
+- [ ] 7. Implement physics engine (`engine-physics`)
+  - [x] 7.1 Implement `RigidBody`, `Collider`, `ColliderShape`, and `PhysicsWorld` structs
+    - All fields from design data model
+    - _Requirements: 4.1, 4.2_
+  - [x] 7.2 Implement broadphase AABB tree (BVH) and narrowphase GJK+EPA / SAT
+    - GJK+EPA for convex hull pairs; SAT for AABB/OBB pairs
+    - _Requirements: 4.2, 4.3_
+  - [x] 7.3 Implement semi-implicit Euler integrator and fixed 60 Hz timestep accumulator
+    - `PhysicsWorld::update(elapsed: f32)` steps in exact 1/60 s increments
+    - _Requirements: 4.1, 4.4_
+  - [x]* 7.4 Write property test for physics fixed timestep invariant
+    - **Property 14: Physics Fixed Timestep Invariant**
+    - **Validates: Requirements 4.4**
+  - [x] 7.5 Implement sequential impulse collision resolution
+    - Penetration depth reduced to zero or negative after each tick
+    - _Requirements: 4.3_
+  - [x]* 7.6 Write property test for collision resolution separates overlapping bodies
+    - **Property 13: Collision Resolution Separates Overlapping Bodies**
+    - **Validates: Requirements 4.3**
+  - [x] 7.7 Implement world bounds check, `WorldBoundsExceeded` event, and body freeze at boundary
+    - _Requirements: 4.5_
+  - [x] 7.8 Implement trigger volumes: overlap detection without impulse resolution
+    - _Requirements: 4.6_
+  - [x] 7.9 Implement raycast returning first intersection by smallest positive t-parameter
+    - _Requirements: 4.7_
+  - [x]* 7.10 Write property test for raycast returns correct first intersection
+    - **Property 15: Raycast Returns Correct First Intersection**
+    - **Validates: Requirements 4.7**
+
+- [x] 8. Checkpoint — Physics
+  - Ensure all physics tests pass. Ask the user if questions arise.
+
+- [~] 9. Implement audio engine (`engine-audio`)
+  - [x] 9.1 Implement WAV/PCM decoder: parse RIFF header, read raw samples into `AudioClip`
+    - _Requirements: 5.1_
+  - [x]* 9.2 Write property test for audio decode round-trip
+    - **Property 16: Audio Decode Round-Trip**
+    - **Validates: Requirements 5.1**
+  - [x] 9.3 Implement OGG Vorbis decoder (Vorbis I spec: floor, residue, mapping, mode decode)
+    - Original implementation of the Vorbis I bitstream specification
+    - _Requirements: 5.1_
+  - [x] 9.4 Implement `Mixer`: accumulate up to 64 sources into 44100 Hz stereo output buffer, clamp to [-1.0, 1.0]
+    - _Requirements: 5.2, 5.5_
+  - [x]* 9.5 Write property test for mixer output correctness
+    - **Property 17: Mixer Output Correctness**
+    - **Validates: Requirements 5.2**
+  - [x] 9.6 Implement 3D spatialization: inverse-square-law attenuation, linear panning by azimuth, range cutoff
+    - _Requirements: 5.3, 5.4_
+  - [x]* 9.7 Write property test for spatial audio attenuation and range cutoff
+    - **Property 18: Spatial Audio Attenuation and Range Cutoff**
+    - **Validates: Requirements 5.3, 5.4**
+  - [x] 9.8 Implement audio load error handling: log path + reason, continue without clip
+    - _Requirements: 5.6_
+
+- [x] 10. Checkpoint — Audio
+  - Ensure all audio tests pass. Ask the user if questions arise.
+
+- [x] 11. Implement scripting runtime (`engine-scripting`)
+  - [x] 11.1 Implement Loom lexer: tokenize keywords, identifiers, literals, operators
+    - _Requirements: 6.1, 6.7_
+  - [x] 11.2 Implement Loom parser: recursive-descent, produces `Ast` (Expr, Stmt, FnDecl)
+    - _Requirements: 6.1, 6.7_
+  - [x] 11.3 Implement `PrettyPrinter`: format `Ast` back to canonical Loom source text
+    - _Requirements: 6.8_
+  - [x]* 11.4 Write property test for Loom AST round-trip
+    - **Property 22: Loom Script AST Round-Trip**
+    - **Validates: Requirements 6.7, 6.9**
+  - [x] 11.5 Implement `TypeChecker`: static type inference over `Ast`
+    - _Requirements: 6.1_
+  - [x] 11.6 Implement `BytecodeGen`: lower typed `Ast` to register-based `Opcode` bytecode
+    - All opcodes from design instruction set
+    - _Requirements: 6.1_
+  - [x] 11.7 Implement `VirtualMachine`: execute bytecode with call stack, heap, and `EcsBridge`
+    - `EcsBridge` exposes `world.query<T>()`, `entity.add<T>()`, `entity.remove<T>()`
+    - Runtime error: log path/line/stack trace, disable script, no crash
+    - _Requirements: 6.1, 6.4, 6.5_
+  - [x] 11.8 Implement `ScriptingRuntime`: wire lexer → parser → type checker → codegen → VM
+    - `on_start` called once on first activation tick; `on_update(delta)` called every frame
+    - _Requirements: 6.2, 6.3_
+  - [x]* 11.9 Write property test for on_start called exactly once
+    - **Property 19: Script on_start Called Exactly Once**
+    - **Validates: Requirements 6.2**
+  - [x]* 11.10 Write property test for on_update called on all active scripts
+    - **Property 20: Script on_update Called on All Active Scripts**
+    - **Validates: Requirements 6.3**
+  - [x] 11.11 Implement bytecode cache keyed by source file mtime; invalidate and recompile on change
+    - _Requirements: 6.6_
+  - [x]* 11.12 Write property test for bytecode cache invalidation
+    - **Property 21: Bytecode Cache Invalidation**
+    - **Validates: Requirements 6.6**
+
+- [x] 12. Checkpoint — Scripting
+  - Ensure all scripting tests pass. Ask the user if questions arise.
+
+- [x] 13. Implement asset pipeline (`engine-assets`)
+  - [x] 13.1 Define `AssetImporter` trait and `AssetData`, `ImportError` types
+    - _Requirements: 7.1, 7.2_
+  - [x] 13.2 Implement `PngImporter`, `JpegImporter`, `WebpImporter` (original format parsers)
+    - _Requirements: 7.1_
+  - [x] 13.3 Implement `GltfImporter` (original GLTF/GLB parser)
+    - _Requirements: 7.1_
+  - [x] 13.4 Implement `WavImporter` and `OggImporter` (delegate to audio decoders in `engine-audio`)
+    - _Requirements: 7.1_
+  - [x] 13.5 Implement `ScriptImporter` (validate Loom source, delegate to scripting compiler)
+    - _Requirements: 7.1_
+  - [x]* 13.6 Write property test for asset import error isolation
+    - **Property 23: Asset Import Error Isolation**
+    - **Validates: Requirements 7.2**
+  - [x] 13.7 Implement Blake3 hash (original implementation) and `ContentAddressableCache`
+    - Cache key = `blake3(file_contents)`; skip reimport if hash unchanged
+    - _Requirements: 7.5_
+  - [x]* 13.8 Write property test for asset cache idempotence
+    - **Property 25: Asset Cache Idempotence**
+    - **Validates: Requirements 7.5**
+  - [x] 13.9 Implement `FileWatcher`: poll `mtime` every 100ms on background thread, emit `AssetChanged` events
+    - _Requirements: 7.3_
+  - [x] 13.10 Implement hot-reload: on `AssetChanged`, re-import and update all referencing entities within the same frame
+    - _Requirements: 7.4_
+  - [x]* 13.11 Write property test for hot-reload updates all referencing entities
+    - **Property 24: Hot-Reload Updates All Referencing Entities**
+    - **Validates: Requirements 7.4**
+  - [x] 13.12 Implement asset metadata serializer/deserializer (KiroMeta text format)
+    - _Requirements: 7.6, 7.7, 7.8_
+  - [x]* 13.13 Write property test for asset metadata round-trip
+    - **Property 26: Asset Metadata Round-Trip**
+    - **Validates: Requirements 7.6, 7.8**
+
+- [x] 14. Checkpoint — Asset pipeline
+  - Ensure all asset pipeline tests pass. Ask the user if questions arise.
+
+- [x] 15. Implement scene editor (`engine-editor`)
+  - [x] 15.1 Implement immediate-mode UI layer: button, label, text field, panel, scroll view widgets
+    - Original code, no external UI framework
+    - _Requirements: 8.1_
+  - [x] 15.2 Implement `HierarchyPanel`: list entities with parent-child relationships
+    - _Requirements: 8.2_
+  - [x] 15.3 Implement `InspectorPanel`: display and edit component properties for selected entity
+    - Edits applied to live world within 100ms
+    - _Requirements: 8.3, 8.4_
+  - [x]* 15.4 Write property test for editor component edit applies to world
+    - **Property 27: Editor Component Edit Applies to World**
+    - **Validates: Requirements 8.4**
+  - [x] 15.5 Implement `UndoStack` with `EditorCommand` trait, 100-operation history, and redo stack
+    - _Requirements: 8.5_
+  - [x]* 15.6 Write property test for undo/redo round-trip
+    - **Property 28: Undo/Redo Round-Trip**
+    - **Validates: Requirements 8.5**
+  - [x] 15.7 Implement scene save via `SceneSerializer` with success/error reporting
+    - _Requirements: 8.6_
+  - [x] 15.8 Implement `AutoSave`: write recovery file every 30 seconds; offer restore on startup if recovery is newer than project file
+    - _Requirements: 8.7_
+  - [x] 15.9 Implement `EditorViewport`: render active scene via `GfxBackend` in editor window
+    - _Requirements: 8.1_
+
+- [x] 16. Checkpoint — Editor
+  - Ensure all editor tests pass. Ask the user if questions arise.
+
+- [x] 17. Implement build system (`engine-build`)
+  - [x] 17.1 Implement `ProjectManifest` parser and `BuildSystem` struct
+    - _Requirements: 9.1_
+  - [x] 17.2 Implement `IncrementalCache`: track file hashes, skip unchanged scripts and assets on rebuild
+    - _Requirements: 9.5_
+  - [x]* 17.3 Write property test for incremental build recompiles only changed files
+    - **Property 29: Incremental Build Recompiles Only Changed Files**
+    - **Validates: Requirements 9.5**
+  - [x] 17.4 Implement platform build dispatch via `std::process::Command` for each `Platform` variant
+    - Windows x64, macOS arm64/x64, Linux x64, Web WASM, iOS, Android — local toolchain only, no network
+    - _Requirements: 9.1, 9.2_
+  - [x] 17.5 Implement Web build output: `index.html`, `game.wasm`, `loader.js` with no CDN references
+    - _Requirements: 9.6_
+  - [x] 17.6 Implement build reporting: duration + artifact size on success; first error with path/line on failure; delete partial artifact on failure
+    - _Requirements: 9.3, 9.4_
+
+- [x] 18. Implement plugin system (`engine-runtime`)
+  - [x] 18.1 Define `Plugin` trait, `on_register`, `on_unregister`, `on_update`
+    - _Requirements: 10.1, 10.2, 10.3_
+  - [x]* 18.2 Write property test for plugin `on_register` called before first frame
+    - **Property 30: Plugin on_register Called Before First Frame**
+    - **Validates: Requirements 10.2**
+  - [x] 18.3 Implement plugin unload: unmap memory, purge entities/components
+    - _Requirements: 10.3_
+  - [x]* 18.4 Write property test for plugin unload removes all registrations
+    - **Property 31: Plugin Unload Removes All Registrations**
+    - **Validates: Requirements 10.3**
+  - [x] 18.5 Implement plugin load failure handling: unload partial registration and bubble error
+    - _Requirements: 10.4_
+  - [x] 18.6 Wire plugin-registered asset importers before default importers
+    - _Requirements: 10.5_
+  - [x]* 18.7 Write property test for plugin importer invoked for matching extensions
+    - **Property 32: Plugin Importer Invoked for Matching Extensions**
+    - **Validates: Requirements 10.5**
+  - [x] 18.8 Implement syscall audit hook: deny child process creation, network binds during gameplay
+    - _Requirements: 11.2plugins that call network syscalls (`connect`, `send`, `getaddrinfo`)
+    - Log rejection with plugin path and reason
+    - _Requirements: 10.6_
+
+- [x] 19. Implement main loop and runtime entry point (`engine-runtime`)
+  - [x] 19.1 Implement `Engine` struct wiring all subsystems (Core, Rendering, Physics, Audio, Scripting)
+    - _Requirements: 11.1_
+  - [x] 19.2 Implement frame execution loop: Input -> Hot-Reload Check -> Script Update -> System Dispatch -> Physics -> Audio -> Render -> Editor
+    - _Requirements: 11.1_
+  - [x] 19.3 Implement network call guard: intercept and log block requests
+  - [x]* 19.4 Write property test for no outbound network calls at runtime
+    - **Property 33: No Outbound Network Calls at Runtime**
+    - **Validates: Requirements 11.2**
+
+- [x] 20. Final checkpoint — Full integration
+  - Ensure all tests across all crates pass (`cargo test --workspace`).
+  - Update `README.md` to indicate final completion status.e.
+
+## Notes
+
+- Tasks marked with `*` are optional and can be skipped for a faster MVP
+- Each task references specific requirements for traceability
+- Checkpoints ensure incremental validation at subsystem boundaries
+- Property tests validate all 33 universal correctness invariants from the design
+- Unit tests cover specific examples, error conditions, and integration points
+- All 8 crates must compile with `cargo build` and zero external registry dependencies
