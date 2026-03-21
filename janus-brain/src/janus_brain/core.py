@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import ray
 from typing import Dict, Any, List
 from .homeostasis import HomeostasisEngine, ValenceVector
 from .llm import ByteLLM, ByteTokenizer, EMBED_DIM
@@ -19,15 +20,19 @@ class MoodAdapter(nn.Module):
         cond = self.proj(valence.to_tensor())
         return hidden + cond.unsqueeze(1)
 
-class AutonomousCore(nn.Module):
+@ray.remote
+class AutonomousCore:
     """Full cognitive architecture integrating all components"""
     def __init__(self):
-        super().__init__()
-        self.homeostasis = HomeostasisEngine(stim_dim=EMBED_DIM)
+        # Initialize Ray if not already initialized
+        if not ray.is_initialized():
+            ray.init()
+
+        self.homeostasis = HomeostasisEngine()
         self.llm = ByteLLM()
         self.memory = ReflectionMemory()
         
-        # Mood adapters for each transformer layer
+        # Mood adapters for each transformer layer - these are local instances within the actor
         self.mood_adapters = nn.ModuleList([
             MoodAdapter(EMBED_DIM) for _ in range(4)
         ])
@@ -78,7 +83,7 @@ class SleepEngine:
     Offline consolidation: replays experiences to stabilize memory
     without catastrophic forgetting.
     """
-    def __init__(self, core: AutonomousCore):
+    def __init__(self, core: 'AutonomousCore'): # Use forward reference for type hinting
         self.core = core
         self.replay_buffer = []
         
