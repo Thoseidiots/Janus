@@ -1,0 +1,666 @@
+warning: unused imports: `ComponentData`, `FieldValue`, `SceneEntityData`, `SceneMetadata`, and `SceneSerializer`
+ --> engine-core\src\scene_manager.rs:2:20
+  |
+2 | ...::{ComponentData, FieldValue, SceneData, SceneEntityData, SceneId, SceneMetadata, SceneSerializer};
+  |       ^^^^^^^^^^^^^  ^^^^^^^^^^             ^^^^^^^^^^^^^^^           ^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `ln`
+   --> engine-core\src\scene.rs:174:25
+    |
+174 | ...et ln = se...
+    |       ^^ help: if this is intentional, prefix it with an underscore: `_ln`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+   Compiling engine-core v0.1.0 (C:\Users\legac\Downloads\Janus-main\Janus-main\oss-game-engine\engine-core)
+warning: `engine-core` (lib) generated 2 warnings (run `cargo fix --lib -p engine-core` to apply 2 suggestions)
+warning: field `stack` is never read
+  --> engine-scripting\src\vm.rs:12:5
+   |
+11 | pub struct VirtualMachine {
+   |            -------------- field in this struct
+12 |     stack: Vec<f64>,
+   |     ^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: error finalizing incremental compilation session directory `\\?\C:\Users\legac\Downloads\Janus-main\Janus-main\oss-game-engine\target\debug\incremental\engine_physics-1hsri4aqcn7fr\s-hgu8b2jnyx-0wxy4i2-working`: Access is denied. (os error 5)
+
+warning: `engine-scripting` (lib) generated 1 warning
+warning: `engine-physics` (lib) generated 1 warning
+warning: unused variable: `data`
+   --> engine-assets\src\lib.rs:247:25
+    |
+247 | ...me(data) =...
+    |       ^^^^ help: if this is intentional, prefix it with an underscore: `_data`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+   Compiling engine-assets v0.1.0 (C:\Users\legac\Downloads\Janus-main\Janus-main\oss-game-engine\engine-assets)
+   Compiling engine-physics v0.1.0 (C:\Users\legac\Downloads\Janus-main\Janus-main\oss-game-engine\engine-physics)
+   Compiling engine-renderer v0.1.0 (C:\Users\legac\Downloads\Janus-main\Janus-main\oss-game-engine\engine-renderer)
+warning: `engine-assets` (lib) generated 1 warning (run `cargo fix --lib -p engine-assets` to apply 1 suggestion)
+warning: `engine-scripting` (lib test) generated 1 warning (1 duplicate)
+warning: field `incremental_cache` is never read
+  --> engine-build\src\lib.rs:30:5
+   |
+29 | pub struct BuildSystem {
+   |            ----------- field in this struct
+30 |     incremental_cache: Ha...
+   |     ^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `std::fs`
+  --> engine-build\src\lib.rs:79:9
+   |
+79 |     use std::fs;
+   |         ^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `engine-build` (lib) generated 1 warning
+warning: `engine-build` (lib test) generated 1 warning (run `cargo fix --lib -p engine-build --tests` to apply 1 suggestion)
+warning: field `plugins` is never read
+  --> engine-runtime\src\lib.rs:31:5
+   |
+25 | pub struct Engine {
+   |            ------ field in this struct
+...
+31 |     plugins: Vec<Box<dyn Plugin>>,
+   |     ^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `load_plugin` is never used
+  --> engine-runtime\src\lib.rs:18:12
+   |
+18 |     pub fn load_plugin(_path: &Path) -> Result<Box<dyn Plugin>, String> {
+   |            ^^^^^^^^^^^
+
+warning: `engine-runtime` (lib) generated 2 warnings
+warning: `engine-runtime` (lib test) generated 1 warning (1 duplicate)
+warning: unused imports: `Quat` and `Vec3`
+   --> engine-core\src\scene.rs:475:16
+    |
+475 |     use glam::{Vec3, Quat};
+    |                ^^^^  ^^^^
+    |
+    = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused imports: `ComponentData`, `FieldValue`, `SceneEntityData`, `SceneMetadata`, and `SceneSerializer`
+ --> engine-core\src\scene_manager.rs:2:20
+  |
+2 | use crate::scene::{ComponentData, FieldValue, SceneData, SceneEntityData, SceneId, SceneMetadata, SceneSerializer};
+  |                    ^^^^^^^^^^^^^  ^^^^^^^^^^             ^^^^^^^^^^^^^^^           ^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^
+
+error[E0433]: failed to resolve: use of undeclared type `Lcg`
+   --> engine-renderer\src\renderer.rs:290:23
+    |
+290 |         let mut rng = Lcg::new(0xcafef00d_deadbeef);
+    |                       ^^^ use of undeclared type `Lcg`
+
+error[E0061]: this method takes 2 arguments but 1 argument was supplied
+   --> engine-physics\src\physics_world.rs:480:37
+    |
+480 |             let sphere_radius = rng.gen_range_f32(0.1..5.0);
+    |                                     ^^^^^^^^^^^^^---------- argument #2 of type `f32` is missing
+    |
+note: expected `f32`, found `Range<{float}>`
+   --> engine-physics\src\physics_world.rs:480:51
+    |
+480 |             let sphere_radius = rng.gen_range_f32(0.1..5.0);
+    |                                                   ^^^^^^^^
+    = note: expected type `f32`
+             found struct `std::ops::Range<{float}>`
+note: method defined here
+   --> engine-physics\src\physics_world.rs:312:12
+    |
+312 |         fn gen_range_f32(&mut self, lo: f32, hi: f32) -> f32 {
+    |            ^^^^^^^^^^^^^            -------  -------
+help: remove the unnecessary `.` operator for a floating point literal
+    |
+480 -             let sphere_radius = rng.gen_range_f32(0.1..5.0);
+480 +             let sphere_radius = rng.gen_range_f32(0.1.5.0);
+    |
+help: provide the argument
+    |
+480 -             let sphere_radius = rng.gen_range_f32(0.1..5.0);
+480 +             let sphere_radius = rng.gen_range_f32(/* f32 */, /* f32 */);
+    |
+
+error[E0061]: this method takes 2 arguments but 1 argument was supplied
+   --> engine-physics\src\physics_world.rs:490:46
+    |
+490 |             let half_extents = Vec3::new(rng.gen_range_f32(0.1..5.0), rng.gen_range_f32(0.1..5.0), rng.gen_range_f32(0.1..5.0));
+    |                                              ^^^^^^^^^^^^^---------- argument #2 of type `f32` is missing
+    |
+note: expected `f32`, found `Range<{float}>`
+   --> engine-physics\src\physics_world.rs:490:60
+    |
+490 |             let half_extents = Vec3::new(rng.gen_range_f32(0.1..5.0), rng.gen_range_f32(0.1..5.0), rng.gen_range_f32(0.1..5.0));
+    |                                                            ^^^^^^^^
+    = note: expected type `f32`
+             found struct `std::ops::Range<{float}>`
+note: method defined here
+   --> engine-physics\src\physics_world.rs:312:12
+    |
+312 |         fn gen_range_f32(&mut self, lo: f32, hi: f32) -> f32 {
+    |            ^^^^^^^^^^^^^            -------  -------
+help: remove the unnecessary `.` operator for a floating point literal
+    |
+490 -             let half_extents = Vec3::new(rng.gen_range_f32(0.1..5.0), rng.gen_range_f32(0.1..5.0), rng.gen_range_f32(0.1..5.0));
+490 +             let half_extents = Vec3::new(rng.gen_range_f32(0.1.5.0), rng.gen_range_f32(0.1..5.0), rng.gen_range_f32(0.1..5.0));
+    |
+help: provide the argument
+    |
+490 -             let half_extents = Vec3::new(rng.gen_range_f32(0.1..5.0), rng.gen_range_f32(0.1..5.0), rng.gen_range_f32(0.1..5.0));
+490 +             let half_extents = Vec3::new(rng.gen_range_f32(/* f32 */, /* f32 */), rng.gen_range_f32(0.1..5.0), rng.gen_range_f32(0.1..5.0));
+    |
+
+error[E0061]: this method takes 2 arguments but 1 argument was supplied
+   --> engine-physics\src\physics_world.rs:490:75
+    |
+490 |             let half_extents = Vec3::new(rng.gen_range_f32(0.1..5.0), rng.gen_range_f32(0.1..5.0), rng.gen_range_f32(0.1..5.0));
+    |                                                                           ^^^^^^^^^^^^^---------- argument #2 of type `f32` is missing
+    |
+note: expected `f32`, found `Range<{float}>`
+   --> engine-physics\src\physics_world.rs:490:89
+    |
+490 |             let half_extents = Vec3::new(rng.gen_range_f32(0.1..5.0), rng.gen_range_f32(0.1..5.0), rng.gen_range_f32(0.1..5.0));
+    |                                                                                         ^^^^^^^^
+    = note: expected type `f32`
+             found struct `std::ops::Range<{float}>`
+note: method defined here
+   --> engine-physics\src\physics_world.rs:312:12
+    |
+312 |         fn gen_range_f32(&mut self, lo: f32, hi: f32) -> f32 {
+    |            ^^^^^^^^^^^^^            -------  -------
+help: remove the unnecessary `.` operator for a floating point literal
+    |
+490 -             let half_extents = Vec3::new(rng.gen_range_f32(0.1..5.0), rng.gen_range_f32(0.1..5.0), rng.gen_range_f32(0.1..5.0));
+490 +             let half_extents = Vec3::new(rng.gen_range_f32(0.1..5.0), rng.gen_range_f32(0.1.5.0), rng.gen_range_f32(0.1..5.0));
+    |
+help: provide the argument
+    |
+490 -             let half_extents = Vec3::new(rng.gen_range_f32(0.1..5.0), rng.gen_range_f32(0.1..5.0), rng.gen_range_f32(0.1..5.0));
+490 +             let half_extents = Vec3::new(rng.gen_range_f32(0.1..5.0), rng.gen_range_f32(/* f32 */, /* f32 */), rng.gen_range_f32(0.1..5.0));
+    |
+
+error[E0061]: this method takes 2 arguments but 1 argument was supplied
+   --> engine-physics\src\physics_world.rs:490:104
+    |
+490 |             let half_extents = Vec3::new(rng.gen_range_f32(0.1..5.0), rng.gen_range_f32(0.1..5.0), rng.gen_range_f32(0.1..5.0));
+    |                                                                                                        ^^^^^^^^^^^^^---------- argument #2 of type `f32` is missing
+    |
+note: expected `f32`, found `Range<{float}>`
+   --> engine-physics\src\physics_world.rs:490:118
+    |
+490 |             let half_extents = Vec3::new(rng.gen_range_f32(0.1..5.0), rng.gen_range_f32(0.1..5.0), rng.gen_range_f32(0.1..5.0));
+    |                                                                                                                      ^^^^^^^^
+    = note: expected type `f32`
+             found struct `std::ops::Range<{float}>`
+note: method defined here
+   --> engine-physics\src\physics_world.rs:312:12
+    |
+312 |         fn gen_range_f32(&mut self, lo: f32, hi: f32) -> f32 {
+    |            ^^^^^^^^^^^^^            -------  -------
+help: remove the unnecessary `.` operator for a floating point literal
+    |
+490 -             let half_extents = Vec3::new(rng.gen_range_f32(0.1..5.0), rng.gen_range_f32(0.1..5.0), rng.gen_range_f32(0.1..5.0));
+490 +             let half_extents = Vec3::new(rng.gen_range_f32(0.1..5.0), rng.gen_range_f32(0.1..5.0), rng.gen_range_f32(0.1.5.0));
+    |
+help: provide the argument
+    |
+490 -             let half_extents = Vec3::new(rng.gen_range_f32(0.1..5.0), rng.gen_range_f32(0.1..5.0), rng.gen_range_f32(0.1..5.0));
+490 +             let half_extents = Vec3::new(rng.gen_range_f32(0.1..5.0), rng.gen_range_f32(0.1..5.0), rng.gen_range_f32(/* f32 */, /* f32 */));
+    |
+
+error[E0061]: this method takes 2 arguments but 1 argument was supplied
+   --> engine-physics\src\physics_world.rs:499:40
+    |
+499 |             let origin = Vec3::new(rng.gen_range_f32(-20.0..20.0), rng.gen_range_f32(-20.0..20.0), rng.gen_range_f32(-20.0..20.0));
+    |                                        ^^^^^^^^^^^^^------------- argument #2 of type `f32` is missing
+    |
+note: expected `f32`, found `Range<{float}>`
+   --> engine-physics\src\physics_world.rs:499:54
+    |
+499 |             let origin = Vec3::new(rng.gen_range_f32(-20.0..20.0), rng.gen_range_f32(-20.0..20.0), rng.gen_range_f32(-20.0..20.0));
+    |                                                      ^^^^^^^^^^^
+    = note: expected type `f32`
+             found struct `std::ops::Range<{float}>`
+note: method defined here
+   --> engine-physics\src\physics_world.rs:312:12
+    |
+312 |         fn gen_range_f32(&mut self, lo: f32, hi: f32) -> f32 {
+    |            ^^^^^^^^^^^^^            -------  -------
+help: remove the unnecessary `.` operator for a floating point literal
+    |
+499 -             let origin = Vec3::new(rng.gen_range_f32(-20.0..20.0), rng.gen_range_f32(-20.0..20.0), rng.gen_range_f32(-20.0..20.0));
+499 +             let origin = Vec3::new(rng.gen_range_f32(-20.0.20.0), rng.gen_range_f32(-20.0..20.0), rng.gen_range_f32(-20.0..20.0));
+    |
+help: provide the argument
+    |
+499 -             let origin = Vec3::new(rng.gen_range_f32(-20.0..20.0), rng.gen_range_f32(-20.0..20.0), rng.gen_range_f32(-20.0..20.0));
+499 +             let origin = Vec3::new(rng.gen_range_f32(/* f32 */, /* f32 */), rng.gen_range_f32(-20.0..20.0), rng.gen_range_f32(-20.0..20.0));
+    |
+
+error[E0061]: this method takes 2 arguments but 1 argument was supplied
+   --> engine-physics\src\physics_world.rs:499:72
+    |
+499 |             let origin = Vec3::new(rng.gen_range_f32(-20.0..20.0), rng.gen_range_f32(-20.0..20.0), rng.gen_range_f32(-20.0..20.0));
+    |                                                                        ^^^^^^^^^^^^^------------- argument #2 of type `f32` is missing
+    |
+note: expected `f32`, found `Range<{float}>`
+   --> engine-physics\src\physics_world.rs:499:86
+    |
+499 |             let origin = Vec3::new(rng.gen_range_f32(-20.0..20.0), rng.gen_range_f32(-20.0..20.0), rng.gen_range_f32(-20.0..20.0));
+    |                                                                                      ^^^^^^^^^^^
+    = note: expected type `f32`
+             found struct `std::ops::Range<{float}>`
+note: method defined here
+   --> engine-physics\src\physics_world.rs:312:12
+    |
+312 |         fn gen_range_f32(&mut self, lo: f32, hi: f32) -> f32 {
+    |            ^^^^^^^^^^^^^            -------  -------
+help: remove the unnecessary `.` operator for a floating point literal
+    |
+499 -             let origin = Vec3::new(rng.gen_range_f32(-20.0..20.0), rng.gen_range_f32(-20.0..20.0), rng.gen_range_f32(-20.0..20.0));
+499 +             let origin = Vec3::new(rng.gen_range_f32(-20.0..20.0), rng.gen_range_f32(-20.0.20.0), rng.gen_range_f32(-20.0..20.0));
+    |
+help: provide the argument
+    |
+499 -             let origin = Vec3::new(rng.gen_range_f32(-20.0..20.0), rng.gen_range_f32(-20.0..20.0), rng.gen_range_f32(-20.0..20.0));
+499 +             let origin = Vec3::new(rng.gen_range_f32(-20.0..20.0), rng.gen_range_f32(/* f32 */, /* f32 */), rng.gen_range_f32(-20.0..20.0));
+    |
+
+error[E0061]: this method takes 2 arguments but 1 argument was supplied
+   --> engine-physics\src\physics_world.rs:499:104
+    |
+499 |             let origin = Vec3::new(rng.gen_range_f32(-20.0..20.0), rng.gen_range_f32(-20.0..20.0), rng.gen_range_f32(-20.0..20.0));
+    |                                                                                                        ^^^^^^^^^^^^^------------- argument #2 of type `f32` is missing
+    |
+note: expected `f32`, found `Range<{float}>`
+   --> engine-physics\src\physics_world.rs:499:118
+    |
+499 |             let origin = Vec3::new(rng.gen_range_f32(-20.0..20.0), rng.gen_range_f32(-20.0..20.0), rng.gen_range_f32(-20.0..20.0));
+    |                                                                                                                      ^^^^^^^^^^^
+    = note: expected type `f32`
+             found struct `std::ops::Range<{float}>`
+note: method defined here
+   --> engine-physics\src\physics_world.rs:312:12
+    |
+312 |         fn gen_range_f32(&mut self, lo: f32, hi: f32) -> f32 {
+    |            ^^^^^^^^^^^^^            -------  -------
+help: remove the unnecessary `.` operator for a floating point literal
+    |
+499 -             let origin = Vec3::new(rng.gen_range_f32(-20.0..20.0), rng.gen_range_f32(-20.0..20.0), rng.gen_range_f32(-20.0..20.0));
+499 +             let origin = Vec3::new(rng.gen_range_f32(-20.0..20.0), rng.gen_range_f32(-20.0..20.0), rng.gen_range_f32(-20.0.20.0));
+    |
+help: provide the argument
+    |
+499 -             let origin = Vec3::new(rng.gen_range_f32(-20.0..20.0), rng.gen_range_f32(-20.0..20.0), rng.gen_range_f32(-20.0..20.0));
+499 +             let origin = Vec3::new(rng.gen_range_f32(-20.0..20.0), rng.gen_range_f32(-20.0..20.0), rng.gen_range_f32(/* f32 */, /* f32 */));
+    |
+
+error[E0061]: this method takes 2 arguments but 1 argument was supplied
+   --> engine-physics\src\physics_world.rs:500:43
+    |
+500 | ...   let direction = Vec3::new(rng.gen_range_f32(-1.0..1.0), rng.gen_range_f32(-1.0..1.0), rng.gen_range_f32(-1.0..1.0)).normalize();
+    |                                     ^^^^^^^^^^^^^----------- argument #2 of type `f32` is missing
+    |
+note: expected `f32`, found `Range<{float}>`
+   --> engine-physics\src\physics_world.rs:500:57
+    |
+500 | ...   let direction = Vec3::new(rng.gen_range_f32(-1.0..1.0), rng.gen_range_f32(-1.0..1.0), rng.gen_range_f32(-1.0..1.0)).normalize();
+    |                                                   ^^^^^^^^^
+    = note: expected type `f32`
+             found struct `std::ops::Range<{float}>`
+note: method defined here
+   --> engine-physics\src\physics_world.rs:312:12
+    |
+312 |         fn gen_range_f32(&mut self, lo: f32, hi: f32) -> f32 {
+    |            ^^^^^^^^^^^^^            -------  -------
+help: remove the unnecessary `.` operator for a floating point literal
+    |
+500 -             let direction = Vec3::new(rng.gen_range_f32(-1.0..1.0), rng.gen_range_f32(-1.0..1.0), rng.gen_range_f32(-1.0..1.0)).normalize();
+500 +             let direction = Vec3::new(rng.gen_range_f32(-1.0.1.0), rng.gen_range_f32(-1.0..1.0), rng.gen_range_f32(-1.0..1.0)).normalize();
+    |
+help: provide the argument
+    |
+500 -             let direction = Vec3::new(rng.gen_range_f32(-1.0..1.0), rng.gen_range_f32(-1.0..1.0), rng.gen_range_f32(-1.0..1.0)).normalize();
+500 +             let direction = Vec3::new(rng.gen_range_f32(/* f32 */, /* f32 */), rng.gen_range_f32(-1.0..1.0), rng.gen_range_f32(-1.0..1.0)).normalize();
+    |
+
+error[E0061]: this method takes 2 arguments but 1 argument was supplied
+   --> engine-physics\src\physics_world.rs:500:73
+    |
+500 | ...   let direction = Vec3::new(rng.gen_range_f32(-1.0..1.0), rng.gen_range_f32(-1.0..1.0), rng.gen_range_f32(-1.0..1.0)).normalize();
+    |                                                                   ^^^^^^^^^^^^^----------- argument #2 of type `f32` is missing
+    |
+note: expected `f32`, found `Range<{float}>`
+   --> engine-physics\src\physics_world.rs:500:87
+    |
+500 | ...   let direction = Vec3::new(rng.gen_range_f32(-1.0..1.0), rng.gen_range_f32(-1.0..1.0), rng.gen_range_f32(-1.0..1.0)).normalize();
+    |                                                                                 ^^^^^^^^^
+    = note: expected type `f32`
+             found struct `std::ops::Range<{float}>`
+note: method defined here
+   --> engine-physics\src\physics_world.rs:312:12
+    |
+312 |         fn gen_range_f32(&mut self, lo: f32, hi: f32) -> f32 {
+    |            ^^^^^^^^^^^^^            -------  -------
+help: remove the unnecessary `.` operator for a floating point literal
+    |
+500 -             let direction = Vec3::new(rng.gen_range_f32(-1.0..1.0), rng.gen_range_f32(-1.0..1.0), rng.gen_range_f32(-1.0..1.0)).normalize();
+500 +             let direction = Vec3::new(rng.gen_range_f32(-1.0..1.0), rng.gen_range_f32(-1.0.1.0), rng.gen_range_f32(-1.0..1.0)).normalize();
+    |
+help: provide the argument
+    |
+500 -             let direction = Vec3::new(rng.gen_range_f32(-1.0..1.0), rng.gen_range_f32(-1.0..1.0), rng.gen_range_f32(-1.0..1.0)).normalize();
+500 +             let direction = Vec3::new(rng.gen_range_f32(-1.0..1.0), rng.gen_range_f32(/* f32 */, /* f32 */), rng.gen_range_f32(-1.0..1.0)).normalize();
+    |
+
+error[E0061]: this method takes 2 arguments but 1 argument was supplied
+   --> engine-physics\src\physics_world.rs:500:103
+    |
+500 | ...ng.gen_range_f32(-1.0..1.0), rng.gen_range_f32(-1.0..1.0)).normalize();
+    |                                     ^^^^^^^^^^^^^----------- argument #2 of type `f32` is missing
+    |
+note: expected `f32`, found `Range<{float}>`
+   --> engine-physics\src\physics_world.rs:500:117
+    |
+500 | ...   let direction = Vec3::new(rng.gen_range_f32(-1.0..1.0), rng.gen_range_f32(-1.0..1.0), rng.gen_range_f32(-1.0..1.0)).normalize();
+    |                                                                                                               ^^^^^^^^^
+    = note: expected type `f32`
+             found struct `std::ops::Range<{float}>`
+note: method defined here
+   --> engine-physics\src\physics_world.rs:312:12
+    |
+312 |         fn gen_range_f32(&mut self, lo: f32, hi: f32) -> f32 {
+    |            ^^^^^^^^^^^^^            -------  -------
+help: remove the unnecessary `.` operator for a floating point literal
+    |
+500 -             let direction = Vec3::new(rng.gen_range_f32(-1.0..1.0), rng.gen_range_f32(-1.0..1.0), rng.gen_range_f32(-1.0..1.0)).normalize();
+500 +             let direction = Vec3::new(rng.gen_range_f32(-1.0..1.0), rng.gen_range_f32(-1.0..1.0), rng.gen_range_f32(-1.0.1.0)).normalize();
+    |
+help: provide the argument
+    |
+500 -             let direction = Vec3::new(rng.gen_range_f32(-1.0..1.0), rng.gen_range_f32(-1.0..1.0), rng.gen_range_f32(-1.0..1.0)).normalize();
+500 +             let direction = Vec3::new(rng.gen_range_f32(-1.0..1.0), rng.gen_range_f32(-1.0..1.0), rng.gen_range_f32(/* f32 */, /* f32 */)).normalize();
+    |
+
+error[E0061]: this method takes 2 arguments but 1 argument was supplied
+   --> engine-physics\src\physics_world.rs:601:32
+    |
+601 |             let radius_a = rng.gen_range_f32(0.5..2.0);
+    |                                ^^^^^^^^^^^^^---------- argument #2 of type `f32` is missing
+    |
+note: expected `f32`, found `Range<{float}>`
+   --> engine-physics\src\physics_world.rs:601:46
+    |
+601 |             let radius_a = rng.gen_range_f32(0.5..2.0);
+    |                                              ^^^^^^^^
+    = note: expected type `f32`
+             found struct `std::ops::Range<{float}>`
+note: method defined here
+   --> engine-physics\src\physics_world.rs:312:12
+    |
+312 |         fn gen_range_f32(&mut self, lo: f32, hi: f32) -> f32 {
+    |            ^^^^^^^^^^^^^            -------  -------
+help: remove the unnecessary `.` operator for a floating point literal
+    |
+601 -             let radius_a = rng.gen_range_f32(0.5..2.0);
+601 +             let radius_a = rng.gen_range_f32(0.5.2.0);
+    |
+help: provide the argument
+    |
+601 -             let radius_a = rng.gen_range_f32(0.5..2.0);
+601 +             let radius_a = rng.gen_range_f32(/* f32 */, /* f32 */);
+    |
+
+error[E0061]: this method takes 2 arguments but 1 argument was supplied
+   --> engine-physics\src\physics_world.rs:602:32
+    |
+602 |             let radius_b = rng.gen_range_f32(0.5..2.0);
+    |                                ^^^^^^^^^^^^^---------- argument #2 of type `f32` is missing
+    |
+note: expected `f32`, found `Range<{float}>`
+   --> engine-physics\src\physics_world.rs:602:46
+    |
+602 |             let radius_b = rng.gen_range_f32(0.5..2.0);
+    |                                              ^^^^^^^^
+    = note: expected type `f32`
+             found struct `std::ops::Range<{float}>`
+note: method defined here
+   --> engine-physics\src\physics_world.rs:312:12
+    |
+312 |         fn gen_range_f32(&mut self, lo: f32, hi: f32) -> f32 {
+    |            ^^^^^^^^^^^^^            -------  -------
+help: remove the unnecessary `.` operator for a floating point literal
+    |
+602 -             let radius_b = rng.gen_range_f32(0.5..2.0);
+602 +             let radius_b = rng.gen_range_f32(0.5.2.0);
+    |
+help: provide the argument
+    |
+602 -             let radius_b = rng.gen_range_f32(0.5..2.0);
+602 +             let radius_b = rng.gen_range_f32(/* f32 */, /* f32 */);
+    |
+
+error[E0061]: this method takes 2 arguments but 1 argument was supplied
+   --> engine-physics\src\physics_world.rs:603:31
+    |
+603 |             let overlap = rng.gen_range_f32(0.1..0.5);
+    |                               ^^^^^^^^^^^^^---------- argument #2 of type `f32` is missing
+    |
+note: expected `f32`, found `Range<{float}>`
+   --> engine-physics\src\physics_world.rs:603:45
+    |
+603 |             let overlap = rng.gen_range_f32(0.1..0.5);
+    |                                             ^^^^^^^^
+    = note: expected type `f32`
+             found struct `std::ops::Range<{float}>`
+note: method defined here
+   --> engine-physics\src\physics_world.rs:312:12
+    |
+312 |         fn gen_range_f32(&mut self, lo: f32, hi: f32) -> f32 {
+    |            ^^^^^^^^^^^^^            -------  -------
+help: remove the unnecessary `.` operator for a floating point literal
+    |
+603 -             let overlap = rng.gen_range_f32(0.1..0.5);
+603 +             let overlap = rng.gen_range_f32(0.1.0.5);
+    |
+help: provide the argument
+    |
+603 -             let overlap = rng.gen_range_f32(0.1..0.5);
+603 +             let overlap = rng.gen_range_f32(/* f32 */, /* f32 */);
+    |
+
+error[E0061]: this method takes 2 arguments but 1 argument was supplied
+   --> engine-physics\src\physics_world.rs:605:39
+    |
+605 |             let pos_a = Vec3::new(rng.gen_range_f32(-1.0..1.0), 0.0, 0.0);
+    |                                       ^^^^^^^^^^^^^----------- argument #2 of type `f32` is missing
+    |
+note: expected `f32`, found `Range<{float}>`
+   --> engine-physics\src\physics_world.rs:605:53
+    |
+605 |             let pos_a = Vec3::new(rng.gen_range_f32(-1.0..1.0), 0.0, 0.0);
+    |                                                     ^^^^^^^^^
+    = note: expected type `f32`
+             found struct `std::ops::Range<{float}>`
+note: method defined here
+   --> engine-physics\src\physics_world.rs:312:12
+    |
+312 |         fn gen_range_f32(&mut self, lo: f32, hi: f32) -> f32 {
+    |            ^^^^^^^^^^^^^            -------  -------
+help: remove the unnecessary `.` operator for a floating point literal
+    |
+605 -             let pos_a = Vec3::new(rng.gen_range_f32(-1.0..1.0), 0.0, 0.0);
+605 +             let pos_a = Vec3::new(rng.gen_range_f32(-1.0.1.0), 0.0, 0.0);
+    |
+help: provide the argument
+    |
+605 -             let pos_a = Vec3::new(rng.gen_range_f32(-1.0..1.0), 0.0, 0.0);
+605 +             let pos_a = Vec3::new(rng.gen_range_f32(/* f32 */, /* f32 */), 0.0, 0.0);
+    |
+
+error[E0061]: this method takes 2 arguments but 1 argument was supplied
+   --> engine-physics\src\physics_world.rs:608:30
+    |
+608 |             let mass_a = rng.gen_range_f32(1.0..5.0);
+    |                              ^^^^^^^^^^^^^---------- argument #2 of type `f32` is missing
+    |
+note: expected `f32`, found `Range<{float}>`
+   --> engine-physics\src\physics_world.rs:608:44
+    |
+608 |             let mass_a = rng.gen_range_f32(1.0..5.0);
+    |                                            ^^^^^^^^
+    = note: expected type `f32`
+             found struct `std::ops::Range<{float}>`
+note: method defined here
+   --> engine-physics\src\physics_world.rs:312:12
+    |
+312 |         fn gen_range_f32(&mut self, lo: f32, hi: f32) -> f32 {
+    |            ^^^^^^^^^^^^^            -------  -------
+help: remove the unnecessary `.` operator for a floating point literal
+    |
+608 -             let mass_a = rng.gen_range_f32(1.0..5.0);
+608 +             let mass_a = rng.gen_range_f32(1.0.5.0);
+    |
+help: provide the argument
+    |
+608 -             let mass_a = rng.gen_range_f32(1.0..5.0);
+608 +             let mass_a = rng.gen_range_f32(/* f32 */, /* f32 */);
+    |
+
+error[E0061]: this method takes 2 arguments but 1 argument was supplied
+   --> engine-physics\src\physics_world.rs:609:30
+    |
+609 |             let mass_b = rng.gen_range_f32(1.0..5.0);
+    |                              ^^^^^^^^^^^^^---------- argument #2 of type `f32` is missing
+    |
+note: expected `f32`, found `Range<{float}>`
+   --> engine-physics\src\physics_world.rs:609:44
+    |
+609 |             let mass_b = rng.gen_range_f32(1.0..5.0);
+    |                                            ^^^^^^^^
+    = note: expected type `f32`
+             found struct `std::ops::Range<{float}>`
+note: method defined here
+   --> engine-physics\src\physics_world.rs:312:12
+    |
+312 |         fn gen_range_f32(&mut self, lo: f32, hi: f32) -> f32 {
+    |            ^^^^^^^^^^^^^            -------  -------
+help: remove the unnecessary `.` operator for a floating point literal
+    |
+609 -             let mass_b = rng.gen_range_f32(1.0..5.0);
+609 +             let mass_b = rng.gen_range_f32(1.0.5.0);
+    |
+help: provide the argument
+    |
+609 -             let mass_b = rng.gen_range_f32(1.0..5.0);
+609 +             let mass_b = rng.gen_range_f32(/* f32 */, /* f32 */);
+    |
+
+error[E0061]: this method takes 2 arguments but 1 argument was supplied
+   --> engine-physics\src\physics_world.rs:615:52
+    |
+615 |             body_a.linear_velocity = Vec3::new(rng.gen_range_f32(1.0..5.0), 0.0, 0.0);
+    |                                                    ^^^^^^^^^^^^^---------- argument #2 of type `f32` is missing
+    |
+note: expected `f32`, found `Range<{float}>`
+   --> engine-physics\src\physics_world.rs:615:66
+    |
+615 |             body_a.linear_velocity = Vec3::new(rng.gen_range_f32(1.0..5.0), 0.0, 0.0);
+    |                                                                  ^^^^^^^^
+    = note: expected type `f32`
+             found struct `std::ops::Range<{float}>`
+note: method defined here
+   --> engine-physics\src\physics_world.rs:312:12
+    |
+312 |         fn gen_range_f32(&mut self, lo: f32, hi: f32) -> f32 {
+    |            ^^^^^^^^^^^^^            -------  -------
+help: remove the unnecessary `.` operator for a floating point literal
+    |
+615 -             body_a.linear_velocity = Vec3::new(rng.gen_range_f32(1.0..5.0), 0.0, 0.0);
+615 +             body_a.linear_velocity = Vec3::new(rng.gen_range_f32(1.0.5.0), 0.0, 0.0);
+    |
+help: provide the argument
+    |
+615 -             body_a.linear_velocity = Vec3::new(rng.gen_range_f32(1.0..5.0), 0.0, 0.0);
+615 +             body_a.linear_velocity = Vec3::new(rng.gen_range_f32(/* f32 */, /* f32 */), 0.0, 0.0);
+    |
+
+For more information about this error, try `rustc --explain E0433`.
+error[E0061]: this method takes 2 arguments but 1 argument was supplied
+   --> engine-physics\src\physics_world.rs:616:52
+    |
+616 |             body_b.linear_velocity = Vec3::new(rng.gen_range_f32(-5.0..-1.0), 0.0, 0.0);
+    |                                                    ^^^^^^^^^^^^^------------ argument #2 of type `f32` is missing
+    |
+note: expected `f32`, found `Range<{float}>`
+   --> engine-physics\src\physics_world.rs:616:66
+    |
+616 |             body_b.linear_velocity = Vec3::new(rng.gen_range_f32(-5.0..-1.0), 0.0, 0.0);
+    |                                                                  ^^^^^^^^^^
+    = note: expected type `f32`
+             found struct `std::ops::Range<{float}>`
+note: method defined here
+   --> engine-physics\src\physics_world.rs:312:12
+    |
+312 |         fn gen_range_f32(&mut self, lo: f32, hi: f32) -> f32 {
+    |            ^^^^^^^^^^^^^            -------  -------
+help: remove the unnecessary `.` operator for a floating point literal
+    |
+616 -             body_b.linear_velocity = Vec3::new(rng.gen_range_f32(-5.0..-1.0), 0.0, 0.0);
+616 +             body_b.linear_velocity = Vec3::new(rng.gen_range_f32(-5.0.-1.0), 0.0, 0.0);
+    |
+help: provide the argument
+    |
+616 -             body_b.linear_velocity = Vec3::new(rng.gen_range_f32(-5.0..-1.0), 0.0, 0.0);
+616 +             body_b.linear_velocity = Vec3::new(rng.gen_range_f32(/* f32 */, /* f32 */), 0.0, 0.0);
+    |
+
+error: could not compile `engine-renderer` (lib test) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+For more information about this error, try `rustc --explain E0061`.
+error: could not compile `engine-physics` (lib test) due to 18 previous errors
+warning: unused variable: `data`
+   --> engine-assets\src\lib.rs:247:25
+    |
+247 |             if let Some(data) = cache.get(path) {
+    |                         ^^^^ help: if this is intentional, prefix it with an underscore: `_data`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `first_load`
+   --> engine-assets\src\lib.rs:293:13
+    |
+293 |         let first_load = pipeline.load(&temp_file).unwrap();
+    |             ^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_first_load`
+
+warning: unused variable: `second_load`
+   --> engine-assets\src\lib.rs:294:13
+    |
+294 |         let second_load = pipeline.load(&temp_file).unwrap();
+    |             ^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_second_load`
+
+warning: unused variable: `ln`
+   --> engine-core\src\scene.rs:174:25
+    |
+174 |                     let ln = self.line;
+    |                         ^^ help: if this is intentional, prefix it with an underscore: `_ln`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: `engine-assets` (lib test) generated 3 warnings (run `cargo fix --lib -p engine-assets --tests` to apply 3 suggestions)
+error: failed to remove C:\Users\legac\Downloads\Janus-main\Janus-main\oss-game-engine\target\debug\deps\engine_core-407b5d2e54af4f2b.4t3ldwznv2oco7aqsfs5ojhc8.0rbq6zx.rcgu.o: The process cannot access the file because it is being used by another process. (os error 32)
+
+error: failed to remove C:\Users\legac\Downloads\Janus-main\Janus-main\oss-game-engine\target\debug\deps\engine_core-407b5d2e54af4f2b.5pr2vuo3tw4xzxfxr9hp83c84.0rbq6zx.rcgu.o: The process cannot access the file because it is being used by another process. (os error 32)
+
+warning: `engine-core` (lib test) generated 3 warnings
+error: could not compile `engine-core` (lib test) due to 2 previous errors; 3 warnings emitted
