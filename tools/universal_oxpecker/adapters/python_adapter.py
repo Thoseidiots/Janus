@@ -168,12 +168,17 @@ class PythonAdapter(LanguageAdapter):
             visit_AsyncFunctionDef = visit_FunctionDef
 
             def visit_Compare(self, node: ast.Compare):
-                for op in node.ops:
+                # 1. Check all (left, op[0], comparator[0]), (comparator[0], op[1], comparator[1]), etc.
+                operands = [node.left] + node.comparators
+                for i, op in enumerate(node.ops):
                     if isinstance(op, (ast.Is, ast.IsNot)):
-                        # is/is not with literals
-                        for comp in node.comparators:
-                            if isinstance(comp, (ast.Constant,)) and isinstance(comp.value, (int, str, float)):
-                                if not isinstance(comp.value, bool) and comp.value is not None:
+                        left_val = operands[i]
+                        right_val = operands[i+1]
+                        
+                        # Flag if either side is a literal (int, str, float, etc.)
+                        for side in [left_val, right_val]:
+                            if isinstance(side, (ast.Constant,)) and isinstance(side.value, (int, str, float)):
+                                if not isinstance(side.value, bool) and side.value is not None:
                                     issues.append(adapter.create_issue(
                                         severity="warning",
                                         message=f"Use '==' instead of 'is' to compare values (line {node.lineno})",
@@ -181,6 +186,7 @@ class PythonAdapter(LanguageAdapter):
                                         line=node.lineno,
                                         fix_suggestion="Replace 'is'/'is not' with '=='/'!=' when comparing values, not identities.",
                                     ))
+                                    break
                 self.generic_visit(node)
 
         Visitor().visit(tree)

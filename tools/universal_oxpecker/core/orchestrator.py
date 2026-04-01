@@ -16,8 +16,16 @@ class OxpeckerOrchestrator:
 
     def _ensure_adapters(self) -> None:
         if not self._adapters_loaded:
-            # Lazy import and register adapters
-            adapters_mod = importlib.import_module("universal_oxpecker.adapters")
+            # Robust lazy import: try absolute package first, then fallback to relative/local
+            try:
+                adapters_mod = importlib.import_module("universal_oxpecker.adapters")
+            except (ImportError, ModuleNotFoundError):
+                try:
+                    adapters_mod = importlib.import_module("adapters")
+                except (ImportError, ModuleNotFoundError):
+                    # Final fallback for script-mode when core is in sys.path
+                    import adapters as adapters_mod
+            
             for adapter in adapters_mod.ALL_ADAPTERS:
                 self.engine.register_adapter(adapter)
             self._adapters_loaded = True

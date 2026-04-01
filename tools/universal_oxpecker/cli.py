@@ -259,7 +259,7 @@ def main() -> None:
         p.add_argument("target", help="Path to file or directory")
         p.add_argument("--project", action="store_true", help="Treat target as a project directory")
         p.add_argument("--workers", type=int, default=4, help="Number of Oxpecker workers for project mode")
-        p_scan.add_argument("--no-recursive", action="store_true", help="Do not recurse into subdirectories")
+        p.add_argument("--no-recursive", action="store_true", help="Do not recurse into subdirectories")
         p.add_argument("--output-dir", default=None, help="Directory for safe working copies")
         p.add_argument("--max-rounds", type=int, default=10, help="Maximum repair rounds per file")
         p.add_argument(

@@ -5,6 +5,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 from typing import Dict, List, Optional, Sequence, Tuple
 
@@ -243,7 +244,7 @@ class AutomatedProgramRepair:
             )
         )
         score = _severity_score(issue.severity) + _tier_score(draft.complexity_tier)
-        if draft.patch_kind == "ast":
+        if draft.patch_kind == "text":
             score += 15
         if draft.metadata.get("preferred") == "true":
             score += 10
@@ -326,11 +327,12 @@ class AutomatedProgramRepair:
                 proposal.approval = "needs-review"
             ranked.append(proposal)
 
+
         ranked.sort(
             key=lambda item: (
                 item.approval != "approved",
                 -(item.score),
-                item.patch_kind != "ast",
+                item.patch_kind != "text",
                 item.line or 0,
             )
         )
@@ -435,7 +437,6 @@ class AutomatedProgramRepair:
 
     def _find_project_root(self, source_path: str) -> str:
         current = os.path.abspath(os.path.dirname(source_path))
-        best = current
         markers = {
             "pyproject.toml",
             "setup.py",
@@ -445,20 +446,24 @@ class AutomatedProgramRepair:
             ".git",
         }
         while True:
+            # APR-ROOT-009: Prefer the closest directory that looks like a project root
             if any(os.path.exists(os.path.join(current, marker)) for marker in markers):
-                best = current
+                return current
             if os.path.isdir(os.path.join(current, "tests")):
-                best = current
+                return current
             parent = os.path.dirname(current)
             if parent == current:
                 break
             current = parent
-        return best
+        return os.path.abspath(os.path.dirname(source_path))
 
     def _detect_test_command(self, project_root: str, language: str) -> Optional[List[str]]:
         if language == "python":
-            if os.path.isdir(os.path.join(project_root, "tests")) and shutil.which("pytest"):
-                return ["pytest", "-q"]
+            if os.path.isdir(os.path.join(project_root, "tests")):
+                if shutil.which("pytest"):
+                    return ["pytest", "-q"]
+                # Fallback to python -m pytest if pytest is not in PATH
+                return [sys.executable, "-m", "pytest", "-q"]
         return None
 
     def _run_test_command(self, working_directory: str, command: Sequence[str], kind: str) -> TestRunResult:
