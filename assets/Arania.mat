@@ -1,0 +1,128 @@
+{
+  "material_name": "Arania_PBR",
+  "shader": "oss://engine-renderer/pbr_cook_torrance",
+  "shader_source": "engine-renderer/src/shaders.rs::PBR_FRAG_GLSL",
+  "passes": {
+    "skin": {
+      "u_base_color": [
+        0.784,
+        0.569,
+        0.416,
+        1.0
+      ],
+      "u_metallic": 0.0,
+      "u_roughness": 0.42,
+      "u_ao": 0.95,
+      "u_sss_weight": 0.28
+    },
+    "hair": {
+      "u_base_color": [
+        0.102,
+        0.039,
+        0.008,
+        1.0
+      ],
+      "u_metallic": 0.0,
+      "u_roughness": 0.35,
+      "u_ao": 1.0,
+      "u_anisotropy": 0.6
+    },
+    "robe": {
+      "u_base_color": [
+        0.784,
+        0.627,
+        0.157,
+        1.0
+      ],
+      "u_metallic": 0.05,
+      "u_roughness": 0.72,
+      "u_ao": 0.9
+    },
+    "gold": {
+      "u_base_color": [
+        0.941,
+        0.753,
+        0.188,
+        1.0
+      ],
+      "u_metallic": 0.95,
+      "u_roughness": 0.18,
+      "u_ao": 1.0
+    },
+    "eye_iris": {
+      "u_base_color": [
+        1.0,
+        0.816,
+        0.376,
+        1.0
+      ],
+      "u_metallic": 0.0,
+      "u_roughness": 0.05,
+      "u_ao": 1.0,
+      "u_emissive_intensity": 0.9
+    },
+    "eye_white": {
+      "u_base_color": [
+        0.973,
+        0.941,
+        0.878,
+        1.0
+      ],
+      "u_metallic": 0.0,
+      "u_roughness": 0.2,
+      "u_ao": 1.0
+    },
+    "lip": {
+      "u_base_color": [
+        0.733,
+        0.439,
+        0.333,
+        1.0
+      ],
+      "u_metallic": 0.0,
+      "u_roughness": 0.38,
+      "u_ao": 1.0
+    }
+  },
+  "lights": {
+    "sun": {
+      "position": [
+        4.0,
+        8.0,
+        5.0
+      ],
+      "color": [
+        1.0,
+        0.941,
+        0.816
+      ],
+      "intensity": 2.2
+    },
+    "rim": {
+      "position": [
+        -4.0,
+        2.0,
+        -3.0
+      ],
+      "color": [
+        0.376,
+        0.251,
+        0.753
+      ],
+      "intensity": 0.45
+    },
+    "fill": {
+      "position": [
+        0.0,
+        -2.0,
+        3.0
+      ],
+      "color": [
+        0.784,
+        0.565,
+        0.314
+      ],
+      "intensity": 0.35
+    }
+  }
+}
