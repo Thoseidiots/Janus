@@ -1,9 +1,9 @@
 # agent_loop.py
 
-“””
+"""
 Janus Agent Loop — the missing piece that ties everything together.
 
-Takes a high-level goal (e.g. “find a data entry job on Fiverr and apply”)
+Takes a high-level goal (e.g. "find a data entry job on Fiverr and apply")
 and executes it end-to-end using:
 
 - goal_planner.py   → breaks goal into steps
@@ -14,8 +14,8 @@ and executes it end-to-end using:
 
 Usage:
 agent = JanusAgent()
-agent.run_goal(“Search Fiverr for data entry jobs and collect the top 5 listings”)
-“””
+agent.run_goal("Search Fiverr for data entry jobs and collect the top 5 listings")
+"""
 
 from **future** import annotations
 
@@ -34,7 +34,7 @@ from tool_executor import ToolExecutor, ToolCall, RiskTier
 
 @dataclass
 class AgentStep:
-“”“A single action step in a plan.”””
+"""A single action step in a plan."""
 step_id:     str
 description: str
 tool:        str
@@ -47,22 +47,22 @@ max_attempts: int      = 3
 
 @dataclass
 class AgentPlan:
-“”“A sequence of steps to achieve a goal.”””
+"""A sequence of steps to achieve a goal."""
 plan_id:   str
 goal:      str
 steps:     list[AgentStep]
 created:   str = field(default_factory=lambda: datetime.now().isoformat())
 completed: bool = False
-outcome:   str  = “”
+outcome:   str  = ""
 
 # ── Planner ───────────────────────────────────────────────────────────────────
 
 class SimplePlanner:
-“””
+"""
 Converts a goal string into a sequence of AgentSteps.
 Uses keyword matching to select the right plan template.
 When JanusGPT is available, it can generate plans dynamically.
-“””
+"""
 
 ```
 PLAN_TEMPLATES = {
@@ -163,10 +163,10 @@ def _extract_url(self, goal: str) -> str:
 # ── Web Tool Extensions ───────────────────────────────────────────────────────
 
 class WebToolHandler:
-“””
+"""
 Extends ToolExecutor with web-specific tools using JanusWebAutonomy.
 Lazy-loads Playwright only when actually needed.
-“””
+"""
 
 ```
 def __init__(self):
@@ -238,7 +238,7 @@ def stop(self):
 # ── Agent Memory ──────────────────────────────────────────────────────────────
 
 class AgentMemory:
-“”“Persists plan history and learned patterns.”””
+"""Persists plan history and learned patterns."""
 
 ```
 def __init__(self, path: str = "agent_memory.jsonl"):
@@ -272,7 +272,7 @@ def success_rate(self) -> float:
 # ── Main Agent Loop ───────────────────────────────────────────────────────────
 
 class JanusAgent:
-“””
+"""
 The top-level agent that takes a goal and executes it.
 
 ```
@@ -445,7 +445,7 @@ def stop(self):
 
 # ── CLI entry point ───────────────────────────────────────────────────────────
 
-if **name** == “**main**”:
+if __name__ == "__main__":
 import sys
 
 ```

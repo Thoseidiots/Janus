@@ -317,7 +317,7 @@ fontFamily:"'Space Mono','Courier New',monospace",paddingBottom:40}}>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
 
       {/* Perception Feed */}
-      <Card title="Perception Feed" badge="Real-time" accent="#10b981">
+      <Card title="Perception Feed" accent="#10b981">
         <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:9}}>
           <Dot color="#10b981"/>
           <span style={{fontSize:9,color:"#10b981",letterSpacing:"0.1em"}}>LIVE · 9.8 FPS</span>
@@ -449,5 +449,7 @@ fontFamily:"'Space Mono','Courier New',monospace",paddingBottom:40}}>
     </div>
   </div>
 </div>
+```
+
 );
 }

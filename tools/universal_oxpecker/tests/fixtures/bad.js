@@ -5,6 +5,6 @@ if (name == "world") {            // loose equality
     eval("alert('xss')");         // eval
     try {
         throw new Error("oops");
-    } catch () {                  // syntax: missing param
+    } catch (error) {             // syntax: missing param
     }
 }

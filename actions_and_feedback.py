@@ -1,6 +1,6 @@
 # actions_and_feedback.py
 
-“””
+"""
 Janus Real World Actions + Feedback Loop — gaps 4 and 5.
 
 Gap 4: Real world actions that matter
@@ -23,12 +23,12 @@ without real actions, and real actions are dangerous without feedback.
 Usage:
 from actions_and_feedback import ActionEngine, FeedbackLoop
 engine  = ActionEngine()
-outcome = engine.submit_form(“https://example.com/contact”, {
-“name”: “Ishmael Sears”, “message”: “I’m interested in…”
+outcome = engine.submit_form("https://example.com/contact", {
+"name": "Ishmael Sears", "message": "I'm interested in..."
 })
 feedback = FeedbackLoop()
 feedback.record(outcome)
-“””
+"""
 
 from **future** import annotations
 
@@ -45,12 +45,12 @@ from typing import Any, Optional
 # ── Action result types ───────────────────────────────────────────────────────
 
 class ActionStatus(str, Enum):
-SUCCESS        = “success”
-PARTIAL        = “partial”       # action ran but outcome uncertain
-FAILED         = “failed”
-NEEDS_AUTH     = “needs_auth”
-NEEDS_CAPTCHA  = “needs_captcha”
-BLOCKED        = “blocked”
+SUCCESS        = "success"
+PARTIAL        = "partial"       # action ran but outcome uncertain
+FAILED         = "failed"
+NEEDS_AUTH     = "needs_auth"
+NEEDS_CAPTCHA  = "needs_captcha"
+BLOCKED        = "blocked"
 
 @dataclass
 class ActionOutcome:
@@ -60,12 +60,12 @@ target:      str                  # URL or description
 status:      ActionStatus
 evidence:    dict                 # what Janus observed after acting
 timestamp:   str = field(default_factory=lambda: datetime.now().isoformat())
-notes:       str = “”
+notes:       str = ""
 
 # ── Action Engine ─────────────────────────────────────────────────────────────
 
 class ActionEngine:
-“””
+"""
 Executes real-world actions via Playwright with outcome verification.
 
 ```
@@ -367,11 +367,11 @@ def _new_id(prefix: str = "act") -> str:
 # ── Session Manager ───────────────────────────────────────────────────────────
 
 class SessionManager:
-“””
+"""
 Persists browser cookies and localStorage between runs.
 This means Janus stays logged in across sessions without
 storing raw passwords anywhere.
-“””
+"""
 
 ```
 SESSION_FILE = "janus_session.json"
@@ -400,13 +400,13 @@ def clear(self):
 # ── Feedback Loop ─────────────────────────────────────────────────────────────
 
 class FeedbackLoop:
-“””
+"""
 Records action outcomes and feeds them back into:
 - Valence (did this feel good/bad?)
 - Memory (what worked?)
 - Goal scorer (what should we try next?)
-- Success model (what’s our actual track record?)
-“””
+- Success model (what's our actual track record?)
+"""
 
 ```
 FEEDBACK_FILE = "action_feedback.jsonl"
@@ -557,11 +557,11 @@ def what_fails(self) -> list[str]:
 # ── Integration helper ────────────────────────────────────────────────────────
 
 class ActionFeedbackBridge:
-“””
+"""
 Connects ActionEngine + FeedbackLoop to the ReplanningAgent.
-Registers action tools into the agent’s ToolExecutor so the
+Registers action tools into the agent's ToolExecutor so the
 agent loop can call real-world actions like any other tool.
-“””
+"""
 
 ```
 def __init__(self, agent):
@@ -647,7 +647,7 @@ def stop(self):
 
 # ── CLI / quick test ──────────────────────────────────────────────────────────
 
-if **name** == “**main**”:
+if __name__ == "__main__":
 import sys
 
 ```
