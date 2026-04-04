@@ -1,5 +1,9 @@
 import React, { useState, useCallback } from 'react';
+<<<<<<< HEAD
 import { generateStoryboardFromFile, generateStoryboardFromUrl } from '../../services/geminiService';
+=======
+import { generateStoryboardFromFile, generateStoryboardFromUrl } from '../../services/aiServiceRouter';
+>>>>>>> 0626836 (Add aiService router shim, router tests, and wire frontend to router)
 import { Storyboard } from '../../types';
 import { Card } from '../common/Card';
 import { Button } from '../common/Button';

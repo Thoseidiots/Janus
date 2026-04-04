@@ -1,6 +1,10 @@
 
 import React, { useState } from 'react';
+<<<<<<< HEAD
 import { generateText } from '../../services/geminiService';
+=======
+import { generateText } from '../../services/aiServiceRouter';
+>>>>>>> 0626836 (Add aiService router shim, router tests, and wire frontend to router)
 import { Card } from '../common/Card';
 import { Button } from '../common/Button';
 import { Spinner } from '../common/Spinner';

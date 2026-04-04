@@ -1,5 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+<<<<<<< HEAD
 import { generateSpeech } from '../../services/geminiService';
+=======
+import { generateSpeech } from '../../services/aiServiceRouter';
+>>>>>>> 0626836 (Add aiService router shim, router tests, and wire frontend to router)
 import { decode, decodeAudioData } from '../../utils/audioUtils';
 import { Card } from '../common/Card';
 import { Button } from '../common/Button';

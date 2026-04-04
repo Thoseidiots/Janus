@@ -1,6 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
+<<<<<<< HEAD
 import { generateWithGoogleSearch, generateWithGoogleMaps } from '../../services/geminiService';
+=======
+import { generateWithGoogleSearch, generateWithGoogleMaps } from '../../services/aiServiceRouter';
+>>>>>>> 0626836 (Add aiService router shim, router tests, and wire frontend to router)
 import { ChatMessage } from '../../types';
 import { Card } from '../common/Card';
 import { Button } from '../common/Button';

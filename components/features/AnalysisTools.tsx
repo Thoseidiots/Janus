@@ -1,6 +1,10 @@
 
 import React, { useState, useCallback } from 'react';
+<<<<<<< HEAD
 import { analyzeImage, analyzeVideo } from '../../services/geminiService';
+=======
+import { analyzeImage, analyzeVideo } from '../../services/aiServiceRouter';
+>>>>>>> 0626836 (Add aiService router shim, router tests, and wire frontend to router)
 import { fileToBase64 } from '../../utils/fileUtils';
 import { Card } from '../common/Card';
 import { Button } from '../common/Button';

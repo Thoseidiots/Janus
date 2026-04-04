@@ -1,6 +1,10 @@
 
 import React, { useState, useCallback } from 'react';
+<<<<<<< HEAD
 import { generateVideoFromText, generateVideoFromImage } from '../../services/geminiService';
+=======
+import { generateVideoFromText, generateVideoFromImage } from '../../services/aiServiceRouter';
+>>>>>>> 0626836 (Add aiService router shim, router tests, and wire frontend to router)
 import { fileToBase64 } from '../../utils/fileUtils';
 import { useVeo, VeoStatus } from '../../hooks/useVeo';
 import { Card } from '../common/Card';

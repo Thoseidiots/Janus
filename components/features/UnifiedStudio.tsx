@@ -1,7 +1,11 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { UnifiedChatMessage, GroundingSource } from '../../types';
+<<<<<<< HEAD
 import * as geminiService from '../../services/geminiService';
+=======
+import * as aiService from '../../services/aiServiceRouter';
+>>>>>>> 0626836 (Add aiService router shim, router tests, and wire frontend to router)
 import { fileToBase64 } from '../../utils/fileUtils';
 import { useVeo, VeoStatus } from '../../hooks/useVeo';
 
@@ -150,6 +154,7 @@ export const UnifiedStudio: React.FC = () => {
                 if (mimeType.startsWith('image/')) {
                     const base64 = await fileToBase64(currentFile);
                     if(lowerInput.includes('edit') || lowerInput.includes('change') || lowerInput.includes('add') || lowerInput.includes('remove')) {
+<<<<<<< HEAD
                         const resultUrl = await geminiService.editImage(currentInput, base64, mimeType);
                         addMessage('model', { type: 'image', url: resultUrl, prompt: currentInput });
                     } else {
@@ -158,13 +163,27 @@ export const UnifiedStudio: React.FC = () => {
                     }
                 } else if (mimeType.startsWith('video/')) {
                     const storyboard = await geminiService.generateStoryboardFromFile(currentFile);
+=======
+                        const resultUrl = await aiService.editImage(currentInput, base64, mimeType);
+                        addMessage('model', { type: 'image', url: resultUrl, prompt: currentInput });
+                    } else {
+                        const analysis = await aiService.analyzeImage(currentInput || "Describe this image.", base64, mimeType);
+                        addMessage('model', { type: 'text', text: analysis });
+                    }
+                } else if (mimeType.startsWith('video/')) {
+                    const storyboard = await aiService.generateStoryboardFromFile(currentFile);
+>>>>>>> 0626836 (Add aiService router shim, router tests, and wire frontend to router)
                     addMessage('model', { type: 'storyboard', storyboard });
                 }
             } 
             // --- Text-based Actions ---
             else {
                 if (lowerInput.startsWith('generate image') || lowerInput.startsWith('create an image of')) {
+<<<<<<< HEAD
                     const imageUrl = await geminiService.generateImage(currentInput, '1:1');
+=======
+                    const imageUrl = await aiService.generateImage(currentInput, '1:1');
+>>>>>>> 0626836 (Add aiService router shim, router tests, and wire frontend to router)
                     addMessage('model', { type: 'image', url: imageUrl, prompt: currentInput });
                 } else if (lowerInput.startsWith('generate video') || lowerInput.startsWith('create a video of')) {
                     if (!apiKeySelected) {
@@ -173,7 +192,11 @@ export const UnifiedStudio: React.FC = () => {
                     } else {
                         const messageId = Date.now().toString();
                         setMessages(prev => [...prev, { id: messageId, role: 'model', content: {type: 'video_generating', prompt: currentInput}}]);
+<<<<<<< HEAD
                         handleGeneration(() => geminiService.generateVideoFromText(currentInput, '16:9'))
+=======
+                        handleGeneration(() => aiService.generateVideoFromText(currentInput, '16:9'))
+>>>>>>> 0626836 (Add aiService router shim, router tests, and wire frontend to router)
                             .then(videoUrl => {
                                 setMessages(prev => prev.map(m => m.id === messageId ? { ...m, content: { type: 'video', url: videoUrl, prompt: currentInput}} : m));
                             }).catch(err => {
@@ -182,10 +205,17 @@ export const UnifiedStudio: React.FC = () => {
                     }
                 } else if (lowerInput.startsWith('say:')) {
                     const textToSpeak = currentInput.substring(4).trim();
+<<<<<<< HEAD
                     const audioBase64 = await geminiService.generateSpeech(textToSpeak);
                     addMessage('model', { type: 'audio', base64: audioBase64 });
                 } else if (lowerInput.startsWith('http')) { // Basic URL check
                     const storyboard = await geminiService.generateStoryboardFromUrl(currentInput);
+=======
+                    const audioBase64 = await aiService.generateSpeech(textToSpeak);
+                    addMessage('model', { type: 'audio', base64: audioBase64 });
+                } else if (lowerInput.startsWith('http')) { // Basic URL check
+                    const storyboard = await aiService.generateStoryboardFromUrl(currentInput);
+>>>>>>> 0626836 (Add aiService router shim, router tests, and wire frontend to router)
                     addMessage('model', { type: 'storyboard', storyboard });
                 }
                 else {
@@ -193,7 +223,11 @@ export const UnifiedStudio: React.FC = () => {
                         role: m.role === 'user' ? 'user' : 'model',
                         content: (m.content as { type: 'text', text: string }).text
                     }));
+<<<<<<< HEAD
                     const response = await geminiService.generateChatResponse(chatHistory, currentInput, useWebSearch);
+=======
+                    const response = await aiService.generateChatResponse(chatHistory, currentInput, useWebSearch);
+>>>>>>> 0626836 (Add aiService router shim, router tests, and wire frontend to router)
                     addMessage('model', { type: 'text', text: response.text, sources: response.sources });
                 }
             }

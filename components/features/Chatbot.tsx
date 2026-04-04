@@ -1,6 +1,10 @@
 
 import React, { useState, useRef, useEffect } from 'react';
+<<<<<<< HEAD
 import { generateChatResponse } from '../../services/geminiService';
+=======
+import { generateChatResponse } from '../../services/aiServiceRouter';
+>>>>>>> 0626836 (Add aiService router shim, router tests, and wire frontend to router)
 import { ChatMessage } from '../../types';
 import { Card } from '../common/Card';
 import { Button } from '../common/Button';
