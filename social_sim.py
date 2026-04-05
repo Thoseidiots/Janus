@@ -1,4 +1,4 @@
-“””
+﻿"""
 social_sim.py
 ────────────────────────────────────────────────────────────
 Multi-agent social simulation for Janus.
@@ -6,8 +6,8 @@ Multi-agent social simulation for Janus.
 • Model other agents (humans or AI) with persistent belief/relationship state.
 • Run internal social simulations during the SLEEP phase to refine
 theory-of-mind (ToM) predictions.
-• Persistent “relationships” live in relationships.json.
-“””
+• Persistent "relationships" live in relationships.json.
+"""
 
 import json
 import uuid
@@ -21,21 +21,21 @@ from pathlib import Path
 from enum import Enum
 
 class AgentType(Enum):
-JANUS      = “janus”
-HUMAN      = “human”
-AI_OTHER   = “ai_other”
-SUBAGENT   = “subagent”
+JANUS      = "janus"
+HUMAN      = "human"
+AI_OTHER   = "ai_other"
+SUBAGENT   = "subagent"
 
 class RelationshipTone(Enum):
-NEUTRAL    = “neutral”
-FRIENDLY   = “friendly”
-ADVERSARIAL = “adversarial”
-COLLABORATIVE = “collaborative”
-DEPENDENT  = “dependent”
+NEUTRAL    = "neutral"
+FRIENDLY   = "friendly"
+ADVERSARIAL = "adversarial"
+COLLABORATIVE = "collaborative"
+DEPENDENT  = "dependent"
 
 @dataclass
 class BeliefState:
-“”“Janus’s model of another agent’s internal state.”””
+"""Janus’s model of another agent’s internal state."""
 goals:       List[str]       = field(default_factory=list)
 emotions:    Dict[str, float] = field(default_factory=dict)
 knowledge:   List[str]       = field(default_factory=list)
@@ -55,7 +55,7 @@ interaction_count: int        = 0
 last_seen:   Optional[str]    = None
 belief:      BeliefState      = field(default_factory=BeliefState)
 memory_ids:  List[str]        = field(default_factory=list)
-notes:       str              = “”
+notes:       str              = ""
 
 ```
 def to_dict(self) -> dict:
@@ -78,9 +78,9 @@ def from_dict(d: dict) -> "Relationship":
 
 @dataclass
 class AgentProxy:
-“”“Lightweight sub-instance of Janus used for planning simulations.”””
+"""Lightweight sub-instance of Janus used for planning simulations."""
 agent_id:    str
-role:        str             # e.g. “critic”, “advocate”, “devil_advocate”
+role:        str             # e.g. "critic", "advocate", "devil_advocate"
 goals:       List[str]
 valence:     Dict[str, float] = field(default_factory=dict)
 history:     List[dict]       = field(default_factory=list)
@@ -89,7 +89,7 @@ terminated:  bool             = False
 
 ```
 def act(self, observation: str) -> str:
-    """Simulate a decision given an observation (stub — wire to your LLM)."""
+    """Simulate a decision given an observation (stub -- wire to your LLM)."""
     role_responses = {
         "critic":         f"[CRITIC] I challenge: {observation[:60]}... Is this assumption valid?",
         "advocate":       f"[ADVOCATE] This supports: {observation[:60]}...",
@@ -116,10 +116,10 @@ outcome: Optional[str] = None
 tom_update: Optional[dict] = None
 
 class SocialSimulator:
-“””
+"""
 Runs internal social simulations during the SLEEP phase.
 Produces theory-of-mind updates for known relationships.
-“””
+"""
 
 ```
 def __init__(self, relationships: Dict[str, "Relationship"]):
@@ -184,7 +184,7 @@ def _extract_tom_updates(self, sim: SimulationRound,
 # ── Relationship manager ───────────────────────────────────────────────────────
 
 class RelationshipManager:
-“””
+"""
 Persistent store for Janus’s relationships with other agents.
 Integrates with the social simulator and SLEEP-phase ToM refinement.
 

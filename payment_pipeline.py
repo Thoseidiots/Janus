@@ -1,7 +1,7 @@
-# “””
+﻿# """
 payment_pipeline.py
 
-Janus payment pipeline — handles invoicing, tracking, and payment
+Janus payment pipeline -- handles invoicing, tracking, and payment
 confirmation across Revolut and PayPal.
 
 Janus uses this to:
@@ -20,14 +20,14 @@ pipeline = PaymentPipeline()
 request = pipeline.create_request(
     amount=25.00,
     currency="USD",
-    description="Character concept art — 2 characters",
+    description="Character concept art -- 2 characters",
     client_name="John"
 )
 print(request.payment_link)   # share this with the client
 print(request.summary())      # full details
 ```
 
-“””
+"""
 
 import json
 import time
@@ -39,15 +39,15 @@ from typing import Dict, List, Optional
 
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Config — your payment details
+# Config -- your payment details
 
 # ─────────────────────────────────────────────────────────────────────────────
 
-REVOLUT_TAG     = “@i_sears”
-REVOLUT_LINK    = “https://revolut.me/i_sears”
-PAYPAL_NAME     = “Ishmael Sears”
-PAYPAL_LINK     = “https://www.paypal.com/paypalme/ishmael_sears”  # update if different
-LEDGER_FILE     = “payment_ledger.json”
+REVOLUT_TAG     = "@i_sears"
+REVOLUT_LINK    = "https://revolut.me/i_sears"
+PAYPAL_NAME     = "Ishmael Sears"
+PAYPAL_LINK     = "https://www.paypal.com/paypalme/ishmael_sears"  # update if different
+LEDGER_FILE     = "payment_ledger.json"
 
 # Fiverr commission rates (platform takes 20%)
 
@@ -60,24 +60,24 @@ FIVERR_FEE_RATE = 0.20
 # ─────────────────────────────────────────────────────────────────────────────
 
 class PaymentMethod(str, Enum):
-REVOLUT = “revolut”
-PAYPAL  = “paypal”
-FIVERR  = “fiverr”   # handled by platform, tracked only
-CASH    = “cash”
+REVOLUT = "revolut"
+PAYPAL  = "paypal"
+FIVERR  = "fiverr"   # handled by platform, tracked only
+CASH    = "cash"
 
 class PaymentStatus(str, Enum):
-PENDING   = “pending”
-SENT      = “sent”       # link sent to client
-CONFIRMED = “confirmed”  # manually marked as received
-CANCELLED = “cancelled”
+PENDING   = "pending"
+SENT      = "sent"       # link sent to client
+CONFIRMED = "confirmed"  # manually marked as received
+CANCELLED = "cancelled"
 
 class ServiceType(str, Enum):
-COMMISSION      = “commission”
-ASSET_PACK      = “asset_pack”
-CONCEPT_ART     = “concept_art”
-CHARACTER_SHEET = “character_sheet”
-GAME_ASSET      = “game_asset”
-OTHER           = “other”
+COMMISSION      = "commission"
+ASSET_PACK      = "asset_pack"
+CONCEPT_ART     = "concept_art"
+CHARACTER_SHEET = "character_sheet"
+GAME_ASSET      = "game_asset"
+OTHER           = "other"
 
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -155,7 +155,7 @@ total_pending:    float = 0.0
 total_cancelled:  float = 0.0
 request_count:    int   = 0
 confirmed_count:  int   = 0
-currency:         str   = “USD”
+currency:         str   = "USD"
 by_method:        Dict[str, float] = field(default_factory=dict)
 by_service:       Dict[str, float] = field(default_factory=dict)
 
@@ -166,18 +166,18 @@ by_service:       Dict[str, float] = field(default_factory=dict)
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _revolut_link(amount: float, currency: str, description: str) -> str:
-“”“Revolut payment link — pre-fills amount and note.”””
-desc_encoded = description.replace(” “, “%20”)[:50]
-return (f”{REVOLUT_LINK}?amount={amount:.2f}”
-f”&currency={currency}&note={desc_encoded}”)
+"""Revolut payment link -- pre-fills amount and note."""
+desc_encoded = description.replace(" ", "%20")[:50]
+return (f"{REVOLUT_LINK}?amount={amount:.2f}"
+f"&currency={currency}&note={desc_encoded}")
 
 def _paypal_link(amount: float, currency: str, description: str) -> str:
-“”“PayPal.me link with amount.”””
-return f”{PAYPAL_LINK}/{amount:.2f}{currency}”
+"""PayPal.me link with amount."""
+return f"{PAYPAL_LINK}/{amount:.2f}{currency}"
 
 def _fiverr_note(amount: float, description: str) -> str:
-“”“Fiverr is handled by the platform — just a tracking note.”””
-return f”[Fiverr order] {description} — ${amount:.2f} gross”
+"""Fiverr is handled by the platform -- just a tracking note."""
+return f"[Fiverr order] {description} -- ${amount:.2f} gross"
 
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -186,7 +186,7 @@ return f”[Fiverr order] {description} — ${amount:.2f} gross”
 # ─────────────────────────────────────────────────────────────────────────────
 
 class PaymentPipeline:
-“””
+"""
 Janus’s payment management system.
 
 ```
@@ -223,7 +223,7 @@ def create_request(
     elif method == PaymentMethod.FIVERR:
         link = _fiverr_note(amount, description)
     else:
-        link = f"Cash payment — {currency} {amount:.2f}"
+        link = f"Cash payment -- {currency} {amount:.2f}"
 
     req = PaymentRequest(
         id           = request_id,
@@ -243,7 +243,7 @@ def create_request(
     self._requests[request_id] = req
     self._save_ledger()
     print(f"[PaymentPipeline] Created request {request_id[:8]} "
-          f"— {currency} {amount:.2f} via {method.value}")
+          f"-- {currency} {amount:.2f} via {method.value}")
     return req
 
 # ── Status updates ────────────────────────────────────────────────────────
@@ -269,7 +269,7 @@ def confirm_payment(self, request_id: str,
     if notes:
         req.notes = notes
     self._save_ledger()
-    print(f"[PaymentPipeline] ✅ {request_id[:8]} CONFIRMED — "
+    print(f"[PaymentPipeline] ✅ {request_id[:8]} CONFIRMED -- "
           f"{req.currency} {req.amount:.2f} from {req.client_name}")
     return True
 
@@ -358,7 +358,7 @@ def generate_payment_message(self, request_id: str) -> str:
             f"💳 Revolut: {req.payment_link}\n\n"
             f"Amount: {req.currency} {req.amount:.2f}\n"
             f"For: {req.description}\n\n"
-            f"You don't need a Revolut account — the link works for anyone. "
+            f"You don't need a Revolut account -- the link works for anyone. "
             f"Please let me know once sent and I'll get started right away!"
         )
     elif req.method == PaymentMethod.PAYPAL:
@@ -422,14 +422,14 @@ def __repr__(self) -> str:
 
 # ─────────────────────────────────────────────────────────────────────────────
 
-if **name** == “**main**”:
-pipeline = PaymentPipeline(ledger_path=“test_ledger.json”)
+if **name** == "**main**":
+pipeline = PaymentPipeline(ledger_path="test_ledger.json")
 
 ```
 # Simulate a Fiverr commission
 r1 = pipeline.create_request(
     amount=30.00,
-    description="Character concept art — full body",
+    description="Character concept art -- full body",
     client_name="Alex",
     method=PaymentMethod.FIVERR,
     service_type=ServiceType.CHARACTER_SHEET,
@@ -454,7 +454,7 @@ pipeline.mark_sent(r2.id)
 # Simulate PayPal asset pack sale
 r3 = pipeline.create_request(
     amount=15.00,
-    description="Dungeon asset pack — 15 assets",
+    description="Dungeon asset pack -- 15 assets",
     client_name="Tom",
     method=PaymentMethod.PAYPAL,
     service_type=ServiceType.ASSET_PACK,

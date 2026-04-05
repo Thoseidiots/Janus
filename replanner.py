@@ -1,7 +1,7 @@
-# replanner.py
+﻿# replanner.py
 
-“””
-Janus Dynamic Replanner — closes the most critical agency gap.
+"""
+Janus Dynamic Replanner -- closes the most critical agency gap.
 
 When a step fails, instead of blindly retrying the same action,
 the Replanner:
@@ -15,8 +15,8 @@ This plugs into agent_loop.py’s JanusAgent as a drop-in upgrade.
 Usage:
 from replanner import ReplanningAgent
 agent = ReplanningAgent()
-plan = agent.run_goal(“Find data entry jobs on Fiverr”)
-“””
+plan = agent.run_goal("Find data entry jobs on Fiverr")
+"""
 
 from **future** import annotations
 
@@ -37,13 +37,13 @@ from tool_executor import ToolExecutor, ToolCall, ToolResult, RiskTier
 # ── Failure taxonomy ──────────────────────────────────────────────────────────
 
 class FailureKind(str, Enum):
-ELEMENT_NOT_FOUND  = “element_not_found”   # CSS selector missed
-TIMEOUT            = “timeout”              # page/network too slow
-BLOCKED            = “blocked”              # rate-limited or CAPTCHA
-PERMISSION_DENIED  = “permission_denied”    # auth required
-NETWORK_ERROR      = “network_error”        # no connectivity
-PARSE_ERROR        = “parse_error”          # content not what expected
-UNKNOWN            = “unknown”
+ELEMENT_NOT_FOUND  = "element_not_found"   # CSS selector missed
+TIMEOUT            = "timeout"              # page/network too slow
+BLOCKED            = "blocked"              # rate-limited or CAPTCHA
+PERMISSION_DENIED  = "permission_denied"    # auth required
+NETWORK_ERROR      = "network_error"        # no connectivity
+PARSE_ERROR        = "parse_error"          # content not what expected
+UNKNOWN            = "unknown"
 
 @dataclass
 class FailureDiagnosis:
@@ -56,10 +56,10 @@ attempt:     int
 # ── Failure Diagnoser ─────────────────────────────────────────────────────────
 
 class FailureDiagnoser:
-“””
+"""
 Reads the error message from a failed ToolResult and classifies it
 into a FailureKind with confidence score.
-“””
+"""
 
 ```
 # Error substring → (FailureKind, confidence)
@@ -111,10 +111,10 @@ def diagnose(self, result: ToolResult, step: AgentStep) -> FailureDiagnosis:
 # ── Alternative Strategy Generator ───────────────────────────────────────────
 
 class StrategyGenerator:
-“””
+"""
 Given a failure diagnosis, produces replacement AgentSteps
 that try a different approach to achieve the same outcome.
-“””
+"""
 
 ```
 def alternatives(
@@ -145,7 +145,7 @@ def alternatives(
         return self._alt_parse_error(step, context)
 
     else:
-        # Unknown — try a generic fallback
+        # Unknown -- try a generic fallback
         return self._alt_generic(step, context)
 
 # ── Alternative strategies per failure kind ───────────────────────────────
@@ -217,7 +217,7 @@ def _alt_blocked(self, step: AgentStep, goal: str, ctx: dict) -> list[AgentStep]
     return [
         AgentStep(
             step_id     = alt_id,
-            description = f"Blocked — trying alternative route via DuckDuckGo",
+            description = f"Blocked -- trying alternative route via DuckDuckGo",
             tool        = "web_navigate",
             args        = {"url": alt_url},
             max_attempts= 2,
@@ -233,11 +233,11 @@ def _alt_blocked(self, step: AgentStep, goal: str, ctx: dict) -> list[AgentStep]
     ]
 
 def _alt_network_error(self, step: AgentStep, ctx: dict) -> list[AgentStep]:
-    """Network is down — save what we have and stop gracefully."""
+    """Network is down -- save what we have and stop gracefully."""
     alt_id = self._new_id()
     return [AgentStep(
         step_id     = alt_id,
-        description = "Network error — saving partial results",
+        description = "Network error -- saving partial results",
         tool        = "file_write",
         args        = {
             "path":    "partial_results.txt",
@@ -248,11 +248,11 @@ def _alt_network_error(self, step: AgentStep, ctx: dict) -> list[AgentStep]:
     )]
 
 def _alt_permission_denied(self, step: AgentStep, ctx: dict) -> list[AgentStep]:
-    """Auth required — log the need for credentials and skip."""
+    """Auth required -- log the need for credentials and skip."""
     alt_id = self._new_id()
     return [AgentStep(
         step_id     = alt_id,
-        description = "Auth required — logging credential gap",
+        description = "Auth required -- logging credential gap",
         tool        = "file_write",
         args        = {
             "path":    "auth_required.txt",
@@ -263,21 +263,21 @@ def _alt_permission_denied(self, step: AgentStep, ctx: dict) -> list[AgentStep]:
     )]
 
 def _alt_parse_error(self, step: AgentStep, ctx: dict) -> list[AgentStep]:
-    """Content wasn't in expected format — extract raw text instead."""
+    """Content wasn't in expected format -- extract raw text instead."""
     alt_id = self._new_id()
     return [AgentStep(
         step_id     = alt_id,
-        description = "Parse error — falling back to raw text extraction",
+        description = "Parse error -- falling back to raw text extraction",
         tool        = "web_extract_text",
         args        = {"selector": "body"},
         max_attempts= 2,
     )]
 
 def _alt_generic(self, step: AgentStep, ctx: dict) -> list[AgentStep]:
-    """Unknown failure — log and move on."""
+    """Unknown failure -- log and move on."""
     return [AgentStep(
         step_id     = self._new_id(),
-        description = f"Unknown failure in '{step.description}' — logging and continuing",
+        description = f"Unknown failure in '{step.description}' -- logging and continuing",
         tool        = "file_write",
         args        = {
             "path":    "agent_errors.txt",
@@ -296,7 +296,7 @@ def _new_id() -> str:
 # ── Replanning Agent (upgrades JanusAgent) ────────────────────────────────────
 
 class ReplanningAgent(JanusAgent):
-“””
+"""
 Drop-in upgrade to JanusAgent that adds dynamic replanning.
 
 ```
@@ -343,7 +343,7 @@ def run_goal(self, goal: str, context: dict = {}) -> AgentPlan:
             for dep in step.depends_on
         )
         if step.depends_on and not deps_met:
-            self._log("  Skipping — dependencies not met")
+            self._log("  Skipping -- dependencies not met")
             i += 1
             continue
 
@@ -375,7 +375,7 @@ def run_goal(self, goal: str, context: dict = {}) -> AgentPlan:
             replan_count = self._replan_counts.get(replan_key, 0)
 
             if replan_count >= self.MAX_REPLANS_PER_STEP:
-                self._log(f"  Replan budget exhausted for this step — skipping")
+                self._log(f"  Replan budget exhausted for this step -- skipping")
                 i += 1
                 continue
 
@@ -392,7 +392,7 @@ def run_goal(self, goal: str, context: dict = {}) -> AgentPlan:
             )
 
             if not alternatives:
-                self._log("  No alternatives found — skipping step")
+                self._log("  No alternatives found -- skipping step")
                 i += 1
                 continue
 
@@ -445,7 +445,7 @@ def explain_last_replans(self, plan: AgentPlan) -> str:
 
 # ── CLI entry point ───────────────────────────────────────────────────────────
 
-if **name** == “**main**”:
+if **name** == "**main**":
 import sys
 
 ```

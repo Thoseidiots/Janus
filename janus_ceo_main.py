@@ -277,28 +277,37 @@ class JanusCEOAutonomousAgent:
         logger.info(f"\n{'='*70}")
         logger.info(f"STARTING {self.name} - CEO-LEVEL AUTONOMOUS AGENT")
         logger.info(f"{'='*70}")
-        
+
         try:
             await self.initialize()
+
+            # Start the persistent scheduler in the background
+            try:
+                from janus_scheduler import start_scheduler_thread
+                self._scheduler = start_scheduler_thread()
+                logger.info("Persistent scheduler started in background")
+            except Exception as e:
+                logger.warning(f"Scheduler could not start: {e}")
+
             await self.autonomous_ceo_cycle(num_cycles)
-            
+
             # Generate summary
             summary = await self.generate_executive_summary()
-            
+
             logger.info(f"\n{'='*70}")
             logger.info("EXECUTIVE SUMMARY")
             logger.info(f"{'='*70}")
             logger.info(json.dumps(summary, indent=2))
-            
+
             # Save state
             self.ceo.save_state("ceo_state.json")
-            
+
             # Save learning history
             with open("learning_history.json", "w") as f:
                 json.dump(self.learning_history, f, indent=2)
-            
+
             logger.info("\n✓ CEO agent cycle completed successfully")
-            
+
         except KeyboardInterrupt:
             logger.info("\nShutdown signal received")
         except Exception as e:

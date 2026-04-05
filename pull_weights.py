@@ -1,8 +1,8 @@
-# “””
+﻿# """
 pull_weights.py
 
 Downloads Avus weights from Kaggle on demand.
-Run this once after cloning the repo — no Git LFS needed.
+Run this once after cloning the repo -- no Git LFS needed.
 
 Works on any platform: Windows (EliteDesk), Linux (Kaggle/Lightning), Mac.
 
@@ -12,7 +12,7 @@ python pull_weights.py
 Or import and call from any other script:
 from pull_weights import ensure_weights
 ensure_weights()
-“””
+"""
 
 import os
 import sys
@@ -32,23 +32,23 @@ REPO_ROOT = Path(**file**).parent
 
 # Kaggle dataset details
 
-KAGGLE_OWNER   = “ishmaelsears”
-KAGGLE_DATASET = “janus-avus-weights”
-WEIGHTS_FILE   = “avus_1b_weights.pt”
-CONFIG_FILE    = “config_avus_1b.json”
+KAGGLE_OWNER   = "ishmaelsears"
+KAGGLE_DATASET = "janus-avus-weights"
+WEIGHTS_FILE   = "avus_1b_weights.pt"
+CONFIG_FILE    = "config_avus_1b.json"
 
 # Local paths to save to
 
 WEIGHTS_PATH   = REPO_ROOT / WEIGHTS_FILE
 CONFIG_PATH    = REPO_ROOT / CONFIG_FILE
 
-# Expected file size in bytes (roughly 584MB — used for sanity check)
+# Expected file size in bytes (roughly 584MB -- used for sanity check)
 
 EXPECTED_MIN_SIZE = 500_000_000
 
 # Kaggle API endpoint
 
-KAGGLE_API_BASE = “https://www.kaggle.com/api/v1”
+KAGGLE_API_BASE = "https://www.kaggle.com/api/v1"
 
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -57,15 +57,15 @@ KAGGLE_API_BASE = “https://www.kaggle.com/api/v1”
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _load_kaggle_creds():
-“””
+"""
 Load Kaggle API credentials from:
 1. Environment variables KAGGLE_USERNAME and KAGGLE_KEY
 2. ~/.kaggle/kaggle.json
 3. kaggle.json in repo root (gitignored)
-“””
+"""
 # Environment variables
-username = os.environ.get(“KAGGLE_USERNAME”)
-key      = os.environ.get(“KAGGLE_KEY”)
+username = os.environ.get("KAGGLE_USERNAME")
+key      = os.environ.get("KAGGLE_KEY")
 if username and key:
 return username, key
 
@@ -95,9 +95,9 @@ return None, None
 
 def _download_with_progress(url: str, dest: Path,
 username: str, key: str) -> bool:
-“”“Download a file with a progress bar. Returns True on success.”””
+"""Download a file with a progress bar. Returns True on success."""
 import base64
-token = base64.b64encode(f”{username}:{key}”.encode()).decode()
+token = base64.b64encode(f"{username}:{key}".encode()).decode()
 
 ```
 req = urllib.request.Request(url)
@@ -141,14 +141,14 @@ except Exception as e:
 
 def _kaggle_download(filename: str, dest: Path,
 username: str, key: str) -> bool:
-“”“Download a file from the Kaggle dataset.”””
-url = (f”{KAGGLE_API_BASE}/datasets/{KAGGLE_OWNER}/”
-f”{KAGGLE_DATASET}/versions/latest/files/{filename}”)
-print(f”  Downloading {filename} from Kaggle…”)
+"""Download a file from the Kaggle dataset."""
+url = (f"{KAGGLE_API_BASE}/datasets/{KAGGLE_OWNER}/"
+f"{KAGGLE_DATASET}/versions/latest/files/{filename}")
+print(f"  Downloading {filename} from Kaggle…")
 return _download_with_progress(url, dest, username, key)
 
 def _check_file(path: Path, min_size: int = 0) -> bool:
-“”“Check if a file exists and meets minimum size.”””
+"""Check if a file exists and meets minimum size."""
 return path.exists() and path.stat().st_size >= min_size
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -158,7 +158,7 @@ return path.exists() and path.stat().st_size >= min_size
 # ─────────────────────────────────────────────────────────────────────────────
 
 def ensure_weights(force: bool = False) -> bool:
-“””
+"""
 Ensure avus_1b_weights.pt is present locally.
 Downloads from Kaggle if missing or if force=True.
 
@@ -197,17 +197,17 @@ else:
 ```
 
 def ensure_config(force: bool = False) -> bool:
-“””
+"""
 Ensure config_avus_1b.json is present locally.
 Downloads from Kaggle if missing.
-“””
+"""
 if not force and _check_file(CONFIG_PATH):
 return True
 
 ```
 username, key = _load_kaggle_creds()
 if not username or not key:
-    # Config is small — write the default
+    # Config is small -- write the default
     default = {
         "vocab_size":  50304,
         "dim":         768,
@@ -226,18 +226,18 @@ return ok and CONFIG_PATH.exists()
 ```
 
 def ensure_all(force: bool = False) -> bool:
-“”“Download both weights and config if needed.”””
+"""Download both weights and config if needed."""
 config_ok  = ensure_config(force)
 weights_ok = ensure_weights(force)
 return config_ok and weights_ok
 
 def setup_kaggle_credentials():
-“”“Interactive setup for Kaggle credentials.”””
-print(“Kaggle Credential Setup”)
-print(“─” * 40)
-print(“Go to https://www.kaggle.com/settings”)
-print(“Scroll to ‘API’ → ‘Create New Token’”)
-print(“This downloads kaggle.json with your username and key.”)
+"""Interactive setup for Kaggle credentials."""
+print("Kaggle Credential Setup")
+print("─" * 40)
+print("Go to https://www.kaggle.com/settings")
+print("Scroll to ‘API’ → ‘Create New Token’")
+print("This downloads kaggle.json with your username and key.")
 print()
 
 ```
@@ -271,7 +271,7 @@ print(f"Credentials saved to {dest}")
 
 # ─────────────────────────────────────────────────────────────────────────────
 
-if **name** == “**main**”:
+if **name** == "**main**":
 import argparse
 
 ```

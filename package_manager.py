@@ -1,8 +1,8 @@
-“””
+﻿"""
 Janus Package Manager
 Manages dependencies, libraries, and code modules autonomously
 Works offline with local package registry
-“””
+"""
 
 import json
 import os
@@ -18,21 +18,21 @@ import subprocess
 
 @dataclass
 class Package:
-“”“Represents a code package/library”””
+"""Represents a code package/library"""
 name: str
 version: str
 description: str
 author: str
 language: str
 files: Dict[str, str]  # relative_path -> content
-dependencies: List[str]  # [“package_name@version”]
+dependencies: List[str]  # ["package_name@version"]
 install_script: Optional[str] = None
 created_at: Optional[str] = None
 checksum: Optional[str] = None
 
 @dataclass
 class PackageMetadata:
-“”“Metadata for installed package”””
+"""Metadata for installed package"""
 name: str
 version: str
 install_path: str
@@ -41,7 +41,7 @@ size_bytes: int
 dependencies: List[str]
 
 class LocalPackageRegistry:
-“”“Local registry of available packages”””
+"""Local registry of available packages"""
 
 ```
 def __init__(self, registry_path: str = "/tmp/janus_packages"):
@@ -186,7 +186,7 @@ def _calculate_package_checksum(self, package: Package) -> str:
 ```
 
 class PackageInstaller:
-“”“Installs and manages installed packages”””
+"""Installs and manages installed packages"""
 
 ```
 def __init__(self, install_root: str = "/tmp/janus_installed"):
@@ -361,7 +361,7 @@ def _parse_dependency(self, dep: str) -> Tuple[str, str]:
 ```
 
 class PackageBuilder:
-“”“Builds packages from source code”””
+"""Builds packages from source code"""
 
 ```
 def __init__(self):
@@ -475,7 +475,7 @@ def build_from_directory(self, directory: Path, metadata: Dict) -> Package:
 ```
 
 class JanusPackageManager:
-“”“Main package manager for Janus”””
+"""Main package manager for Janus"""
 
 ```
 def __init__(self):
@@ -525,7 +525,7 @@ def factorial(n):
 if n <= 1:
 return 1
 return n * factorial(n - 1)
-“””
+"""
 },
 dependencies=[]
 )
@@ -562,7 +562,7 @@ return len(s.split())
 def to_title_case(s):
 ‘’‘Convert to title case’’’
 return ’ ’.join(word.capitalize() for word in s.split())
-“””
+"""
 },
 dependencies=[]
 )
@@ -613,7 +613,7 @@ def get_package_path(self, name: str, version: str = "latest") -> Optional[str]:
 ```
 
 def main():
-“”“Example usage”””
+"""Example usage"""
 pm = JanusPackageManager()
 
 ```
@@ -653,11 +653,11 @@ new_package = pm.builder.create_package_from_code(
 ```
 
 def greet(name):
-return f”Hello, {name}!”
+return f"Hello, {name}!"
 
 def add(a, b):
 return a + b
-“””
+"""
 }
 )
 

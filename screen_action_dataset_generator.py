@@ -1,11 +1,11 @@
-# “””
+﻿# """
 screen_action_dataset_generator.py
 
 Synthetic (screen_description, action_json) dataset generator for training
 Avus to interpret screen state and output desktop control actions.
 
 No real screenshots needed. Generates thousands of described UI states paired
-with the correct JSON action — same philosophy as Grade3DGeneration.
+with the correct JSON action -- same philosophy as Grade3DGeneration.
 
 Output format (matches skill_executor action types):
 <|startoftext|>{screen_description} [ACT_START] {action_json} [ACT_END]<|endoftext|>
@@ -19,7 +19,7 @@ pairs = gen.generate_dataset(samples=10_000)
 
 # pairs -> List[Tuple[str, str]]  (description, json_string)
 
-“””
+"""
 
 import json
 import random
@@ -32,69 +32,69 @@ from typing import List, Tuple
 # ─────────────────────────────────────────────────────────────────────────────
 
 APPS = [
-“Chrome”, “Firefox”, “Notepad”, “VS Code”, “File Explorer”,
-“Discord”, “Slack”, “Terminal”, “Paint”, “Excel”,
-“Word”, “Outlook”, “Task Manager”, “Settings”, “Calculator”,
+"Chrome", "Firefox", "Notepad", "VS Code", "File Explorer",
+"Discord", "Slack", "Terminal", "Paint", "Excel",
+"Word", "Outlook", "Task Manager", "Settings", "Calculator",
 ]
 
 WEBSITES = [
-“Google”, “YouTube”, “GitHub”, “Fiverr”, “Reddit”,
-“Twitter”, “LinkedIn”, “Gmail”, “Wikipedia”, “Stack Overflow”,
+"Google", "YouTube", "GitHub", "Fiverr", "Reddit",
+"Twitter", "LinkedIn", "Gmail", "Wikipedia", "Stack Overflow",
 ]
 
 BUTTON_LABELS = [
-“Submit”, “Cancel”, “OK”, “Close”, “Save”,
-“Login”, “Sign Up”, “Search”, “Next”, “Back”,
-“Download”, “Upload”, “Delete”, “Edit”, “Confirm”,
-“Apply”, “Reset”, “Send”, “Continue”, “Finish”,
+"Submit", "Cancel", "OK", "Close", "Save",
+"Login", "Sign Up", "Search", "Next", "Back",
+"Download", "Upload", "Delete", "Edit", "Confirm",
+"Apply", "Reset", "Send", "Continue", "Finish",
 ]
 
 INPUT_FIELDS = [
-“username”, “password”, “email”, “search bar”, “message box”,
-“title field”, “description field”, “URL bar”, “file name field”,
-“phone number field”, “zip code field”, “comment box”,
+"username", "password", "email", "search bar", "message box",
+"title field", "description field", "URL bar", "file name field",
+"phone number field", "zip code field", "comment box",
 ]
 
 MENU_ITEMS = [
-“File > Save”, “File > Open”, “File > New”, “Edit > Copy”,
-“Edit > Paste”, “Edit > Undo”, “View > Zoom In”, “View > Zoom Out”,
-“Tools > Settings”, “Help > About”,
+"File > Save", "File > Open", "File > New", "Edit > Copy",
+"Edit > Paste", "Edit > Undo", "View > Zoom In", "View > Zoom Out",
+"Tools > Settings", "Help > About",
 ]
 
 KEYBOARD_ACTIONS = [
-(“press Ctrl+C”, 0x43, “copy”),
-(“press Ctrl+V”, 0x56, “paste”),
-(“press Ctrl+Z”, 0x5A, “undo”),
-(“press Ctrl+S”, 0x53, “save”),
-(“press Escape”,  0x1B, “dismiss”),
-(“press Tab”,     0x09, “tab”),
-(“press Delete”,  0x2E, “delete selected”),
-(“press Ctrl+A”,  0x41, “select all”),
-(“press Ctrl+F”,  0x46, “open find”),
-(“press F5”,      0x74, “refresh”),
+("press Ctrl+C", 0x43, "copy"),
+("press Ctrl+V", 0x56, "paste"),
+("press Ctrl+Z", 0x5A, "undo"),
+("press Ctrl+S", 0x53, "save"),
+("press Escape",  0x1B, "dismiss"),
+("press Tab",     0x09, "tab"),
+("press Delete",  0x2E, "delete selected"),
+("press Ctrl+A",  0x41, "select all"),
+("press Ctrl+F",  0x46, "open find"),
+("press F5",      0x74, "refresh"),
 ]
 
 SCROLL_CONTEXTS = [
-“a long webpage”, “a list of search results”, “a file directory”,
-“a chat history”, “a code file”, “a settings panel”,
-“a dropdown menu”, “an image gallery”, “a log output”,
+"a long webpage", "a list of search results", "a file directory",
+"a chat history", "a code file", "a settings panel",
+"a dropdown menu", "an image gallery", "a log output",
 ]
 
 WAIT_REASONS = [
-“a loading spinner is visible”, “a progress bar is at 60%”,
-“a page is still loading”, “a download is in progress”,
-“an animation is playing”, “a video is buffering”,
+"a loading spinner is visible", "a progress bar is at 60%",
+"a page is still loading", "a download is in progress",
+"an animation is playing", "a video is buffering",
 ]
 
 DRAG_TARGETS = [
-“a file icon”, “a window title bar”, “a slider handle”,
-“a list item”, “an image thumbnail”,
+"a file icon", "a window title bar", "a slider handle",
+"a list item", "an image thumbnail",
 ]
 
 TEXT_TO_TYPE = [
-“Hello, world!”, “search query”, “my username”, “a short note”,
-“the file name”, “an email address”, “a URL”, “a password”,
-“Yes”, “No”, “Done”, “1234”, “test input”,
+"Hello, world!", "search query", "my username", "a short note",
+"the file name", "an email address", "a URL", "a password",
+"Yes", "No", "Done", "1234", "test input",
 ]
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -126,12 +126,12 @@ def _rf(a, b): return round(random.uniform(a, b), 2)
 # ─────────────────────────────────────────────────────────────────────────────
 
 class ScreenActionDataset:
-“””
+"""
 Generates synthetic (screen_description, action_json) pairs.
 
 ```
 Each sample is a realistic description of what Janus 'sees' on screen,
-paired with the correct action to take — formatted as JSON matching
+paired with the correct action to take -- formatted as JSON matching
 skill_executor's action dispatch.
 """
 
@@ -201,7 +201,7 @@ def _right_click_item(self):
     x, y   = _coord(w, h)
     desc = (f"The screen shows the desktop or file manager. "
             f"There is {target} at ({x}, {y}). "
-            f"A context menu is needed — right-click it.")
+            f"A context menu is needed -- right-click it.")
     action = {"type": "right_click", "x": x, "y": y}
     return desc, action
 
@@ -352,7 +352,7 @@ def _scroll_to_find(self):
 
 # ─────────────────────────────────────────────────────────────────────────────
 
-if **name** == “**main**”:
+if **name** == "**main**":
 gen   = ScreenActionDataset()
 pairs = gen.generate_dataset(samples=10_000)
 

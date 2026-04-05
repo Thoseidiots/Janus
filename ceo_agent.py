@@ -12,6 +12,19 @@ from enum import Enum
 
 logger = logging.getLogger("janus_ceo")
 
+# Lazy-load JanusBrain to avoid circular imports and slow startup
+_brain = None
+
+def _get_brain():
+    global _brain
+    if _brain is None:
+        try:
+            from avus_brain import get_brain
+            _brain = get_brain()
+        except Exception as e:
+            logger.warning(f"JanusBrain unavailable: {e} -- using heuristic fallback")
+    return _brain
+
 
 class GoalPriority(Enum):
     """Goal priority levels."""
@@ -250,16 +263,26 @@ class CEOAgent:
             recommendation=recommendation,
             reasoning=reasoning or f"Selected best risk-adjusted option (score: {evaluation['confidence']:.2f})"
         )
-        
+
         self.decisions[decision.id] = decision
-        
+
         self.strategy_log.append({
             "timestamp": datetime.now().isoformat(),
             "action": "decision_made",
             "context": context,
             "recommendation": recommendation
         })
-        
+
+        # Persist to identity
+        try:
+            from janus_identity import get_identity
+            get_identity().remember_decision(
+                decision=recommendation or context[:60],
+                reasoning=reasoning or f"Risk-adjusted score: {evaluation['confidence']:.2f}",
+            )
+        except Exception:
+            pass
+
         logger.info(f"Decision made: {recommendation} (confidence: {evaluation['confidence']:.2f})")
         return decision
     
@@ -426,32 +449,69 @@ class CEOAgent:
     def recommend_action(self, situation: str) -> Dict:
         """
         AI-powered recommendation based on current state.
-        No ML model needed - uses heuristics and goal alignment.
+        Uses JanusBrain if available, falls back to heuristics.
         """
-        
         financial_summary = self.get_financial_summary()
         active_goals = self.prioritize_goals()
-        
         recommendations = []
-        
-        # Financial health checks
+
+        # Try JanusBrain first
+        brain = _get_brain()
+        if brain and brain.is_loaded:
+            context = (
+                f"Cash: ${financial_summary['cash']:.0f}, "
+                f"Revenue: ${financial_summary['total_revenue']:.0f}, "
+                f"Expenses: ${financial_summary['total_expenses']:.0f}, "
+                f"Active goals: {len(active_goals)}. "
+                f"Situation: {situation}"
+            )
+            try:
+                ai_response = brain.solve(context, max_tokens=300)
+                if ai_response and len(ai_response) > 20:
+                    # Check confidence — escalate if too uncertain
+                    try:
+                        from janus_escalation import ConfidenceEvaluator, get_escalation_manager, EscalationTrigger
+                        evaluator = ConfidenceEvaluator()
+                        score = evaluator.score(ai_response)
+                        if score < 0.35:
+                            get_escalation_manager().escalate(
+                                title       = f"Low confidence decision: {situation[:50]}",
+                                description = (f"JanusBrain scored {score:.0%} confidence.\n\n"
+                                               f"Situation: {situation}\n\n"
+                                               f"Brain response: {ai_response[:300]}"),
+                                trigger     = EscalationTrigger.LOW_CONFIDENCE,
+                                context     = {"situation": situation, "score": score},
+                                options     = ["Accept brain response", "Provide manual guidance", "Skip"],
+                                default_option = "Skip",
+                            )
+                    except Exception:
+                        pass
+                    recommendations.append({
+                        "priority": "HIGH",
+                        "action": ai_response,
+                        "reason": "JanusBrain analysis",
+                        "steps": [],
+                    })
+            except Exception as e:
+                logger.warning(f"JanusBrain recommendation failed: {e}")
+
+        # Heuristic fallbacks
         if financial_summary["cash"] < 100:
             recommendations.append({
                 "priority": "CRITICAL",
                 "action": "Increase cash reserves",
                 "reason": "Low cash balance",
-                "steps": ["Execute revenue-generating skill", "Cut non-essential expenses"]
+                "steps": ["Execute revenue-generating skill", "Cut non-essential expenses"],
             })
-        
+
         if financial_summary["net_profit"] < 0:
             recommendations.append({
                 "priority": "HIGH",
                 "action": "Reduce expenses or increase revenue",
                 "reason": "Operating at a loss",
-                "steps": ["Audit expenses", "Launch revenue initiative"]
+                "steps": ["Audit expenses", "Launch revenue initiative"],
             })
-        
-        # Goal-aligned recommendations
+
         for goal in active_goals:
             if goal.status == GoalStatus.PENDING:
                 recommendations.append({
@@ -459,18 +519,17 @@ class CEOAgent:
                     "action": f"Start working toward: {goal.name}",
                     "reason": f"High priority goal with {(goal.current_value / goal.target_value * 100):.0f}% progress",
                     "target": f"{goal.target_value} {goal.metric}",
-                    "deadline": goal.deadline.isoformat()
+                    "deadline": goal.deadline.isoformat(),
                 })
-        
-        # Sort by priority
+
         priority_order = {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3}
         recommendations.sort(key=lambda x: priority_order.get(x["priority"], 4))
-        
+
         return {
             "situation": situation,
-            "recommendations": recommendations[:3],  # Top 3
+            "recommendations": recommendations[:3],
             "financial_health": financial_summary,
-            "active_goals": len(active_goals)
+            "active_goals": len(active_goals),
         }
     
     # ==================== REPORTING ====================
