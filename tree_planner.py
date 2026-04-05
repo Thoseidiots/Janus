@@ -1,6 +1,6 @@
-# tree_planner.py
+﻿# tree_planner.py
 
-“””
+"""
 Tree-of-Thought planner integrated with janus-brain components:
 
 - LLM adapter: wraps ByteLLM.generate() or any callable(prompt)->str
@@ -10,7 +10,7 @@ Tree-of-Thought planner integrated with janus-brain components:
 
 BFS with correct per-node depth termination, regex score extraction,
 beam-search path selection, and graceful degradation if LLM is untrained.
-“””
+"""
 
 from **future** import annotations
 
@@ -26,9 +26,9 @@ from typing import List, Optional, Callable, Dict, Any
 @dataclass
 class TreeNode:
 thought: str
-parent: Optional[“TreeNode”] = field(default=None, repr=False)
+parent: Optional["TreeNode"] = field(default=None, repr=False)
 id: str = field(default_factory=lambda: str(uuid.uuid4()))
-children: List[“TreeNode”] = field(default_factory=list)
+children: List["TreeNode"] = field(default_factory=list)
 score: float = 0.0
 depth: int = 0
 
@@ -41,10 +41,10 @@ def __post_init__(self):
 # ── LLM adapter ───────────────────────────────────────────────────────────────
 
 class LLMAdapter:
-“””
+"""
 Wraps whatever LLM backend Janus has.
 Priority: janus-brain ByteLLM → plain callable → stub.
-“””
+"""
 
 ```
 def __init__(self, llm=None):
@@ -79,21 +79,21 @@ def __call__(self, prompt: str, max_tokens: int = 200) -> str:
 
 @staticmethod
 def _stub(prompt: str) -> str:
-    """Fallback when no real LLM is available — returns template response."""
+    """Fallback when no real LLM is available -- returns template response."""
     if "rate feasibility" in prompt.lower():
-        return "0.5 — unable to score without active LLM."
+        return "0.5 -- unable to score without active LLM."
     return "1. Research the requirement\n2. Take the first low-cost action\n3. Validate the result"
 ```
 
 # ── Score extractor ───────────────────────────────────────────────────────────
 
-_SCORE_PATTERN = re.compile(r”\b(0.\d+|1.0|1)\b”)
+_SCORE_PATTERN = re.compile(r"\b(0.\d+|1.0|1)\b")
 
 def _extract_score(text: str) -> float:
-“””
+"""
 Scan entire LLM response for the first float in [0, 1].
 Much more robust than splitting on whitespace.
-“””
+"""
 matches = _SCORE_PATTERN.findall(text)
 if matches:
 try:
@@ -105,7 +105,7 @@ return 0.5
 # ── Neutral valence for memory storage ───────────────────────────────────────
 
 def _make_planning_valence(curiosity_boost: float = 0.0):
-“”“Create a ValenceVector for storing planning entries in memory.”””
+"""Create a ValenceVector for storing planning entries in memory."""
 try:
 import torch
 from janus_brain.homeostasis import ValenceVector
@@ -123,7 +123,7 @@ return None
 # ── TreePlanner ───────────────────────────────────────────────────────────────
 
 class TreePlanner:
-“””
+"""
 Tree-of-Thought planner using BFS with correct per-node depth gating,
 LLM-scored branch evaluation, and beam-search path selection.
 
@@ -382,7 +382,7 @@ def _nudge_curiosity(self, score: float):
 # ── Capability hub tool spec ──────────────────────────────────────────────────
 
 def make_tree_planner_tool(planner: TreePlanner) -> Dict[str, Any]:
-“””
+"""
 Returns a tool spec dict for registration into JanusCapabilityHub.
 
 ```
@@ -406,8 +406,8 @@ return {
         "a scored, feasibility-ranked sequence of actionable steps."
     ),
     "parameters":  {
-        "goal":    "str — the high-level goal to plan toward",
-        "context": "str (optional) — current situation or constraints",
+        "goal":    "str -- the high-level goal to plan toward",
+        "context": "str (optional) -- current situation or constraints",
     },
     "risk_level":  "low",
     "execute":     _execute,

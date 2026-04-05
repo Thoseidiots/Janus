@@ -1,13 +1,13 @@
-# video_observer.py
+﻿# video_observer.py
 
-“””
+"""
 Core video observation module for Janus.
 Captures a target window (browser playing YouTube/tutorial), runs motion
 detection, subtitle region scanning, scene summarisation, and feeds
 everything into Janus memory + goal planner.
 
-Windows-only: ctypes user32/gdi32/kernel32 only — no third-party deps.
-“””
+Windows-only: ctypes user32/gdi32/kernel32 only -- no third-party deps.
+"""
 
 import ctypes
 import ctypes.wintypes as wt
@@ -37,25 +37,25 @@ SM_CYSCREEN     = 1
 
 class BITMAPINFOHEADER(ctypes.Structure):
 *fields* = [
-(“biSize”,          ctypes.c_uint32),
-(“biWidth”,         ctypes.c_int32),
-(“biHeight”,        ctypes.c_int32),
-(“biPlanes”,        ctypes.c_uint16),
-(“biBitCount”,      ctypes.c_uint16),
-(“biCompression”,   ctypes.c_uint32),
-(“biSizeImage”,     ctypes.c_uint32),
-(“biXPelsPerMeter”, ctypes.c_int32),
-(“biYPelsPerMeter”, ctypes.c_int32),
-(“biClrUsed”,       ctypes.c_uint32),
-(“biClrImportant”,  ctypes.c_uint32),
+("biSize",          ctypes.c_uint32),
+("biWidth",         ctypes.c_int32),
+("biHeight",        ctypes.c_int32),
+("biPlanes",        ctypes.c_uint16),
+("biBitCount",      ctypes.c_uint16),
+("biCompression",   ctypes.c_uint32),
+("biSizeImage",     ctypes.c_uint32),
+("biXPelsPerMeter", ctypes.c_int32),
+("biYPelsPerMeter", ctypes.c_int32),
+("biClrUsed",       ctypes.c_uint32),
+("biClrImportant",  ctypes.c_uint32),
 ]
 
 class BITMAPINFO(ctypes.Structure):
-*fields* = [(“bmiHeader”, BITMAPINFOHEADER), (“bmiColors”, ctypes.c_uint32 * 3)]
+*fields* = [("bmiHeader", BITMAPINFOHEADER), ("bmiColors", ctypes.c_uint32 * 3)]
 
 class RECT(ctypes.Structure):
-*fields* = [(“left”, ctypes.c_long), (“top”, ctypes.c_long),
-(“right”, ctypes.c_long), (“bottom”, ctypes.c_long)]
+*fields* = [("left", ctypes.c_long), ("top", ctypes.c_long),
+("right", ctypes.c_long), ("bottom", ctypes.c_long)]
 
 # ── Frame dataclass ───────────────────────────────────────────────────────────
 
@@ -66,13 +66,13 @@ width:       int
 height:      int
 data:        bytearray          # raw BGRA bytes
 motion_score: float = 0.0
-subtitle_text: str  = “”
-scene_hash:  str    = “”
+subtitle_text: str  = ""
+scene_hash:  str    = ""
 
 # ── Window finder ─────────────────────────────────────────────────────────────
 
 def _find_window_by_title(partial_title: str) -> Optional[int]:
-“”“Enumerate top-level windows, return hwnd whose title contains partial_title.”””
+"""Enumerate top-level windows, return hwnd whose title contains partial_title."""
 found = ctypes.c_void_p(None)
 
 ```
@@ -146,7 +146,7 @@ return VideoFrame(
 # ── Motion detection (byte-level diff, no numpy) ─────────────────────────────
 
 def _compute_motion(prev: VideoFrame, curr: VideoFrame) -> float:
-“”“Returns 0.0–1.0 motion score via MAD on luminance-approximated samples.”””
+"""Returns 0.0–1.0 motion score via MAD on luminance-approximated samples."""
 if prev.width != curr.width or prev.height != curr.height:
 return 1.0   # size changed = treat as scene cut
 
@@ -178,11 +178,11 @@ return min(1.0, (total / n) / 10000.0)
 # ── Subtitle region scanner (bottom 15% of frame) ────────────────────────────
 
 def _scan_subtitle_region(frame: VideoFrame) -> str:
-“””
+"""
 Heuristic: scan bottom 15% of frame for high-contrast horizontal edges.
-Returns a simple description string — not OCR, but detects *presence* and
+Returns a simple description string -- not OCR, but detects *presence* and
 rough position of text-like edges for change tracking.
-“””
+"""
 w, h    = frame.width, frame.height
 sub_y   = int(h * 0.85)
 sub_h   = h - sub_y
@@ -231,12 +231,12 @@ return ""
 # ── Scene delta summariser ────────────────────────────────────────────────────
 
 def _summarise_delta(frames: List[VideoFrame]) -> str:
-“””
+"""
 Produce a plain-text learning summary from a sequence of frames.
 Uses motion scores, subtitle detections, and scene hash change rate.
-“””
+"""
 if not frames:
-return “No frames captured.”
+return "No frames captured."
 
 ```
 duration      = frames[-1].timestamp - frames[0].timestamp
@@ -255,9 +255,9 @@ lines = [
 if sub_frames:
     lines.append("Subtitle activity suggests spoken/captioned content.")
 if avg_motion > 0.08:
-    lines.append("High motion — likely fast-paced visual tutorial or demo.")
+    lines.append("High motion -- likely fast-paced visual tutorial or demo.")
 elif avg_motion < 0.002 and playing:
-    lines.append("Very low motion — likely slide-based or talking-head content.")
+    lines.append("Very low motion -- likely slide-based or talking-head content.")
 
 return " ".join(lines)
 ```
@@ -265,11 +265,11 @@ return " ".join(lines)
 # ── VideoObserver ─────────────────────────────────────────────────────────────
 
 class VideoObserver:
-“””
+"""
 Main video observation engine.  Runs a background capture thread that
 fills a ring buffer of VideoFrame objects.  Designed to be driven by
 the cognitive loop or called directly.
-“””
+"""
 
 ```
 BUFFER_SIZE  = 60       # frames kept in memory

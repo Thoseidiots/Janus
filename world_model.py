@@ -1,12 +1,12 @@
-“””
+﻿"""
 world_model.py
 ────────────────────────────────────────────────────────────
 Grounded causal world-model for Janus.
 During OBSERVE: records (state, action, next_state) transitions.
 During SLEEP:   replays + predicts trajectories to improve PLAN.
-No external API — lightweight local learning via tabular + simple
+No external API -- lightweight local learning via tabular + simple
 gradient-free model (expandable to a tiny neural net).
-“””
+"""
 
 import json
 import math
@@ -23,7 +23,7 @@ from collections import defaultdict
 
 @dataclass
 class WorldState:
-“”“Snapshot of the world at a point in time.”””
+"""Snapshot of the world at a point in time."""
 snapshot_id:  str
 timestamp:    str
 entities:     List[str]          # detected objects / people
@@ -36,7 +36,7 @@ metadata:     Dict[str, Any] = field(default_factory=dict)
 
 @dataclass
 class Transition:
-“””(state_t, action, state_t+1) triple for world-model training.”””
+"""(state_t, action, state_t+1) triple for world-model training."""
 transition_id: str
 state:         WorldState
 action:        str
@@ -46,7 +46,7 @@ timestamp:     str = field(default_factory=lambda: datetime.now().isoformat())
 
 @dataclass
 class Prediction:
-“”“Model’s prediction for next state given current state + action.”””
+"""Model’s prediction for next state given current state + action."""
 predicted_entities:  List[str]
 predicted_scene:     str
 predicted_valence:   Dict[str, float]
@@ -56,11 +56,11 @@ basis:               str         # which training examples supported this
 # ── Causal model (tabular + frequency-based) ───────────────────────────────────
 
 class TabularCausalModel:
-“””
+"""
 Lightweight tabular model: for each (scene_type, action) pair,
 tracks how often each entity / scene transition occurs.
 This is the seed; swap in a small neural net when ready.
-“””
+"""
 
 ```
 def __init__(self):
@@ -136,7 +136,7 @@ def to_dict(self) -> dict:
 # ── Replay buffer ──────────────────────────────────────────────────────────────
 
 class ReplayBuffer:
-“”“Circular buffer of Transition records used during sleep replay.”””
+"""Circular buffer of Transition records used during sleep replay."""
 
 ```
 def __init__(self, maxlen: int = 5000):
@@ -162,7 +162,7 @@ def __len__(self):
 # ── World model learner ────────────────────────────────────────────────────────
 
 class WorldModelLearner:
-“””
+"""
 Integrates with the cognitive loop:
 • OBSERVE phase  → record_transition()
 • PLAN phase     → predict() to estimate action outcomes

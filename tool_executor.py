@@ -1,4 +1,4 @@
-“””
+﻿"""
 tool_executor.py
 ────────────────────────────────────────────────────────────
 Dynamic tool invocation for Janus’s PROPOSE → VERIFY → APPLY loop.
@@ -6,7 +6,7 @@ Dynamic tool invocation for Janus’s PROPOSE → VERIFY → APPLY loop.
 Tools are registered with a risk tier.  High-risk tools run inside a
 subprocess sandbox (simulating the WASM wrapper from janus-wasm).
 Every call is appended to an append-only event trace on disk.
-“””
+"""
 
 import os
 import json
@@ -22,9 +22,9 @@ from pathlib import Path
 from enum import Enum
 
 class RiskTier(Enum):
-LOW    = “low”    # pure reads, memory queries  → auto-approved
-MEDIUM = “medium” # file writes, shell cmds      → logged + rate-limited
-HIGH   = “high”   # network, code exec           → sandboxed process
+LOW    = "low"    # pure reads, memory queries  → auto-approved
+MEDIUM = "medium" # file writes, shell cmds      → logged + rate-limited
+HIGH   = "high"   # network, code exec           → sandboxed process
 
 @dataclass
 class ToolSpec:
@@ -39,7 +39,7 @@ class ToolCall:
 call_id:   str
 tool:      str
 args:      Dict[str, Any]
-proposed_by: str = “janus”
+proposed_by: str = "janus"
 timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
 
 @dataclass
@@ -54,7 +54,7 @@ sandbox:    bool
 timestamp:  str = field(default_factory=lambda: datetime.now().isoformat())
 
 class EventTrace:
-“”“Append-only, tamper-evident log of all tool calls and results.”””
+"""Append-only, tamper-evident log of all tool calls and results."""
 
 ```
 def __init__(self, path: str = "event_trace.jsonl"):
@@ -80,7 +80,7 @@ def _hash(record: dict) -> str:
 ```
 
 class SandboxRunner:
-“”“Runs high-risk tools inside an isolated subprocess (WASM proxy).”””
+"""Runs high-risk tools inside an isolated subprocess (WASM proxy)."""
 
 ```
 TIMEOUT = 10  # seconds
@@ -97,33 +97,33 @@ def run(self, code: str, args: dict) -> Tuple[bool, Any, Optional[str]]:
 
 import json, sys
 args = json.loads(open(‘args.json’).read())
-out  = {{“result”: None, “error”: None}}
+out  = {{"result": None, "error": None}}
 try:
 {code}
-out[“result”] = result
+out["result"] = result
 except Exception as e:
-out[“error”] = str(e)
+out["error"] = str(e)
 open(‘out.json’, ‘w’).write(json.dumps(out))
-“””)
+""")
 try:
 proc = subprocess.run(
-[“python3”, str(script)],
+["python3", str(script)],
 cwd=tmpdir, capture_output=True,
 timeout=self.TIMEOUT
 )
 if out_file.exists():
 out = json.loads(out_file.read_text())
-if out.get(“error”):
-return False, None, out[“error”]
-return True, out.get(“result”), None
+if out.get("error"):
+return False, None, out["error"]
+return True, out.get("result"), None
 return False, None, proc.stderr.decode()[:300]
 except subprocess.TimeoutExpired:
-return False, None, f”Sandbox timeout ({self.TIMEOUT}s)”
+return False, None, f"Sandbox timeout ({self.TIMEOUT}s)"
 except Exception as e:
 return False, None, str(e)
 
 class ToolRegistry:
-“”“Holds all registered tools.”””
+"""Holds all registered tools."""
 
 ```
 def __init__(self):
@@ -148,7 +148,7 @@ def list_all(self) -> List[dict]:
 ```
 
 class ToolExecutor:
-“””
+"""
 Orchestrates the PROPOSE → VERIFY → APPLY pipeline for tool calls.
 
 ```

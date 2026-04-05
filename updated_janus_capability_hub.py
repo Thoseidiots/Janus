@@ -1,10 +1,10 @@
-# updated_janus_capability_hub.py
+﻿# updated_janus_capability_hub.py
 
-“””
+"""
 Full replacement for janus_capability_hub.py.
 Auto-registers video_capability on init alongside all existing capabilities.
 Exposes dispatch_action() and a tool_executor-compatible interface.
-“””
+"""
 
 from **future** import annotations
 
@@ -14,7 +14,7 @@ import time
 from typing import Any, Callable, Dict, List, Optional
 
 class JanusCapabilityHub:
-“””
+"""
 Central registry for all Janus tool capabilities.
 
 ```

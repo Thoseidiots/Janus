@@ -1,11 +1,11 @@
-# updated_enhanced_vision.py
+﻿# updated_enhanced_vision.py
 
-“””
+"""
 Full replacement for enhanced_vision.py.
 Adds temporal video analysis methods to EnhancedVisionProcessor while
 keeping all original single-frame functionality intact.
-All processing is pure Python + ctypes — no third-party imports.
-“””
+All processing is pure Python + ctypes -- no third-party imports.
+"""
 
 import ctypes
 import ctypes.wintypes as wt
@@ -37,7 +37,7 @@ count += 1
 return total / count if count else 0.0
 
 def _histogram(frame: VideoFrame, bins: int = 16) -> List[float]:
-“”“Compute normalised luminance histogram over the whole frame.”””
+"""Compute normalised luminance histogram over the whole frame."""
 counts = [0] * bins
 bin_w  = 256 // bins
 data   = frame.data
@@ -55,7 +55,7 @@ return [c / n for c in counts]
 # ── EnhancedVisionProcessor ───────────────────────────────────────────────────
 
 class EnhancedVisionProcessor:
-“””
+"""
 Processes VideoFrame objects (and sequences) to extract perceptual
 features useful for Janus learning.
 
@@ -226,18 +226,18 @@ def summarize_scene_delta(self, frames: List[VideoFrame]) -> str:
     ]
 
     if ct == "tutorial_with_captions":
-        lines.append("Likely instructional content with captions — high learning value.")
+        lines.append("Likely instructional content with captions -- high learning value.")
     elif ct == "slide_or_talking_head":
-        lines.append("Slide/lecture format — dense information delivery likely.")
+        lines.append("Slide/lecture format -- dense information delivery likely.")
     elif ct == "fast_paced_demo":
-        lines.append("Fast demo — visual coding or hardware walkthrough possible.")
+        lines.append("Fast demo -- visual coding or hardware walkthrough possible.")
     elif ct == "paused_or_static":
         lines.append("Video appears paused or at a static frame.")
 
     if tc > 5:
-        lines.append(f"Text/subtitle region changed {tc} times — active captioning detected.")
+        lines.append(f"Text/subtitle region changed {tc} times -- active captioning detected.")
     if motion > 0.05:
-        lines.append("High visual activity — frequent screen changes or animations.")
+        lines.append("High visual activity -- frequent screen changes or animations.")
 
     return " ".join(lines)
 

@@ -1,8 +1,8 @@
-“””
+﻿"""
 Janus Unified Perception System
 Integrates vision, voice, and multi-modal fusion with existing Janus core
 Provides grounded episodic memory and continuous sensing
-“””
+"""
 
 import threading
 import time
@@ -33,7 +33,7 @@ Memory = None
 Consciousness = None
 
 class PerceptionConfig:
-“”“Configuration for perception system”””
+"""Configuration for perception system"""
 def **init**(self):
 # Vision settings
 self.enable_vision = True
@@ -59,10 +59,10 @@ self.vision_fps = 10
 ```
 
 class UnifiedPerceptionSystem:
-“””
+"""
 Unified perception system for Janus
 Integrates vision, voice, and multi-modal fusion
-“””
+"""
 
 ```
 def __init__(self, 
@@ -450,8 +450,8 @@ def _print_statistics(self):
 ```
 
 def main():
-“”“Demo of unified perception system”””
-print(”=== Janus Unified Perception System Demo ===\n”)
+"""Demo of unified perception system"""
+print("=== Janus Unified Perception System Demo ===\n")
 
 ```
 # Create configuration

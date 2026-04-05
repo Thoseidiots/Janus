@@ -1,4 +1,4 @@
-# “””
+﻿# """
 train_avus_kaggle.py
 
 Self-contained Avus training script for Kaggle Notebooks.
@@ -6,19 +6,19 @@ Self-contained Avus training script for Kaggle Notebooks.
 Setup (do once before running):
 
 1. Upload avus_1b_weights.pt + config_avus_1b.json + model.py + avus_tokenizer.py
-   as a Kaggle Dataset called “janus-avus-weights”
+   as a Kaggle Dataset called "janus-avus-weights"
 1. In your Kaggle Notebook:
 - Accelerator: GPU T4 x2
-- Add dataset: your “janus-avus-weights” dataset
+- Add dataset: your "janus-avus-weights" dataset
 - Add dataset: your Janus repo (or upload model.py manually)
 1. Paste this entire script into a notebook cell and run.
 
 After every epoch weights are saved back to /kaggle/working/avus_1b_weights.pt
 At the end of the session download them from the Kaggle output panel,
-re-upload to your “janus-avus-weights” dataset to persist for next session.
+re-upload to your "janus-avus-weights" dataset to persist for next session.
 
 Or use the auto-push cell at the bottom to push via Kaggle API automatically.
-“””
+"""
 
 import os
 import sys
@@ -40,20 +40,20 @@ from torch.utils.data import Dataset, DataLoader
 
 # ─────────────────────────────────────────────
 
-KAGGLE_INPUT    = “/kaggle/input”
-KAGGLE_WORKING  = “/kaggle/working”
-DATASET_NAME    = “janus-avus-weights”   # your Kaggle dataset slug
+KAGGLE_INPUT    = "/kaggle/input"
+KAGGLE_WORKING  = "/kaggle/working"
+DATASET_NAME    = "janus-avus-weights"   # your Kaggle dataset slug
 
 # Where weights live coming IN (read-only Kaggle input mount)
 
-WEIGHTS_IN      = os.path.join(KAGGLE_INPUT, DATASET_NAME, “avus_1b_weights.pt”)
-CONFIG_IN       = os.path.join(KAGGLE_INPUT, DATASET_NAME, “config_avus_1b.json”)
-MODEL_IN        = os.path.join(KAGGLE_INPUT, DATASET_NAME, “model.py”)
+WEIGHTS_IN      = os.path.join(KAGGLE_INPUT, DATASET_NAME, "avus_1b_weights.pt")
+CONFIG_IN       = os.path.join(KAGGLE_INPUT, DATASET_NAME, "config_avus_1b.json")
+MODEL_IN        = os.path.join(KAGGLE_INPUT, DATASET_NAME, "model.py")
 
 # Where weights go OUT (writeable, download from output panel)
 
-WEIGHTS_OUT     = os.path.join(KAGGLE_WORKING, “avus_1b_weights.pt”)
-CONFIG_OUT      = os.path.join(KAGGLE_WORKING, “config_avus_1b.json”)
+WEIGHTS_OUT     = os.path.join(KAGGLE_WORKING, "avus_1b_weights.pt")
+CONFIG_OUT      = os.path.join(KAGGLE_WORKING, "config_avus_1b.json")
 
 # ─────────────────────────────────────────────
 
@@ -64,7 +64,7 @@ CONFIG_OUT      = os.path.join(KAGGLE_WORKING, “config_avus_1b.json”)
 try:
 import tiktoken
 except ImportError:
-os.system(“pip install tiktoken -q”)
+os.system("pip install tiktoken -q")
 import tiktoken
 
 # ─────────────────────────────────────────────
@@ -78,28 +78,28 @@ import shutil
 # Copy model.py from dataset input to working dir so we can import it
 
 if os.path.exists(MODEL_IN):
-shutil.copy(MODEL_IN, os.path.join(KAGGLE_WORKING, “model.py”))
-print(f”Copied model.py from dataset.”)
-elif os.path.exists(”/kaggle/input/janus-repo/model.py”):
-shutil.copy(”/kaggle/input/janus-repo/model.py”,
-os.path.join(KAGGLE_WORKING, “model.py”))
-print(“Copied model.py from repo dataset.”)
+shutil.copy(MODEL_IN, os.path.join(KAGGLE_WORKING, "model.py"))
+print(f"Copied model.py from dataset.")
+elif os.path.exists("/kaggle/input/janus-repo/model.py"):
+shutil.copy("/kaggle/input/janus-repo/model.py",
+os.path.join(KAGGLE_WORKING, "model.py"))
+print("Copied model.py from repo dataset.")
 else:
 # Last resort: check current dir
-assert os.path.exists(“model.py”), (
-“model.py not found. Add your Janus repo as a Kaggle dataset “
-“or include model.py in the janus-avus-weights dataset.”
+assert os.path.exists("model.py"), (
+"model.py not found. Add your Janus repo as a Kaggle dataset "
+"or include model.py in the janus-avus-weights dataset."
 )
 
 if KAGGLE_WORKING not in sys.path:
 sys.path.insert(0, KAGGLE_WORKING)
 
-if “model” in sys.modules:
-del sys.modules[“model”]
+if "model" in sys.modules:
+del sys.modules["model"]
 import model as _m
 importlib.reload(_m)
 from model import C, Avus
-print(“Avus model loaded.”)
+print("Avus model loaded.")
 
 # ─────────────────────────────────────────────
 
@@ -108,12 +108,12 @@ print(“Avus model loaded.”)
 # ─────────────────────────────────────────────
 
 DEFAULT_CONFIG = {
-“vocab_size”:  50304,
-“dim”:         768,
-“n_layers”:    12,
-“n_heads”:     12,
-“n_kv_heads”:  4,
-“max_seq_len”: 512
+"vocab_size":  50304,
+"dim":         768,
+"n_layers":    12,
+"n_heads":     12,
+"n_kv_heads":  4,
+"max_seq_len": 512
 }
 
 # Load from dataset if available, else use default
@@ -122,15 +122,15 @@ if os.path.exists(CONFIG_IN):
 with open(CONFIG_IN) as f:
 cfg = json.load(f)
 # Clamp max_seq_len to avoid OOM
-cfg[“max_seq_len”] = min(cfg.get(“max_seq_len”, 512), 512)
-print(f”Config loaded from dataset: {cfg}”)
+cfg["max_seq_len"] = min(cfg.get("max_seq_len", 512), 512)
+print(f"Config loaded from dataset: {cfg}")
 else:
 cfg = DEFAULT_CONFIG
-print(f”Using default config: {cfg}”)
+print(f"Using default config: {cfg}")
 
 # Save config to output so it travels with the weights
 
-with open(CONFIG_OUT, “w”) as f:
+with open(CONFIG_OUT, "w") as f:
 json.dump(cfg, f, indent=2)
 
 # ─────────────────────────────────────────────
@@ -141,7 +141,7 @@ json.dump(cfg, f, indent=2)
 
 class AvusTokenizer:
 def **init**(self):
-self._enc = tiktoken.get_encoding(“gpt2”)
+self._enc = tiktoken.get_encoding("gpt2")
 
 ```
 def encode(self, text: str, allowed_special: Set[str] = None) -> List[int]:
@@ -167,16 +167,16 @@ def decode(self, tokens: List[int]) -> str:
 
 class Grade3DGeneration:
 ADJECTIVES = [
-“ancient”, “mystical”, “glowing”, “rusty”, “futuristic”,
-“organic”, “sharp”, “smooth”, “rugged”, “floating”,
-“massive”, “tiny”, “vibrant”, “monochromatic”, “crystalline”
+"ancient", "mystical", "glowing", "rusty", "futuristic",
+"organic", "sharp", "smooth", "rugged", "floating",
+"massive", "tiny", "vibrant", "monochromatic", "crystalline"
 ]
 OBJECTS = [
-“rock”, “tree”, “crystal”, “pillar”, “gateway”,
-“chest”, “barrel”, “lantern”, “statue”, “ruin”
+"rock", "tree", "crystal", "pillar", "gateway",
+"chest", "barrel", "lantern", "statue", "ruin"
 ]
-PRIMITIVES = [“box”, “sphere”, “cylinder”, “torus”]
-MATERIALS  = [“stone”, “wood”, “metal”, “plastic”]
+PRIMITIVES = ["box", "sphere", "cylinder", "torus"]
+MATERIALS  = ["stone", "wood", "metal", "plastic"]
 
 ```
 def __init__(self):
@@ -272,16 +272,16 @@ def generate_dataset(self, samples=10_000, seed=42):
 # ─────────────────────────────────────────────
 
 class ScreenActionDataset:
-APPS    = [“Chrome”,“Firefox”,“Notepad”,“VS Code”,“File Explorer”,
-“Discord”,“Slack”,“Terminal”,“Excel”,“Word”]
-BUTTONS = [“Submit”,“Cancel”,“OK”,“Close”,“Save”,“Login”,“Search”,
-“Next”,“Back”,“Download”,“Delete”,“Edit”,“Confirm”]
-FIELDS  = [“username”,“password”,“email”,“search bar”,“message box”,
-“title field”,“URL bar”,“comment box”]
-SCROLL_CTX = [“a long webpage”,“a list of search results”,
-“a file directory”,“a chat history”,“a code file”]
-TEXT    = [“Hello, world!”,“search query”,“my username”,“a short note”,
-“the file name”,“an email address”,“a URL”,“1234”]
+APPS    = ["Chrome","Firefox","Notepad","VS Code","File Explorer",
+"Discord","Slack","Terminal","Excel","Word"]
+BUTTONS = ["Submit","Cancel","OK","Close","Save","Login","Search",
+"Next","Back","Download","Delete","Edit","Confirm"]
+FIELDS  = ["username","password","email","search bar","message box",
+"title field","URL bar","comment box"]
+SCROLL_CTX = ["a long webpage","a list of search results",
+"a file directory","a chat history","a code file"]
+TEXT    = ["Hello, world!","search query","my username","a short note",
+"the file name","an email address","a URL","1234"]
 RESOLUTIONS = [(1920,1080),(1366,768),(2560,1440),(1280,720)]
 
 ```
@@ -379,18 +379,18 @@ def generate_dataset(self, samples=10_000, seed=99):
 # ─────────────────────────────────────────────
 
 class CombinedTextDataset(Dataset):
-“””
+"""
 Tokenises both 3D curriculum and screen-action pairs.
 3D uses [JSON_START]/[JSON_END] tags.
 Screen-action uses [ACT_START]/[ACT_END] tags.
-“””
+"""
 def **init**(self, pairs_3d, pairs_sa, tokenizer, block_size):
 self.block_size = block_size
 self.data: List[List[int]] = []
-special = {”<|startoftext|>”,”<|endoftext|>”,
-“[JSON_START]”,”[JSON_END]”,
-“[ACT_START]”,”[ACT_END]”}
-pad_id = tokenizer.encode(”<|endoftext|>”, allowed_special=special)[0]
+special = {"<|startoftext|>","<|endoftext|>",
+"[JSON_START]","[JSON_END]",
+"[ACT_START]","[ACT_END]"}
+pad_id = tokenizer.encode("<|endoftext|>", allowed_special=special)[0]
 
 ```
     # 3D pairs
@@ -472,7 +472,7 @@ elif os.path.exists(WEIGHTS_OUT):
     model.load_state_dict(sd, strict=False)
     print(f"Resumed from {WEIGHTS_OUT}")
 else:
-    print("No existing weights — training from scratch.")
+    print("No existing weights -- training from scratch.")
 
 # ── datasets ──
 tokenizer = AvusTokenizer()
@@ -541,5 +541,5 @@ return model
 
 # ─────────────────────────────────────────────
 
-if **name** == “**main**”:
+if **name** == "**main**":
 train(epochs=20, samples_per_curriculum=10_000)

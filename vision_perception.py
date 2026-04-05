@@ -1,8 +1,8 @@
-“””
+﻿"""
 Janus Vision Perception System
 Real-time camera input, object detection, scene understanding, and visual memory
 No external API dependencies - uses local models only
-“””
+"""
 
 import cv2
 import numpy as np
@@ -17,7 +17,7 @@ import time
 
 @dataclass
 class DetectedObject:
-“”“Represents a detected object in the visual field”””
+"""Represents a detected object in the visual field"""
 object_id: str
 class_name: str
 confidence: float
@@ -28,7 +28,7 @@ features: Optional[Dict[str, Any]] = None
 
 @dataclass
 class SceneContext:
-“”“High-level scene understanding”””
+"""High-level scene understanding"""
 scene_id: str
 timestamp: str
 objects: List[DetectedObject]
@@ -42,7 +42,7 @@ summary: str
 
 @dataclass
 class VisualMemory:
-“”“Visual episodic memory entry”””
+"""Visual episodic memory entry"""
 memory_id: str
 timestamp: str
 scene: SceneContext
@@ -51,7 +51,7 @@ emotional_valence: float  # -1 to 1
 linked_events: List[str]
 
 class ObjectDetector:
-“”“Local object detection using OpenCV DNN”””
+"""Local object detection using OpenCV DNN"""
 
 ```
 def __init__(self, model_type: str = 'mobilenet'):
@@ -161,7 +161,7 @@ def _classify_by_shape(self, contour, area) -> str:
 ```
 
 class SceneAnalyzer:
-“”“Analyzes overall scene context”””
+"""Analyzes overall scene context"""
 
 ```
 def analyze_scene(self, frame: np.ndarray, objects: List[DetectedObject]) -> SceneContext:
@@ -287,7 +287,7 @@ def _generate_scene_summary(self, objects: List[DetectedObject],
 ```
 
 class VisionPerceptionSystem:
-“”“Main vision perception system with real-time processing”””
+"""Main vision perception system with real-time processing"""
 
 ```
 def __init__(self, camera_id: int = 0, memory_dir: str = "/tmp/janus_vision"):
@@ -550,8 +550,8 @@ def display_live_feed(self):
 ```
 
 def main():
-“”“Demo of vision perception system”””
-print(”=== Janus Vision Perception System Demo ===\n”)
+"""Demo of vision perception system"""
+print("=== Janus Vision Perception System Demo ===\n")
 
 ```
 # Create perception system
