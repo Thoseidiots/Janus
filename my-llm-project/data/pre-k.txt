@@ -1,0 +1,48 @@
+Prompt: The ball is in the box. I carry the box to the kitchen. Where is the ball?
+Target: The ball is in the box in the kitchen.
+
+Prompt: The ball is in the bag. I carry the bag to the kitchen. Where is the ball?
+Target: The ball is in the bag in the kitchen.
+
+Prompt: The ball is in the drawer. I carry the drawer to the kitchen. Where is the ball?
+Target: The ball is in the drawer in the kitchen.
+
+Prompt: The ball is in the cupboard. I carry the cupboard to the kitchen. Where is the ball?
+Target: The ball is in the cupboard in the kitchen.
+
+Prompt: The toy is in the box. I carry the box to the kitchen. Where is the toy?
+Target: The toy is in the box in the kitchen.
+
+Prompt: The toy is in the bag. I carry the bag to the kitchen. Where is the toy?
+Target: The toy is in the bag in the kitchen.
+
+Prompt: The toy is in the drawer. I carry the drawer to the kitchen. Where is the toy?
+Target: The toy is in the drawer in the kitchen.
+
+Prompt: The toy is in the cupboard. I carry the cupboard to the kitchen. Where is the toy?
+Target: The toy is in the cupboard in the kitchen.
+
+Prompt: The spoon is in the box. I carry the box to the kitchen. Where is the spoon?
+Target: The spoon is in the box in the kitchen.
+
+Prompt: The spoon is in the bag. I carry the bag to the kitchen. Where is the spoon?
+Target: The spoon is in the bag in the kitchen.
+
+Prompt: The spoon is in the drawer. I carry the drawer to the kitchen. Where is the spoon?
+Target: The spoon is in the drawer in the kitchen.
+
+Prompt: The spoon is in the cupboard. I carry the cupboard to the kitchen. Where is the spoon?
+Target: The spoon is in the cupboard in the kitchen.
+
+Prompt: The sock is in the box. I carry the box to the kitchen. Where is the sock?
+Target: The sock is in the box in the kitchen.
+
+Prompt: The sock is in the bag. I carry the bag to the kitchen. Where is the sock?
+Target: The sock is in the bag in the kitchen.
+
+Prompt: The sock is in the drawer. I carry the drawer to the kitchen. Where is the sock?
+Target: The sock is in the drawer in the kitchen.
+
+Prompt: The sock is in the cupboard. I carry the cupboard to the kitchen. Where is the sock?
+Target: The sock is in the cupboard in the kitchen.
+

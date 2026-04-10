@@ -1,0 +1,11 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Observe",
+  "type": "object",
+  "properties": {
+    "timestamp": { "type": "string", "format": "date-time" },
+    "source": { "type": "string" },
+    "data": { "type": "object" }
+  },
+  "required": ["timestamp", "source", "data"]
+}

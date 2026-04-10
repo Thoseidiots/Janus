@@ -1,0 +1,13 @@
+[workspace]
+resolver = "2"
+members = [
+    "engine-core",
+    "engine-renderer",
+    "engine-physics",
+    "engine-audio",
+    "engine-scripting",
+    "engine-assets",
+    "engine-editor",
+    "engine-build",
+    "engine-runtime",
+]
