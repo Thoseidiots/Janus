@@ -1,0 +1,53 @@
+warning: unused imports: `ComponentData`, `FieldValue`, `SceneEntityData`, `SceneMetadata`, and `SceneSerializer`
+ --> engine-core\src\scene_manager.rs:2:20
+  |
+2 | ...::{ComponentData, FieldValue, SceneData, SceneEntityData, SceneId, SceneMetadata, SceneSerializer};
+  |       ^^^^^^^^^^^^^  ^^^^^^^^^^             ^^^^^^^^^^^^^^^           ^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `ln`
+   --> engine-core\src\scene.rs:174:25
+    |
+174 | ...et ln = se...
+    |       ^^ help: if this is intentional, prefix it with an underscore: `_ln`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: `engine-core` (lib) generated 2 warnings (run `cargo fix --lib -p engine-core` to apply 2 suggestions)
+warning: field `stack` is never read
+  --> engine-scripting\src\vm.rs:12:5
+   |
+11 | pub struct VirtualMachine {
+   |            -------------- field in this struct
+12 |     stack: Vec<f64>,
+   |     ^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+   Compiling engine-renderer v0.1.0 (C:\Users\legac\Downloads\Janus-main\Janus-main\oss-game-engine\engine-renderer)
+warning: `engine-scripting` (lib) generated 1 warning
+warning: unused variable: `data`
+   --> engine-assets\src\lib.rs:247:25
+    |
+247 | ...me(data) =...
+    |       ^^^^ help: if this is intentional, prefix it with an underscore: `_data`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: `engine-assets` (lib) generated 1 warning (run `cargo fix --lib -p engine-assets` to apply 1 suggestion)
+error[E0046]: not all trait items implemented, missing: `as_any`, `as_any_mut`
+  --> engine-renderer\src\dx12_backend.rs:17:5
+   |
+17 |     impl GfxBackend for Dx12Backend {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ missing `as_any`, `as_any_mut` in implementation
+   |
+  ::: engine-renderer\src\backend.rs:11:5
+   |
+11 |     fn as_any(&self) -> &dyn Any;
+   |     ----------------------------- `as_any` from trait
+12 |     fn as_any_mut(&mut self) -> &mut dyn Any;
+   |     ----------------------------------------- `as_any_mut` from trait
+
+For more information about this error, try `rustc --explain E0046`.
+error: could not compile `engine-renderer` (lib) due to 1 previous error
