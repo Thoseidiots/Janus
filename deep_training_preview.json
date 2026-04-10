@@ -1,0 +1,19 @@
+{
+  "total": 600,
+  "generators": [
+    "ReasoningGenerator",
+    "LanguageGenerator",
+    "CodeGenerator",
+    "PlanningGenerator",
+    "MemoryRecallGenerator",
+    "VisionDescriptionGenerator"
+  ],
+  "sample_count_each": 100,
+  "preview_first_5": [
+    "<|startoftext|>\n[Reasoning | Difficulty 3]\n\nSyllogism:\n  Major premise: All clever beings are brave.\n  Minor premise: All brave beings are fast.\n  Fact: Carol is clever. Bob is brave but not clever. Frank is neither clever nor brave.\nQuestion: Which of Carol, Bob, Frank must be fast?\nAnswer: Carol must be fast (chain: clever→brave→fast). Bob must also be fast (direct: brave→fast). Frank cannot be determined from these premises.\n<|endoftext|>",
+    "<|startoftext|>\n[Reasoning | Difficulty 2]\n\nPremise 1: All brave people are strong.\nPremise 2: Bob is brave.\nPremise 3: Frank is not brave.\nQuestion: Is Bob strong? Is Frank strong?\nAnswer: Bob is strong (follows from premises 1 and 2). We cannot conclude Frank is strong from these premises alone.\n<|endoftext|>",
+    "<|startoftext|>\n[Reasoning | Difficulty 5]\n\nContradiction resolution:\n  Statement 1: Carol is always clever.\n  Statement 2: No one who is clever can own a ring.\n  Statement 3: Carol owns a ring.\n  Statement 4: Frank claims Carol is not clever.\nQuestion: Is there a contradiction? How can it be resolved?\nAnswer: Yes, statements 1, 2, and 3 form a contradiction. If Carol is always clever (S1) and no clever person can own a ring (S2), then Carol cannot own a ring — but S3 says they do. Resolution options: (a) S1 is false — Carol is not always clever; (b) S2 has exceptions; (c) S3 is false. Frank's claim (S4) supports resolution (a): Carol is not clever, making S3 consistent with S2.\n<|endoftext|>",
+    "<|startoftext|>\n[Reasoning | Difficulty 4]\n\nCausal chain analysis:\n  Event: the timer expired.\n  Direct effect: a backup was activated.\n  Branch: If the team is honest, then the team had to adapt is also triggered.\n  Fact: Eve's team is honest.\nQuestion: What are all the effects?\nAnswer: Primary effect is 'a backup was activated'. Because Eve's team is honest, the secondary effect 'the team had to adapt' is also triggered. Total effects: [a backup was activated] and [the team had to adapt].\n<|endoftext|>",
+    "<|startoftext|>\n[Reasoning | Difficulty 3]\n\nSyllogism:\n  Major premise: All clever beings are tall.\n  Minor premise: All tall beings are fast.\n  Fact: Frank is clever. Dave is tall but not clever. Eve is neither clever nor tall.\nQuestion: Which of Frank, Dave, Eve must be fast?\nAnswer: Frank must be fast (chain: clever→tall→fast). Dave must also be fast (direct: tall→fast). Eve cannot be determined from these premises.\n<|endoftext|>"
+  ]
+}

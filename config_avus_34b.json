@@ -1,0 +1,12 @@
+{
+  "vocab_size": 50304,
+  "dim": 7168,
+  "n_layers": 48,
+  "n_heads": 56,
+  "n_kv_heads": 8,
+  "ffn_hidden": 19200,
+  "max_seq_len": 4096,
+  "dropout": 0.0,
+  "eps": 1e-5,
+  "model_type": "avus-34b"
+}
