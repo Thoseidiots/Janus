@@ -1,0 +1,9 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+command: >-
+  python my-llm-project/trainer/task_game.py
+code: .
+environment: azureml:AzureML-ACPT-pytorch-1.13-py38-cuda11.7-gpu@latest
+compute: azureml:cpu-cluster
+display_name: avus-1b-game-training
+experiment_name: avus-game-training
+description: Final consolidated training run for Avus 1.1B on AAA game architecture and procedural generation.
