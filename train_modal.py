@@ -43,8 +43,17 @@ image = (
         "matplotlib",
         "numpy",
     )
-    .add_local_dir(".", remote_path="/repo",
-                   copy=True)
+    .add_local_python_source(
+        "avus",
+        "avus_inference",
+        "avus_brain",
+        "avus_tokenizer",
+        "skill_curriculum",
+        "deep_training_data",
+        "procedural_dataset",
+        "gradient_battery",
+        "holographic_brain_memory",
+    )
 )
 
 # ── Training config ───────────────────────────────────────────────────────────
@@ -55,8 +64,8 @@ MODEL_HEADS    = 16
 MODEL_KV_HEADS = 8
 MODEL_FFN      = 5120
 SEQ_LEN        = 512    # full 512 — A10G has 24GB, no need to reduce
-BATCH_SIZE     = 2      # safe for 900M on A10G with grad checkpointing
-GRAD_ACCUM     = 16     # effective batch = 32
+BATCH_SIZE     = 1      # reduced to fit optimizer states in 24GB
+GRAD_ACCUM     = 32     # effective batch = 32
 EPOCHS         = 20
 SAMPLES_PER    = 10_000
 WEIGHTS_PATH   = "/weights/avus_1b_weights.pt"
@@ -89,9 +98,8 @@ def train():
     print(f"Device: {torch.cuda.get_device_name(0)}")
     print(f"VRAM: {torch.cuda.get_device_properties(0).total_memory/1e9:.1f} GB")
 
-    # ── Add repo to path ──────────────────────────────────────────────────────
-    # Files are copied into the container via modal.Mount
-    sys.path.insert(0, "/repo")
+    # Files are added via add_local_python_source — importable directly
+    sys.path.insert(0, "/root")
 
     from avus import Avus, AvusConfig
     from skill_curriculum import SkillTree, CurriculumSampler
@@ -121,7 +129,16 @@ def train():
     start_epoch = 0
     resume_step = 0
 
-    if os.path.exists(WEIGHTS_PATH):
+    if os.path.exists(WEIGHTS_PATH.replace('weights', 'best')):
+        best_path = WEIGHTS_PATH.replace('weights', 'best')
+        ckpt = torch.load(best_path, map_location=device)
+        sd   = {k.replace("module.", ""): v
+                for k, v in ckpt.get("model_state_dict", ckpt).items()}
+        model.load_state_dict(sd, strict=False)
+        start_epoch = ckpt.get("epoch", 0) if isinstance(ckpt, dict) else 0
+        print(f"Resumed from BEST checkpoint {best_path} "
+              f"(epoch {start_epoch}, loss={ckpt.get('loss', '?'):.4f})")
+    elif os.path.exists(WEIGHTS_PATH):
         ckpt = torch.load(WEIGHTS_PATH, map_location=device)
         sd   = {k.replace("module.", ""): v
                 for k, v in ckpt.get("model_state_dict", ckpt).items()}
@@ -148,14 +165,10 @@ def train():
         print("Skill state loaded")
     sampler = CurriculumSampler(skill_tree)
 
-    # ── Gradient battery ──────────────────────────────────────────────────────
+    # Gradient battery — disabled for Modal (continuous runs don't need cross-session accumulation)
+    # Enable on Kaggle where sessions are fragmented
     battery = None
-    try:
-        from gradient_battery import GradientBattery
-        battery = GradientBattery(BATTERY_PATH, device=str(device))
-        print(battery.status())
-    except ImportError:
-        pass
+    print("[train] Gradient battery disabled (Modal continuous run)")
 
     # ── Data ──────────────────────────────────────────────────────────────────
     import tiktoken
@@ -231,13 +244,16 @@ def train():
                 if p.requires_grad and (p.dim() < 2
                 or any(x in n for x in ["tok_emb", "ln_", "norm"]))]
 
-    base_lr = 3e-4 * (GRAD_ACCUM ** 0.5)
+    base_lr = 3e-4  # Fixed LR — sqrt scaling was too aggressive, caused NaN collapse
+    # Keep model in bf16 to save VRAM
+    model = model.to(torch.bfloat16)
+
     optimizer = optim.AdamW([
         {"params": decay,    "weight_decay": 0.1},
         {"params": no_decay, "weight_decay": 0.0},
-    ], lr=base_lr, betas=(0.9, 0.95))
+    ], lr=base_lr, betas=(0.9, 0.95), foreach=False, fused=False)
 
-    scaler = torch.amp.GradScaler("cuda")
+    # bf16 training — no GradScaler needed
     total_steps  = len(loader) * EPOCHS
     warmup_steps = max(200, total_steps // 50)
     print(f"base_lr={base_lr:.2e} warmup={warmup_steps} total_steps={total_steps}")
@@ -276,26 +292,23 @@ def train():
             for pg in optimizer.param_groups:
                 pg["lr"] = lr
 
-            with torch.amp.autocast("cuda"):
+            with torch.amp.autocast("cuda", dtype=torch.bfloat16):
                 logits, _ = model(x)
                 loss = focal_loss(logits.view(-1, logits.size(-1)), y.view(-1))
 
-            scaler.scale(loss / GRAD_ACCUM).backward()
+            (loss / GRAD_ACCUM).backward()
 
             if (step + 1) % GRAD_ACCUM == 0:
-                scaler.unscale_(optimizer)
                 gn = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
                 if gn > 1.0:
                     clip_count += 1
-                if battery:
-                    battery.charge(model, n_samples=x.shape[0], scale=1.0/GRAD_ACCUM)
-                if battery and battery.is_ready(BATTERY_DISCHARGE):
-                    print(f"\n[Battery] Discharging at step {step}...")
-                    battery.discharge(model)
-                    battery.save()
-                    battery.reset()
-                scaler.step(optimizer)
-                scaler.update()
+
+                # NaN guard
+                if torch.isnan(loss) or torch.isinf(loss):
+                    print(f"\n[FATAL] Loss NaN at step {step}. Best={best_loss:.4f}. Stopping.")
+                    return
+
+                optimizer.step()
                 optimizer.zero_grad(set_to_none=True)
 
             epoch_loss  += loss.item()
