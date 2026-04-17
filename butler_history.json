@@ -1,0 +1,18 @@
+[
+  {
+    "timestamp": 1776400558.5933034,
+    "balance": 4012.5,
+    "credit_value": 0.01670165,
+    "total_value": 67.015389,
+    "network_supply": 8218.75,
+    "providers": 4
+  },
+  {
+    "timestamp": 1776400559.8496332,
+    "balance": 350.0,
+    "credit_value": 0.01670165,
+    "total_value": 5.845579,
+    "network_supply": 8218.75,
+    "providers": 4
+  }
+]
