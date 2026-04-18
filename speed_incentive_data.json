@@ -1,0 +1,44 @@
+{
+  "export_timestamp": "2026-04-17T15:16:31.281836",
+  "incentives": {
+    "lightning": {
+      "time_limit_minutes": 5,
+      "bonus_percentage": 0.5,
+      "bonus_multiplier": 1.5,
+      "quality_requirement": 0.85,
+      "reward_description": "LIGHTNING SPEED - 50% bonus!"
+    },
+    "fast": {
+      "time_limit_minutes": 10,
+      "bonus_percentage": 0.25,
+      "bonus_multiplier": 1.25,
+      "quality_requirement": 0.8,
+      "reward_description": "FAST COMPLETION - 25% bonus!"
+    },
+    "standard": {
+      "time_limit_minutes": 15,
+      "bonus_percentage": 0.1,
+      "bonus_multiplier": 1.1,
+      "quality_requirement": 0.75,
+      "reward_description": "EFFICIENT WORK - 10% bonus!"
+    },
+    "slow": {
+      "time_limit_minutes": 999,
+      "bonus_percentage": 0.0,
+      "bonus_multiplier": 1.0,
+      "quality_requirement": 0.7,
+      "reward_description": "STANDARD COMPLETION - No time bonus"
+    }
+  },
+  "speed_statistics": {
+    "total_tasks": 5,
+    "lightning_tasks": 5,
+    "fast_tasks": 0,
+    "standard_tasks": 0,
+    "slow_tasks": 0,
+    "average_completion_time": 0.0009343999999999999,
+    "total_bonus_earned": 500.0,
+    "efficiency_improvement": 100.0
+  },
+  "task_history": []
+}

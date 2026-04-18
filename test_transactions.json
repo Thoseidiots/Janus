@@ -1,0 +1,69 @@
+{
+  "transactions": [
+    {
+      "id": "TXN_1776445894_a22f76af",
+      "type": "income",
+      "amount": 100.0,
+      "currency": "USD",
+      "method": "revolut",
+      "description": "Content writing service",
+      "client": "Tech Company",
+      "timestamp": "2026-04-17T13:11:34.488061",
+      "status": "pending",
+      "qr_data": "revolut://payment?id=TXN_1776445894_a22f76af&amount=100.0&currency=USD"
+    },
+    {
+      "id": "TXN_1776445894_13757473",
+      "type": "income",
+      "amount": 250.0,
+      "currency": "USD",
+      "method": "revolut",
+      "description": "Code generation service",
+      "client": "Startup Inc",
+      "timestamp": "2026-04-17T13:11:34.490061",
+      "status": "pending",
+      "qr_data": "revolut://payment?id=TXN_1776445894_13757473&amount=250.0&currency=USD"
+    },
+    {
+      "id": "TXN_1776445894_5da4d4e9",
+      "type": "expense",
+      "amount": 50.0,
+      "currency": "USD",
+      "method": "bank_transfer",
+      "description": "Software subscription",
+      "client": "Software Provider",
+      "timestamp": "2026-04-17T13:11:34.490061",
+      "status": "pending",
+      "qr_data": null
+    }
+  ],
+  "accounts": {
+    "revolut": {
+      "name": "Revolut",
+      "currency": "USD",
+      "balance": 0.0,
+      "active": true,
+      "payment_link": "https://revolut.me/i_sears"
+    },
+    "paypal": {
+      "name": "PayPal",
+      "currency": "USD",
+      "balance": 0.0,
+      "active": true,
+      "payment_link": null
+    },
+    "bank": {
+      "name": "Bank Account",
+      "currency": "USD",
+      "balance": 0.0,
+      "active": true,
+      "payment_link": null
+    }
+  },
+  "balance": {
+    "USD": 300.0,
+    "EUR": 0.0,
+    "GBP": 0.0
+  },
+  "export_timestamp": "2026-04-17T13:11:34.491671"
+}
