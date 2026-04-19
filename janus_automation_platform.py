@@ -53,6 +53,7 @@ class TaskType(Enum):
     SOCIAL_MEDIA = "social_media"
     VIDEO_PROCESSING = "video_processing"
     CUSTOM_AUTOMATION = "custom_automation"
+    COMPUTER_USE = "computer_use"
 
 @dataclass
 class AutomationTask:
@@ -123,7 +124,7 @@ class JanusAutomationEngine:
         # Initialize fault guard
         try:
             self.fault_guard = JanusAIGuard()
-        except:
+        except Exception:
             pass
         
         logger.info("Janus Automation Engine initialized")
@@ -137,7 +138,8 @@ class JanusAutomationEngine:
             TaskType.EMAIL_AUTOMATION: self._handle_email_automation,
             TaskType.SOCIAL_MEDIA: self._handle_social_media,
             TaskType.VIDEO_PROCESSING: self._handle_video_processing,
-            TaskType.CUSTOM_AUTOMATION: self._handle_custom_automation
+            TaskType.CUSTOM_AUTOMATION: self._handle_custom_automation,
+            TaskType.COMPUTER_USE: self._handle_computer_use,
         }
     
     async def create_task(self, request: TaskRequest, owner_id: str) -> AutomationTask:
@@ -454,6 +456,19 @@ class JanusAutomationEngine:
             "timestamp": datetime.utcnow().isoformat()
         }
     
+    async def _handle_computer_use(self, config: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle computer use tasks via ComputerUseEngine."""
+        try:
+            from janus_computer_use import ComputerUseEngine
+        except ImportError:
+            return {"success": False, "data": None, "error": "janus_computer_use not installed"}
+        async with ComputerUseEngine(context=config.get("context")) as engine:
+            result = await engine.run_goal(
+                config["goal"],
+                max_steps=config.get("max_steps", 50)
+            )
+        return {"success": result.success, "data": result.data, "error": result.error_message}
+
     def _calculate_task_cost(self, task_type: TaskType) -> float:
         """Calculate cost per task execution"""
         costs = {
@@ -463,7 +478,8 @@ class JanusAutomationEngine:
             TaskType.EMAIL_AUTOMATION: 0.04,
             TaskType.SOCIAL_MEDIA: 0.06,
             TaskType.VIDEO_PROCESSING: 0.15,
-            TaskType.CUSTOM_AUTOMATION: 0.10
+            TaskType.CUSTOM_AUTOMATION: 0.10,
+            TaskType.COMPUTER_USE: 0.12,
         }
         return costs.get(task_type, 0.05)
     

@@ -610,28 +610,28 @@ class StandaloneFinance:
             from avus_brain import AvusBrain
             if AvusBrain().ensure_loaded():
                 component_bonus += 15
-        except:
+        except Exception:
             pass
         
         # Finance system bonus
         try:
             exec(open("finance_complete.py").read())
             component_bonus += 15
-        except:
+        except Exception:
             pass
         
         # Browser system bonus
         try:
             from browser_automation import BrowserAutomationAgent
             component_bonus += 10
-        except:
+        except Exception:
             pass
         
         # Task manager bonus
         try:
             from janus_dual_task_manager import JanusDualTaskManager
             component_bonus += 10
-        except:
+        except Exception:
             pass
         
         # Weights bonus

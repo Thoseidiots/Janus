@@ -564,7 +564,7 @@ class JanusUnifiedSystem:
         if self.browser_agent:
             try:
                 self.browser_agent.driver.quit()
-            except:
+            except Exception:
                 pass
         
         print("System shutdown complete")

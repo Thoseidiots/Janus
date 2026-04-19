@@ -1,429 +1,357 @@
 """
-Janus Enhanced Capability Integration
-Hooks the new capabilities into existing Janus systems:
+janus_enhanced_integration.py
+==============================
+Hooks Janus's new capabilities into the existing core systems:
 
-- consciousness.py for decision-making
-- memory.py for state persistence
-- proxy_layer.py for request filtering
-- moral_core_immutable.py for ethical constraints
-  """
+    consciousness.py        — decision-making and goal planning
+    memory.py               — experience persistence
+    proxy_layer.py          — request filtering
+    moral_core_immutable.py — ethical constraints
 
-import sys
+All existing-system imports are optional; the module runs in standalone
+mode if they are unavailable.
+"""
+
+import hashlib
 import json
-from pathlib import Path
-from typing import Dict, Any, Optional
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-# Import new capabilities
-
-from janus_capability_hub import JanusCapabilityHub, TaskRequest, TaskResult
-
-# Import existing Janus systems
+# ── Optional existing-system imports ─────────────────────────────────────────
 
 try:
-from consciousness import Consciousness
-from memory import Memory
-from proxy_layer import ProxyLayer
-from moral_core_immutable import MoralCore
-except ImportError as e:
-print(f"Warning: Could not import existing Janus modules: {e}")
-print("Running in standalone mode…")
-Consciousness = None
-Memory = None
-ProxyLayer = None
-MoralCore = None
+    from consciousness import Consciousness
+except ImportError:
+    Consciousness = None  # type: ignore[assignment,misc]
+
+try:
+    from memory import Memory
+except ImportError:
+    Memory = None  # type: ignore[assignment,misc]
+
+try:
+    from proxy_layer import ProxyLayer
+except ImportError:
+    ProxyLayer = None  # type: ignore[assignment,misc]
+
+try:
+    from moral_core_immutable import MoralCore
+except ImportError:
+    MoralCore = None  # type: ignore[assignment,misc]
+
+
+# ── EnhancedJanusCore ─────────────────────────────────────────────────────────
 
 class EnhancedJanusCore:
-"""
-Enhanced Janus Core that integrates new capabilities with existing systems
-"""
-
-```
-def __init__(self, 
-             use_existing_systems: bool = True,
-             workspace_dir: str = "/tmp/janus_enhanced"):
-    
-    # Initialize new capability hub
-    self.capabilities = JanusCapabilityHub(workspace_dir)
-    
-    # Connect to existing Janus systems if available
-    self.use_existing = use_existing_systems and all([
-        Consciousness, Memory, ProxyLayer, MoralCore
-    ])
-    
-    if self.use_existing:
-        print("Connecting to existing Janus systems...")
-        self.consciousness = Consciousness() if Consciousness else None
-        self.memory = Memory() if Memory else None
-        self.proxy = ProxyLayer() if ProxyLayer else None
-        self.moral_core = MoralCore() if MoralCore else None
-    else:
-        print("Running with new capabilities only...")
-        self.consciousness = None
-        self.memory = None
-        self.proxy = None
-        self.moral_core = None
-    
-    # State tracking
-    self.session_id = self._generate_session_id()
-    self.action_history = []
-
-def _generate_session_id(self) -> str:
-    """Generate unique session ID"""
-    import hashlib
-    return hashlib.sha256(
-        datetime.now().isoformat().encode()
-    ).hexdigest()[:16]
-
-def process_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Process a request through the full Janus pipeline:
-    1. Proxy layer filtering (if available)
-    2. Consciousness decision-making (if available)
-    3. Moral core validation (if available)
-    4. Capability execution
-    5. Memory storage (if available)
+    Integrates new Janus capabilities with existing core systems.
+
+    Pipeline for each request:
+        1. Proxy layer filtering  (if available)
+        2. Consciousness approval (if available)
+        3. Moral core validation  (if available)
+        4. Capability execution
+        5. Memory storage         (if available)
     """
-    
-    # Step 1: Proxy layer filtering
-    if self.proxy:
-        filtered_request = self.proxy.filter_request(request)
-        if filtered_request.get('blocked'):
-            return {
-                'success': False,
-                'error': 'Request blocked by proxy layer',
-                'reason': filtered_request.get('reason')
-            }
-        request = filtered_request
-    
-    # Step 2: Consciousness evaluation
-    if self.consciousness:
-        decision = self.consciousness.evaluate_action(request)
-        if not decision.get('approved'):
-            return {
-                'success': False,
-                'error': 'Action not approved by consciousness layer',
-                'reason': decision.get('reason')
-            }
-    
-    # Step 3: Moral core validation
-    if self.moral_core:
-        moral_check = self.moral_core.validate_action(request)
-        if not moral_check.get('valid'):
-            return {
-                'success': False,
-                'error': 'Action violates moral core constraints',
-                'violations': moral_check.get('violations')
-            }
-    
-    # Step 4: Execute capability
-    task = TaskRequest(
-        task_id=f"{self.session_id}_{len(self.action_history)}",
-        task_type=request['capability_type'],
-        description=request.get('description', ''),
-        parameters=request.get('parameters', {}),
-        priority=request.get('priority', 5)
-    )
-    
-    result = self.capabilities.execute_task(task)
-    
-    # Step 5: Store in memory
-    if self.memory and result.success:
-        self.memory.store_experience({
-            'session_id': self.session_id,
-            'task': task.__dict__,
-            'result': result.__dict__,
-            'timestamp': datetime.now().isoformat()
+
+    def __init__(
+        self,
+        use_existing_systems: bool = True,
+        workspace_dir: str = "/tmp/janus_enhanced",
+    ) -> None:
+        self.workspace_dir = workspace_dir
+        self.session_id    = self._make_session_id()
+        self.action_history: List[Dict] = []
+
+        # Wire existing systems if requested and available
+        all_present = all([Consciousness, Memory, ProxyLayer, MoralCore])
+        self.use_existing = use_existing_systems and all_present
+
+        if self.use_existing:
+            print("Connecting to existing Janus systems...")
+            self.consciousness = Consciousness() if Consciousness else None
+            self.memory        = Memory()        if Memory        else None
+            self.proxy         = ProxyLayer()    if ProxyLayer    else None
+            self.moral_core    = MoralCore()     if MoralCore     else None
+        else:
+            print("Running in standalone mode (existing systems not available).")
+            self.consciousness = None
+            self.memory        = None
+            self.proxy         = None
+            self.moral_core    = None
+
+    # ── request pipeline ──────────────────────────────────────────────────────
+
+    def process_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Route a capability request through the full Janus pipeline.
+
+        request keys:
+            capability_type (str)  — e.g. 'code_project_create'
+            description     (str)  — human-readable intent
+            parameters      (dict) — capability-specific params
+            priority        (int)  — 1–10, default 5
+        """
+        # 1. Proxy filtering
+        if self.proxy:
+            filtered = self.proxy.filter_request(request)
+            if filtered.get("blocked"):
+                return {
+                    "success": False,
+                    "error":   "Request blocked by proxy layer",
+                    "reason":  filtered.get("reason"),
+                }
+            request = filtered
+
+        # 2. Consciousness approval
+        if self.consciousness:
+            decision = self.consciousness.evaluate_action(request)
+            if not decision.get("approved"):
+                return {
+                    "success": False,
+                    "error":   "Action not approved by consciousness layer",
+                    "reason":  decision.get("reason"),
+                }
+
+        # 3. Moral core validation
+        if self.moral_core:
+            check = self.moral_core.validate_action(request)
+            if not check.get("valid"):
+                return {
+                    "success":    False,
+                    "error":      "Action violates moral core constraints",
+                    "violations": check.get("violations"),
+                }
+
+        # 4. Execute capability
+        result = self._execute_capability(request)
+
+        # 5. Store in memory
+        if self.memory and result.get("success"):
+            try:
+                self.memory.store_experience({
+                    "session_id": self.session_id,
+                    "request":    request,
+                    "result":     result,
+                    "timestamp":  datetime.now().isoformat(),
+                })
+            except Exception:
+                pass
+
+        self.action_history.append({
+            "type":      request.get("capability_type"),
+            "success":   result.get("success"),
+            "timestamp": datetime.now().isoformat(),
         })
-    
-    # Track action
-    self.action_history.append({
-        'task_id': task.task_id,
-        'type': task.task_type,
-        'success': result.success,
-        'timestamp': datetime.now().isoformat()
-    })
-    
-    return {
-        'success': result.success,
-        'task_id': result.task_id,
-        'result_data': result.result_data,
-        'errors': result.errors,
-        'execution_time': result.execution_time
-    }
+        return result
 
-def autonomous_code_generation(self, goal: str) -> Dict[str, Any]:
-    """
-    Autonomous code generation using consciousness for planning
-    and capabilities for execution
-    """
-    
-    # Use consciousness to plan if available
-    if self.consciousness:
-        plan = self.consciousness.plan_for_goal(goal)
-    else:
-        # Simple default plan
-        plan = {
-            'steps': [
-                'create_project',
-                'generate_code',
-                'analyze_code',
-                'execute_code',
-                'deploy'
-            ]
-        }
-    
-    results = []
-    project_id = None
-    
-    # Step 1: Create project
-    result = self.process_request({
-        'capability_type': 'code_project_create',
-        'description': f'Create project for: {goal}',
-        'parameters': {
-            'name': f'Autonomous: {goal[:30]}',
-            'description': goal,
-            'language': 'python'
-        }
-    })
-    
-    if result['success']:
-        project_id = result['result_data']['project_id']
-        results.append({'step': 'create_project', 'success': True})
-    else:
-        return {'success': False, 'error': 'Failed to create project', 'results': results}
-    
-    # Step 2: Generate code (would use your consciousness/LLM here)
-    code = self._generate_code_for_goal(goal)
-    
-    result = self.process_request({
-        'capability_type': 'code_project_add_file',
-        'description': 'Add generated code',
-        'parameters': {
-            'project_id': project_id,
-            'filepath': 'main.py',
-            'content': code
-        }
-    })
-    results.append({'step': 'add_code', 'success': result['success']})
-    
-    # Step 3: Analyze
-    result = self.process_request({
-        'capability_type': 'code_project_analyze',
-        'description': 'Analyze code safety',
-        'parameters': {'project_id': project_id}
-    })
-    
-    safety_score = result['result_data'].get('average_safety_score', 0) if result['success'] else 0
-    results.append({'step': 'analyze', 'success': result['success'], 'safety_score': safety_score})
-    
-    # Step 4: Execute (only if safe)
-    if safety_score > 70:
-        result = self.process_request({
-            'capability_type': 'code_project_execute',
-            'description': 'Execute code',
-            'parameters': {'project_id': project_id, 'timeout': 30}
+    def _execute_capability(self, request: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Dispatch to the appropriate capability handler.
+        Extend this method to add new capability types.
+        """
+        cap_type = request.get("capability_type", "")
+        params   = request.get("parameters", {})
+
+        # Code project capabilities
+        if cap_type == "code_project_create":
+            return self._cap_create_project(params)
+        if cap_type == "code_project_add_file":
+            return self._cap_add_file(params)
+        if cap_type == "code_project_analyze":
+            return self._cap_analyze(params)
+        if cap_type == "code_project_execute":
+            return self._cap_execute(params)
+        if cap_type == "code_project_deploy":
+            return self._cap_deploy(params)
+
+        return {"success": False, "error": f"Unknown capability: {cap_type}"}
+
+    # ── capability handlers ───────────────────────────────────────────────────
+
+    def _cap_create_project(self, params: Dict) -> Dict:
+        try:
+            from autonomous_ide import JanusIDE
+            ide = JanusIDE(self.workspace_dir)
+            pid = ide.create_project(
+                name=params.get("name", "Unnamed"),
+                description=params.get("description", ""),
+                language=params.get("language", "python"),
+            )
+            return {"success": True, "result_data": {"project_id": pid}}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    def _cap_add_file(self, params: Dict) -> Dict:
+        try:
+            from autonomous_ide import JanusIDE
+            ide = JanusIDE(self.workspace_dir)
+            ide.add_file(
+                params["project_id"],
+                params.get("filepath", "main.py"),
+                params.get("content", ""),
+            )
+            return {"success": True, "result_data": {}}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    def _cap_analyze(self, params: Dict) -> Dict:
+        try:
+            from autonomous_ide import JanusIDE
+            ide = JanusIDE(self.workspace_dir)
+            analysis = ide.analyze_project(params["project_id"])
+            return {"success": True, "result_data": analysis}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    def _cap_execute(self, params: Dict) -> Dict:
+        try:
+            from autonomous_ide import JanusIDE
+            ide = JanusIDE(self.workspace_dir)
+            result = ide.execute_project(
+                params["project_id"],
+                timeout=params.get("timeout", 30),
+            )
+            return {
+                "success":     result.success,
+                "result_data": {
+                    "output":         result.output,
+                    "errors":         result.errors,
+                    "execution_time": result.execution_time,
+                },
+            }
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    def _cap_deploy(self, params: Dict) -> Dict:
+        try:
+            from autonomous_ide import JanusIDE
+            ide = JanusIDE(self.workspace_dir)
+            info = ide.deploy_project(params["project_id"])
+            return {"success": info.get("success", False), "result_data": info}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    # ── high-level helpers ────────────────────────────────────────────────────
+
+    def autonomous_code_generation(self, goal: str) -> Dict[str, Any]:
+        """
+        Full autonomous pipeline: create project → add code → analyse →
+        execute (if safe) → deploy.
+        """
+        results: List[Dict] = []
+
+        # Create project
+        r = self.process_request({
+            "capability_type": "code_project_create",
+            "description":     f"Create project for: {goal}",
+            "parameters": {
+                "name":        f"Auto: {goal[:40]}",
+                "description": goal,
+                "language":    "python",
+            },
         })
-        results.append({'step': 'execute', 'success': result['success']})
-        
-        # Step 5: Deploy if successful
-        if result['success']:
-            result = self.process_request({
-                'capability_type': 'code_project_deploy',
-                'description': 'Deploy project',
-                'parameters': {'project_id': project_id}
+        if not r["success"]:
+            return {"success": False, "error": "Failed to create project", "results": results}
+        project_id = r["result_data"]["project_id"]
+        results.append({"step": "create_project", "success": True})
+
+        # Add generated code
+        code = self._generate_code_for_goal(goal)
+        r = self.process_request({
+            "capability_type": "code_project_add_file",
+            "description":     "Add generated code",
+            "parameters": {
+                "project_id": project_id,
+                "filepath":   "main.py",
+                "content":    code,
+            },
+        })
+        results.append({"step": "add_code", "success": r["success"]})
+
+        # Analyse
+        r = self.process_request({
+            "capability_type": "code_project_analyze",
+            "description":     "Analyse code safety",
+            "parameters":      {"project_id": project_id},
+        })
+        safety = r.get("result_data", {}).get("average_safety_score", 0) if r["success"] else 0
+        results.append({"step": "analyze", "success": r["success"], "safety_score": safety})
+
+        # Execute only if safe
+        if safety >= 70:
+            r = self.process_request({
+                "capability_type": "code_project_execute",
+                "description":     "Execute code",
+                "parameters":      {"project_id": project_id, "timeout": 30},
             })
-            results.append({'step': 'deploy', 'success': result['success']})
-    else:
-        results.append({'step': 'execute', 'success': False, 'reason': 'Safety score too low'})
-    
-    return {
-        'success': all(r['success'] for r in results),
-        'project_id': project_id,
-        'results': results
-    }
+            results.append({"step": "execute", "success": r["success"]})
 
-def _generate_code_for_goal(self, goal: str) -> str:
-    """
-    Generate code for a goal
-    In a real implementation, this would use your custom LLM
-    For now, returns a template
-    """
-    # This is where you'd call your custom Janus LLM
-    # For now, return a simple template
-    return f'''
-```
+            if r["success"]:
+                r = self.process_request({
+                    "capability_type": "code_project_deploy",
+                    "description":     "Deploy project",
+                    "parameters":      {"project_id": project_id},
+                })
+                results.append({"step": "deploy", "success": r["success"]})
+        else:
+            results.append({"step": "execute", "success": False, "reason": "Safety score too low"})
 
-"""
-Auto-generated code for goal: {goal}
-Generated by Janus Enhanced System
-"""
-
-def main():
-print("Executing goal: {goal}")
-# TODO: Implement goal logic
-return "Goal completed"
-
-if **name** == '**main**':
-result = main()
-print(f"Result: {{result}}")
-'''
-
-```
-def generate_avatar_face(self, personality_traits: Dict[str, float]) -> Dict[str, Any]:
-    """
-    Generate 3D face avatar based on personality traits
-    Uses the existing knowledge_3d_face_generator.json if available
-    """
-    
-    # Map personality traits to facial features
-    features = self._personality_to_features(personality_traits)
-    
-    # Determine expression from traits
-    expressions = {}
-    if personality_traits.get('friendliness', 0.5) > 0.7:
-        expressions['smile'] = 0.8
-    if personality_traits.get('seriousness', 0.5) > 0.7:
-        expressions['neutral'] = 1.0
-    
-    return self.process_request({
-        'capability_type': 'generate_face',
-        'description': 'Generate avatar for personality',
-        'parameters': {
-            'features': features,
-            'expressions': expressions,
-            'output_format': 'both'
+        return {
+            "success":    all(s["success"] for s in results),
+            "project_id": project_id,
+            "results":    results,
         }
-    })
 
-def _personality_to_features(self, traits: Dict[str, float]) -> Dict[str, float]:
-    """Map personality traits to facial features"""
-    return {
-        'head_width': 0.9 + traits.get('confidence', 0.5) * 0.2,
-        'eye_size': 0.9 + traits.get('curiosity', 0.5) * 0.3,
-        'eye_spacing': 1.0,
-        'nose_length': 0.9 + traits.get('assertiveness', 0.5) * 0.2,
-        'mouth_width': 0.9 + traits.get('friendliness', 0.5) * 0.2,
-        'jaw_width': 0.9 + traits.get('determination', 0.5) * 0.2,
-    }
+    def _generate_code_for_goal(self, goal: str) -> str:
+        """
+        Generate a minimal Python stub for a goal.
+        In production this would call the Janus LLM (janus_gpt.py).
+        """
+        return (
+            f'"""\nAuto-generated for goal: {goal}\n"""\n\n'
+            f"def main():\n"
+            f"    print('Executing: {goal}')\n\n"
+            f"if __name__ == '__main__':\n"
+            f"    main()\n"
+        )
 
-def install_capability_extension(self, package_name: str) -> Dict[str, Any]:
-    """Install a capability extension package"""
-    return self.process_request({
-        'capability_type': 'package_install',
-        'description': f'Install extension: {package_name}',
-        'parameters': {
-            'name': package_name,
-            'version': 'latest'
+    def get_status(self) -> Dict[str, Any]:
+        """Return a snapshot of the current system state."""
+        return {
+            "session_id":       self.session_id,
+            "actions_performed": len(self.action_history),
+            "recent_actions":   self.action_history[-5:],
+            "integrated_systems": {
+                "consciousness": self.consciousness is not None,
+                "memory":        self.memory        is not None,
+                "proxy":         self.proxy         is not None,
+                "moral_core":    self.moral_core    is not None,
+            },
         }
-    })
 
-def get_system_status(self) -> Dict[str, Any]:
-    """Get comprehensive system status"""
-    status = {
-        'session_id': self.session_id,
-        'capabilities': self.capabilities.get_status(),
-        'actions_performed': len(self.action_history),
-        'recent_actions': self.action_history[-5:] if self.action_history else [],
-        'integrated_systems': {
-            'consciousness': self.consciousness is not None,
-            'memory': self.memory is not None,
-            'proxy': self.proxy is not None,
-            'moral_core': self.moral_core is not None
-        }
-    }
-    
-    return status
-```
+    # ── internals ─────────────────────────────────────────────────────────────
 
-# Example integration with existing main.py
+    @staticmethod
+    def _make_session_id() -> str:
+        return hashlib.sha256(datetime.now().isoformat().encode()).hexdigest()[:16]
 
-def integrate_with_main():
-"""
-Example of how to integrate with existing main.py
-Add this to your main.py file:
-"""
-example_code = '''
 
-# In your existing main.py, add:
+# ── Standalone demo ───────────────────────────────────────────────────────────
 
-from janus_enhanced_integration import EnhancedJanusCore
+def main() -> None:
+    print("=== Janus Enhanced Integration Demo ===\n")
+    core = EnhancedJanusCore(use_existing_systems=False)
 
-class JanusMain:
-def **init**(self):
-# … your existing initialization …
+    print("System status:")
+    print(json.dumps(core.get_status(), indent=2))
 
-```
-    # Add enhanced capabilities
-    self.enhanced = EnhancedJanusCore(use_existing_systems=True)
-    
-    print("Janus Enhanced Capabilities loaded!")
-    print(self.enhanced.get_system_status())
+    print("\n--- Autonomous code generation ---")
+    result = core.autonomous_code_generation("Create a prime number checker")
+    print(f"Success: {result['success']}")
+    for step in result.get("results", []):
+        print(f"  {step['step']}: {'OK' if step['success'] else 'FAIL'}")
 
-def process_user_command(self, command: str):
-    # ... your existing command processing ...
-    
-    # Add capability commands
-    if command.startswith('/create_project'):
-        goal = command.replace('/create_project', '').strip()
-        result = self.enhanced.autonomous_code_generation(goal)
-        return result
-    
-    elif command.startswith('/generate_avatar'):
-        # Parse personality traits from command
-        traits = {'friendliness': 0.8, 'curiosity': 0.7}
-        result = self.enhanced.generate_avatar_face(traits)
-        return result
-    
-    # ... rest of your command handling ...
-```
 
-'''
-
-```
-return example_code
-```
-
-def main():
-"""Standalone demo"""
-print("=== Janus Enhanced Integration Demo ===\n")
-
-```
-# Initialize
-core = EnhancedJanusCore(use_existing_systems=False)
-
-# Show status
-status = core.get_system_status()
-print("System Status:")
-print(json.dumps(status, indent=2))
-
-# Demo autonomous code generation
-print("\n" + "="*50)
-print("Demo: Autonomous Code Generation")
-print("="*50 + "\n")
-
-result = core.autonomous_code_generation("Create a prime number checker")
-print(f"Success: {result['success']}")
-print(f"Steps completed: {len(result['results'])}")
-
-# Demo avatar generation
-print("\n" + "="*50)
-print("Demo: Avatar Generation")
-print("="*50 + "\n")
-
-personality = {
-    'friendliness': 0.9,
-    'curiosity': 0.8,
-    'confidence': 0.7
-}
-
-result = core.generate_avatar_face(personality)
-print(f"Avatar generation: {result['success']}")
-if result['success']:
-    print(f"Output: {result['result_data']}")
-
-print("\n=== Integration Complete ===")
-```
-
-if **name** == '**main**':
-main()
+if __name__ == "__main__":
+    main()

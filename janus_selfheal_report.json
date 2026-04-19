@@ -1,0 +1,26 @@
+{
+  "timestamp": "2026-04-19T16:43:22.251728+00:00",
+  "healthy": true,
+  "elapsed_s": 2.99,
+  "test_results": [
+    {
+      "name": "test_full_jc_loop",
+      "passed": true,
+      "details": "\u2713 Task posted; \u2713 Requester balance decreased by escrow amount; \u2713 Task claimed by worker; \u2713 Task status is 'claimed'; \u2713 Task completed; \u2713 Requester balance = 45.0 JC; \u2713 Worker balance = 55.0 JC; \u2713 Task status is 'completed'",
+      "duration_ms": 27.29
+    },
+    {
+      "name": "test_work_generation",
+      "passed": true,
+      "details": "\u2713 WorkGenerator instantiated; \u2713 Job object created; \u2713 Work generated (1109 chars)",
+      "duration_ms": 2026.38
+    },
+    {
+      "name": "test_checkpoint_lifecycle",
+      "passed": true,
+      "details": "\u2713 Checkpoint saved; \u2713 Checkpoint loaded with correct stage and data; \u2713 Checkpoint appears in get_incomplete(); \u2713 Checkpoint cleared via complete(); \u2713 Checkpoint no longer exists after complete()",
+      "duration_ms": 11.79
+    }
+  ],
+  "repair_log": []
+}

@@ -313,12 +313,12 @@ profit_potential: [$X.XX]
                 if 'interest:' in line.lower():
                     try:
                         opportunity.janus_interest = float(line.split(':')[1].strip().split()[0])
-                    except:
+                    except Exception:
                         opportunity.janus_interest = 50.0
                 elif 'price:' in line.lower():
                     try:
                         opportunity.janus_price = float(line.split(':')[1].strip().replace('$', ''))
-                    except:
+                    except Exception:
                         opportunity.janus_price = opportunity.client_budget
                 elif 'decision:' in line.lower():
                     decision = line.split(':')[1].strip().lower()
@@ -335,12 +335,12 @@ profit_potential: [$X.XX]
                 elif 'time_estimate:' in line.lower():
                     try:
                         opportunity.estimated_time = float(line.split(':')[1].strip().split()[0])
-                    except:
+                    except Exception:
                         opportunity.estimated_time = 5.0
                 elif 'profit_potential:' in line.lower():
                     try:
                         opportunity.profit_potential = float(line.split(':')[1].strip().replace('$', ''))
-                    except:
+                    except Exception:
                         opportunity.profit_potential = opportunity.janus_price * 0.7
             
             print(f"  Janus interest: {opportunity.janus_interest:.1f}%")

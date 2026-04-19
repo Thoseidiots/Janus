@@ -261,7 +261,7 @@ class JanusSafetyProtectedSystem:
                 if "task_id" in task:
                     try:
                         self.task_manager.cancel_task(task["task_id"])
-                    except:
+                    except Exception:
                         pass
         
         # Add cooldown period
@@ -338,7 +338,7 @@ class JanusSafetyProtectedSystem:
         if self.task_manager:
             try:
                 self.task_manager.cancel_all_tasks()
-            except:
+            except Exception:
                 pass
         
         # Reset browser
@@ -346,7 +346,7 @@ class JanusSafetyProtectedSystem:
             try:
                 self.browser_agent.driver.quit()
                 self.browser_agent.start_browser(headless=True)
-            except:
+            except Exception:
                 pass
         
         # Clear recent history
@@ -363,7 +363,7 @@ class JanusSafetyProtectedSystem:
         if "task_id" in operation and self.task_manager:
             try:
                 self.task_manager.cancel_task(operation["task_id"])
-            except:
+            except Exception:
                 pass
         
         # Mark as failed

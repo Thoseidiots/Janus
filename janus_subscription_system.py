@@ -752,10 +752,12 @@ class JanusSubscriptionAPI:
         async def record_usage(
             metric: str,
             quantity: int,
-            metadata: Dict[str, Any] = {},
+            metadata: Dict[str, Any] = None,
             credentials: HTTPAuthorizationCredentials = Security(self.security)
         ):
             """Record usage"""
+            if metadata is None:
+                metadata = {}
             user_id = "demo_user"
             
             try:

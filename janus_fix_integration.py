@@ -384,19 +384,19 @@ class StandaloneFinance:
             from avus_brain import AvusBrain
             if AvusBrain().ensure_loaded():
                 component_bonus += 20
-        except:
+        except Exception:
             pass
         
         try:
             from browser_automation import BrowserAutomationAgent
             component_bonus += 10
-        except:
+        except Exception:
             pass
         
         try:
             exec(open("finance_fixed.py").read())
             component_bonus += 10
-        except:
+        except Exception:
             pass
         
         base_score = (passed_tests / total_tests) * 100 if total_tests > 0 else 0

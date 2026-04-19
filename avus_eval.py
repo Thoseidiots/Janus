@@ -59,7 +59,7 @@ def load_tokenizer():
     def decode(tokens):
         valid = [t for t in tokens if 0 <= t < enc.max_token_value]
         try: return enc.decode(valid)
-        except: return ""
+        except Exception: return ""
     return encode, decode
 
 
