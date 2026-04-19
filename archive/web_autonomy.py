@@ -18,5 +18,5 @@ class JanusWeb:
         try:
             with urllib.request.urlopen(url) as response:
                 return response.read().decode('utf-8', errors='ignore')
-        except:
+        except Exception:
             return ""
