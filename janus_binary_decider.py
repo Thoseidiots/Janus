@@ -49,6 +49,12 @@ class BinaryHBMDecider:
         # Execution path cache for pattern detection
         self.execution_cache: Dict[str, list] = defaultdict(list)
 
+        # Decision tracking
+        self.total_decisions: int = 0
+        self.halt_count: int = 0
+        self.loop_count: int = 0
+        self.confidence_history: list = []
+
     def _to_vector(self, obj: Any) -> torch.Tensor:
         """Convert object to high-dimensional complex vector"""
         h = hashlib.sha256(str(obj).encode()).digest()
@@ -186,6 +192,16 @@ class BinaryHBMDecider:
             confidence = abs(combined_score - 0.5) * 2  # Scale to [0, 1]
             reasoning = f"Decision in uncertain zone (score: {combined_score:.3f}). " \
                        f"Forced {'HALT' if decision else 'LOOP'} based on slight bias. Low confidence."
+
+        # Track decision stats
+        self.total_decisions += 1
+        self.confidence_history.append(confidence)
+        if len(self.confidence_history) > 1000:
+            self.confidence_history = self.confidence_history[-1000:]
+        if decision:
+            self.halt_count += 1
+        else:
+            self.loop_count += 1
 
         return DecisionResult(
             decision=decision,

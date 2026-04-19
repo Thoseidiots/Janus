@@ -1,389 +1,416 @@
 """
-Browser Automation for Financial Tasks - No APIs
-Uses Selenium/Playwright to automate browser interactions
-No direct API calls - everything through UI automation
+Browser Automation for Janus
+Specialized browser control for web navigation, form filling, and interaction
 """
 
-import json
-import logging
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple
-from datetime import datetime
-
-logger = logging.getLogger("janus_automation")
+from typing import Optional, Dict, List, Any
+import time
+from dataclasses import dataclass
 
 try:
-    from selenium import webdriver
-    from selenium.webdriver.common.by import By
-    from selenium.webdriver.support.ui import WebDriverWait
-    from selenium.webdriver.support import expected_conditions as EC
-    from selenium.webdriver.chrome.options import Options
-    HAS_SELENIUM = True
+    from os_human_interface import JanusOS
+    from window_manager import WindowManager
+    COMPONENTS_AVAILABLE = True
 except ImportError:
-    HAS_SELENIUM = False
-    logger.warning("Selenium not installed - browser automation disabled")
+    COMPONENTS_AVAILABLE = False
 
 
-class BrowserAutomationAgent:
+@dataclass
+class BrowserElement:
+    """Represents a browser UI element"""
+    element_type: str  # 'button', 'input', 'link', 'dropdown'
+    text: str
+    position: tuple  # (x, y)
+    size: tuple  # (width, height)
+    confidence: float
+
+
+class BrowserAutomation:
     """
-    Automate financial tasks through browser UI.
-    No API keys needed - simulates human interaction.
+    Specialized browser automation for Janus
+    Works with Chrome, Firefox, Edge
     """
     
     def __init__(self):
-        self.driver = None
-        self.task_log = []
-        self.screenshots = []
-        logger.info("Browser Automation Agent initialized")
+        self.janus_os = JanusOS() if COMPONENTS_AVAILABLE else None
+        self.window_manager = WindowManager() if COMPONENTS_AVAILABLE else None
+        self.current_browser = None
         
-        if HAS_SELENIUM:
-            logger.info("Selenium available - browser automation enabled")
-        else:
-            logger.warning("Selenium not available - install: pip install selenium")
-    
-    def start_browser(self, headless: bool = False) -> bool:
-        """Start Chrome browser."""
-        
-        if not HAS_SELENIUM:
-            logger.error("Selenium not available")
-            return False
-        
-        try:
-            options = Options()
-            if headless:
-                options.add_argument("--headless")
-            options.add_argument("--no-sandbox")
-            options.add_argument("--disable-dev-shm-usage")
-            options.add_argument("--start-maximized")
-            
-            self.driver = webdriver.Chrome(options=options)
-            logger.info("Browser started")
-            return True
-        except Exception as e:
-            logger.error(f"Failed to start browser: {e}")
-            return False
-    
-    def navigate_to(self, url: str) -> bool:
-        """Navigate to URL."""
-        if not self.driver:
-            return False
-        
-        try:
-            self.driver.get(url)
-            self.log_action("navigate", {"url": url})
-            return True
-        except Exception as e:
-            logger.error(f"Navigation failed: {e}")
-            return False
-    
-    def find_element(self, selector: str, by=By.CSS_SELECTOR, timeout: int = 10):
-        """Find element by selector."""
-        try:
-            element = WebDriverWait(self.driver, timeout).until(
-                EC.presence_of_element_located((by, selector))
-            )
-            return element
-        except Exception:
+    def find_browser(self) -> Optional[str]:
+        """Find and activate browser window"""
+        if not self.window_manager:
             return None
-    
-    def click(self, selector: str, by=By.CSS_SELECTOR) -> bool:
-        """Click element."""
-        try:
-            element = self.find_element(selector, by)
-            if element:
-                element.click()
-                self.log_action("click", {"selector": selector})
-                return True
-        except Exception as e:
-            logger.error(f"Click failed: {e}")
-        return False
-    
-    def type_text(self, selector: str, text: str, by=By.CSS_SELECTOR) -> bool:
-        """Type text into element."""
-        try:
-            element = self.find_element(selector, by)
-            if element:
-                element.clear()
-                element.send_keys(text)
-                self.log_action("type", {"selector": selector, "text": f"***{len(text)} chars***"})
-                return True
-        except Exception as e:
-            logger.error(f"Type failed: {e}")
-        return False
-    
-    def get_text(self, selector: str, by=By.CSS_SELECTOR) -> Optional[str]:
-        """Get text from element."""
-        try:
-            element = self.find_element(selector, by)
-            if element:
-                return element.text
-        except Exception as e:
-            logger.error(f"Get text failed: {e}")
+        
+        browsers = ['Chrome', 'Firefox', 'Edge', 'Brave', 'Opera']
+        
+        for browser in browsers:
+            window = self.window_manager.find_window(title_contains=browser)
+            if window:
+                self.window_manager.activate_window(window.hwnd)
+                self.current_browser = browser
+                time.sleep(0.5)
+                return browser
+        
         return None
     
-    def take_screenshot(self, filename: str = None) -> str:
-        """Take screenshot."""
-        if not self.driver:
-            return ""
-        
-        if filename is None:
-            filename = f"screenshot_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+    def open_browser(self, browser: str = 'chrome') -> bool:
+        """Open browser application"""
+        if not self.janus_os:
+            return False
         
         try:
-            self.driver.save_screenshot(filename)
-            self.screenshots.append(filename)
-            self.log_action("screenshot", {"filename": filename})
-            return filename
-        except Exception as e:
-            logger.error(f"Screenshot failed: {e}")
-        return ""
-    
-    def get_page_source(self) -> str:
-        """Get page HTML."""
-        if not self.driver:
-            return ""
-        return self.driver.page_source
-    
-    def get_current_url(self) -> str:
-        """Get current URL."""
-        if not self.driver:
-            return ""
-        return self.driver.current_url
-    
-    def wait_for_element(self, selector: str, by=By.CSS_SELECTOR, timeout: int = 10) -> bool:
-        """Wait for element to be present."""
-        try:
-            WebDriverWait(self.driver, timeout).until(
-                EC.presence_of_element_located((by, selector))
-            )
+            # Press Win+R
+            self.janus_os.press_key(0x5B)  # Win key
+            time.sleep(0.1)
+            self.janus_os.press_key(0x52)  # R key
+            time.sleep(0.5)
+            
+            # Type browser name
+            self.janus_os.type_string(browser)
+            time.sleep(0.3)
+            
+            # Press Enter
+            self.janus_os.press_key(0x0D)
+            time.sleep(2)
+            
+            self.current_browser = browser
             return True
-        except Exception:
+        except Exception as e:
+            print(f"Error opening browser: {e}")
             return False
     
-    def scroll(self, direction: str = "down", amount: int = 500) -> bool:
-        """Scroll page."""
+    def navigate_to_url(self, url: str) -> bool:
+        """Navigate to URL"""
+        if not self.janus_os:
+            return False
+        
         try:
-            if direction == "down":
-                self.driver.execute_script(f"window.scrollBy(0, {amount});")
-            elif direction == "up":
-                self.driver.execute_script(f"window.scrollBy(0, -{amount});")
-            elif direction == "right":
-                self.driver.execute_script(f"window.scrollBy({amount}, 0);")
-            else:
-                self.driver.execute_script(f"window.scrollBy(-{amount}, 0);")
+            # Ensure browser is active
+            if not self.find_browser():
+                self.open_browser()
             
-            self.log_action("scroll", {"direction": direction, "amount": amount})
+            # Focus address bar (Ctrl+L)
+            self.janus_os.press_key(0x11)  # Ctrl
+            time.sleep(0.05)
+            self.janus_os.press_key(0x4C)  # L
+            time.sleep(0.3)
+            
+            # Type URL
+            self.janus_os.type_string(url)
+            time.sleep(0.3)
+            
+            # Press Enter
+            self.janus_os.press_key(0x0D)
+            time.sleep(2)
+            
             return True
         except Exception as e:
-            logger.error(f"Scroll failed: {e}")
-        return False
+            print(f"Error navigating to URL: {e}")
+            return False
     
-    def close(self):
-        """Close browser."""
-        if self.driver:
-            self.driver.quit()
-            logger.info("Browser closed")
-    
-    def log_action(self, action_type: str, details: Dict):
-        """Log an action."""
-        entry = {
-            "timestamp": datetime.now().isoformat(),
-            "type": action_type,
-            "details": details
-        }
-        self.task_log.append(entry)
-        logger.debug(f"Action: {action_type} - {details}")
-    
-    def get_task_log(self) -> List[Dict]:
-        """Get action log."""
-        return self.task_log
-    
-    def save_task_log(self, filename: str = "automation_log.json"):
-        """Save task log to file."""
-        with open(filename, 'w') as f:
-            json.dump(self.task_log, f, indent=2)
-        logger.info(f"Task log saved to {filename}")
-
-
-class FinancialAutomationWorkflow:
-    """
-    Pre-built workflows for common financial tasks.
-    All done through browser automation - no APIs.
-    """
-    
-    def __init__(self, browser_agent: BrowserAutomationAgent):
-        self.agent = browser_agent
-    
-    def check_bank_balance(self, bank_url: str, username_selector: str, 
-                          password_selector: str, username: str, password: str) -> Dict:
-        """
-        Automated login and balance check.
-        Scrapes data from UI instead of using API.
-        """
-        result = {
-            "task": "check_bank_balance",
-            "status": "started",
-            "steps": []
-        }
+    def click_link(self, link_text: str, approximate_position: tuple = None) -> bool:
+        """Click a link by text or position"""
+        if not self.janus_os:
+            return False
         
-        # Navigate to bank
-        if not self.agent.navigate_to(bank_url):
-            result["status"] = "failed"
-            result["error"] = "Navigation failed"
-            return result
-        
-        result["steps"].append({"step": "navigate", "status": "success"})
-        
-        # Login
-        if self.agent.type_text(username_selector, username):
-            result["steps"].append({"step": "enter_username", "status": "success"})
-        
-        if self.agent.type_text(password_selector, password):
-            result["steps"].append({"step": "enter_password", "status": "success"})
-        
-        # Submit login (look for login button)
-        if self.agent.click("button[type='submit']"):
-            result["steps"].append({"step": "submit_login", "status": "success"})
-        
-        # Wait for dashboard
-        if self.agent.wait_for_element(".balance, [data-balance]", timeout=10):
-            result["steps"].append({"step": "wait_dashboard", "status": "success"})
-            
-            # Extract balance (depends on bank HTML structure)
-            balance_text = self.agent.get_text(".balance, [data-balance]")
-            result["balance"] = balance_text
-            result["status"] = "success"
-        else:
-            result["status"] = "failed"
-            result["error"] = "Dashboard not loaded"
-        
-        return result
-    
-    def monitor_stock_price(self, stock_url: str, stock_symbol: str) -> Dict:
-        """
-        Monitor stock price by scraping from free websites.
-        Examples: yahoo.com, investing.com, tradingview.com
-        """
-        result = {
-            "task": "monitor_stock",
-            "symbol": stock_symbol,
-            "status": "started"
-        }
-        
-        if not self.agent.navigate_to(stock_url):
-            result["status"] = "failed"
-            return result
-        
-        # Take screenshot for visual verification
-        screenshot = self.agent.take_screenshot(f"stock_{stock_symbol}.png")
-        result["screenshot"] = screenshot
-        
-        # Try to extract price from common selectors
-        price_selectors = [
-            ".price",
-            "[data-price]",
-            ".current-price",
-            "[class*='price']"
-        ]
-        
-        price = None
-        for selector in price_selectors:
-            price = self.agent.get_text(selector)
-            if price:
-                break
-        
-        if price:
-            result["current_price"] = price
-            result["status"] = "success"
-        else:
-            result["status"] = "partial"
-            result["note"] = "Price not found with standard selectors"
-        
-        return result
-    
-    def transfer_between_accounts(self, transfer_url: str, from_account: str,
-                                 to_account: str, amount: str) -> Dict:
-        """
-        Automate bank transfer through UI.
-        Requires pre-login or persistent session.
-        """
-        result = {
-            "task": "transfer_money",
-            "status": "started",
-            "steps": []
-        }
-        
-        # Navigate to transfer page
-        if not self.agent.navigate_to(transfer_url):
-            result["status"] = "failed"
-            return result
-        
-        # Select from account
-        if self.agent.click(f"option[value='{from_account}'], select"):
-            result["steps"].append({"step": "select_from_account", "status": "success"})
-        
-        # Enter to account
-        if self.agent.type_text("input[name*='to'], input[name*='recipient']", to_account):
-            result["steps"].append({"step": "enter_to_account", "status": "success"})
-        
-        # Enter amount
-        if self.agent.type_text("input[name*='amount'], input[type='number']", amount):
-            result["steps"].append({"step": "enter_amount", "status": "success"})
-        
-        # Review & Confirm (take screenshot before confirming)
-        self.agent.take_screenshot("transfer_review.png")
-        
-        if self.agent.click("button[name*='confirm'], button[type='submit']"):
-            result["steps"].append({"step": "confirm_transfer", "status": "success"})
-            result["status"] = "completed"
-        else:
-            result["status"] = "pending_confirmation"
-        
-        return result
-    
-    def track_expenses(self, expense_tracker_url: str) -> Dict:
-        """
-        Scrape expense tracking website or automate expense entry.
-        """
-        result = {
-            "task": "track_expenses",
-            "status": "started"
-        }
-        
-        if not self.agent.navigate_to(expense_tracker_url):
-            result["status"] = "failed"
-            return result
-        
-        # Take screenshot of current expenses
-        self.agent.take_screenshot("expenses_dashboard.png")
-        
-        # Try to extract expense data from table
         try:
-            # This is simplified - real implementation would parse HTML more carefully
-            page_source = self.agent.get_page_source()
-            result["data_captured"] = True
-            result["status"] = "success"
-        except Exception:
-            result["status"] = "failed"
+            if approximate_position:
+                x, y = approximate_position
+                self.janus_os.click(x, y)
+                time.sleep(1)
+                return True
+            else:
+                # Use Ctrl+F to find text
+                return self.find_and_click_text(link_text)
+        except Exception as e:
+            print(f"Error clicking link: {e}")
+            return False
+    
+    def find_and_click_text(self, text: str) -> bool:
+        """Find text on page and click it"""
+        if not self.janus_os:
+            return False
         
-        return result
+        try:
+            # Open find dialog (Ctrl+F)
+            self.janus_os.press_key(0x11)  # Ctrl
+            time.sleep(0.05)
+            self.janus_os.press_key(0x46)  # F
+            time.sleep(0.5)
+            
+            # Type search text
+            self.janus_os.type_string(text)
+            time.sleep(0.5)
+            
+            # Close find dialog (Esc)
+            self.janus_os.press_key(0x1B)
+            time.sleep(0.3)
+            
+            # Click at center of screen (where found text should be highlighted)
+            screen_w, screen_h = self.janus_os.get_screen_size()
+            self.janus_os.click(screen_w // 2, screen_h // 2)
+            time.sleep(1)
+            
+            return True
+        except Exception as e:
+            print(f"Error finding and clicking text: {e}")
+            return False
+    
+    def fill_form_field(self, field_position: tuple, text: str) -> bool:
+        """Fill a form field at given position"""
+        if not self.janus_os:
+            return False
+        
+        try:
+            x, y = field_position
+            
+            # Click field
+            self.janus_os.click(x, y)
+            time.sleep(0.3)
+            
+            # Clear existing text (Ctrl+A, Delete)
+            self.janus_os.press_key(0x11)  # Ctrl
+            time.sleep(0.05)
+            self.janus_os.press_key(0x41)  # A
+            time.sleep(0.1)
+            self.janus_os.press_key(0x2E)  # Delete
+            time.sleep(0.2)
+            
+            # Type new text
+            self.janus_os.type_string(text)
+            time.sleep(0.3)
+            
+            return True
+        except Exception as e:
+            print(f"Error filling form field: {e}")
+            return False
+    
+    def submit_form(self, submit_button_position: tuple = None) -> bool:
+        """Submit form by clicking button or pressing Enter"""
+        if not self.janus_os:
+            return False
+        
+        try:
+            if submit_button_position:
+                x, y = submit_button_position
+                self.janus_os.click(x, y)
+            else:
+                # Press Enter
+                self.janus_os.press_key(0x0D)
+            
+            time.sleep(2)
+            return True
+        except Exception as e:
+            print(f"Error submitting form: {e}")
+            return False
+    
+    def scroll_page(self, direction: str = 'down', amount: int = 3) -> bool:
+        """Scroll page up or down"""
+        if not self.janus_os:
+            return False
+        
+        try:
+            key_code = 0x22 if direction == 'down' else 0x21  # Page Down / Page Up
+            
+            for _ in range(amount):
+                self.janus_os.press_key(key_code)
+                time.sleep(0.3)
+            
+            return True
+        except Exception as e:
+            print(f"Error scrolling page: {e}")
+            return False
+    
+    def go_back(self) -> bool:
+        """Navigate back"""
+        if not self.janus_os:
+            return False
+        
+        try:
+            # Alt+Left Arrow
+            self.janus_os.press_key(0x12)  # Alt
+            time.sleep(0.05)
+            self.janus_os.press_key(0x25)  # Left Arrow
+            time.sleep(1)
+            return True
+        except Exception as e:
+            print(f"Error going back: {e}")
+            return False
+    
+    def go_forward(self) -> bool:
+        """Navigate forward"""
+        if not self.janus_os:
+            return False
+        
+        try:
+            # Alt+Right Arrow
+            self.janus_os.press_key(0x12)  # Alt
+            time.sleep(0.05)
+            self.janus_os.press_key(0x27)  # Right Arrow
+            time.sleep(1)
+            return True
+        except Exception as e:
+            print(f"Error going forward: {e}")
+            return False
+    
+    def refresh_page(self) -> bool:
+        """Refresh current page"""
+        if not self.janus_os:
+            return False
+        
+        try:
+            # F5
+            self.janus_os.press_key(0x74)
+            time.sleep(2)
+            return True
+        except Exception as e:
+            print(f"Error refreshing page: {e}")
+            return False
+    
+    def new_tab(self) -> bool:
+        """Open new tab"""
+        if not self.janus_os:
+            return False
+        
+        try:
+            # Ctrl+T
+            self.janus_os.press_key(0x11)  # Ctrl
+            time.sleep(0.05)
+            self.janus_os.press_key(0x54)  # T
+            time.sleep(0.5)
+            return True
+        except Exception as e:
+            print(f"Error opening new tab: {e}")
+            return False
+    
+    def close_tab(self) -> bool:
+        """Close current tab"""
+        if not self.janus_os:
+            return False
+        
+        try:
+            # Ctrl+W
+            self.janus_os.press_key(0x11)  # Ctrl
+            time.sleep(0.05)
+            self.janus_os.press_key(0x57)  # W
+            time.sleep(0.5)
+            return True
+        except Exception as e:
+            print(f"Error closing tab: {e}")
+            return False
+    
+    def switch_tab(self, direction: str = 'next') -> bool:
+        """Switch to next or previous tab"""
+        if not self.janus_os:
+            return False
+        
+        try:
+            # Ctrl+Tab (next) or Ctrl+Shift+Tab (previous)
+            self.janus_os.press_key(0x11)  # Ctrl
+            time.sleep(0.05)
+            
+            if direction == 'previous':
+                self.janus_os.press_key(0x10)  # Shift
+                time.sleep(0.05)
+            
+            self.janus_os.press_key(0x09)  # Tab
+            time.sleep(0.3)
+            return True
+        except Exception as e:
+            print(f"Error switching tab: {e}")
+            return False
+    
+    def download_file(self, download_link_position: tuple) -> bool:
+        """Click download link"""
+        if not self.janus_os:
+            return False
+        
+        try:
+            x, y = download_link_position
+            self.janus_os.click(x, y)
+            time.sleep(2)
+            return True
+        except Exception as e:
+            print(f"Error downloading file: {e}")
+            return False
+    
+    def take_screenshot(self) -> Optional[bytes]:
+        """Take screenshot of browser window"""
+        if not self.janus_os:
+            return None
+        
+        try:
+            raw_bytes, w, h = self.janus_os.capture_screen()
+            return raw_bytes
+        except Exception as e:
+            print(f"Error taking screenshot: {e}")
+            return None
+
+
+# High-level browser tasks
+class BrowserTasks:
+    """High-level browser task automation"""
+    
+    def __init__(self):
+        self.browser = BrowserAutomation()
+    
+    def search_google(self, query: str) -> bool:
+        """Search on Google"""
+        if not self.browser.navigate_to_url("https://www.google.com"):
+            return False
+        
+        time.sleep(2)
+        
+        # Click search box (approximate center)
+        screen_w, screen_h = self.browser.janus_os.get_screen_size()
+        self.browser.fill_form_field((screen_w // 2, screen_h // 2), query)
+        
+        return self.browser.submit_form()
+    
+    def login_form(self, username_pos: tuple, password_pos: tuple,
+                   username: str, password: str, 
+                   submit_pos: tuple = None) -> bool:
+        """Fill and submit login form"""
+        if not self.browser.fill_form_field(username_pos, username):
+            return False
+        
+        time.sleep(0.5)
+        
+        if not self.browser.fill_form_field(password_pos, password):
+            return False
+        
+        time.sleep(0.5)
+        
+        return self.browser.submit_form(submit_pos)
+    
+    def read_article(self, url: str, scroll_times: int = 5) -> bool:
+        """Navigate to article and scroll through it"""
+        if not self.browser.navigate_to_url(url):
+            return False
+        
+        time.sleep(3)
+        
+        return self.browser.scroll_page('down', scroll_times)
 
 
 if __name__ == "__main__":
-    print("Browser Automation for Financial Tasks")
-    print("=" * 50)
+    # Test browser automation
+    browser = BrowserAutomation()
     
-    if HAS_SELENIUM:
-        print("✓ Selenium available")
-        print("\nFeatures:")
-        print("  • Automate login/logout")
-        print("  • Fill forms")
-        print("  • Extract data from websites")
-        print("  • Monitor prices")
-        print("  • Transfer money (through UI)")
-        print("  • Track expenses")
-        print("\nNo API keys needed - everything through browser automation!")
+    print("Browser Automation Test")
+    print("=" * 60)
+    
+    print("\n1. Finding browser...")
+    found = browser.find_browser()
+    if found:
+        print(f"   ✓ Found: {found}")
     else:
-        print("✗ Selenium not installed")
-        print("  Install: pip install selenium")
-        print("  Download ChromeDriver: https://chromedriver.chromium.org/")
+        print("   Opening browser...")
+        browser.open_browser()
+    
+    print("\n2. Testing navigation...")
+    if browser.navigate_to_url("https://www.example.com"):
+        print("   ✓ Navigated to example.com")
+    
+    print("\n" + "=" * 60)
+    print("Browser automation ready!")

@@ -1,0 +1,17 @@
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+Env/
+.env
+*.env
+*.db
+*.pt
+Janus-repo/
+.oxpecker_work/
+synthetic_databases/
+*.bak
+*.log
+.kiro/

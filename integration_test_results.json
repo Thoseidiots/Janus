@@ -1,0 +1,23 @@
+{
+  "test_timestamp": "2026-04-17T14:51:47.511500",
+  "test_duration": 76.816559,
+  "components": [
+    "finance",
+    "ai",
+    "browser",
+    "task_manager"
+  ],
+  "test_results": {
+    "component_availability": true,
+    "finance_basic": false,
+    "ai_basic": true,
+    "browser_basic": true,
+    "finance_ai_integration": false,
+    "browser_finance_integration": false,
+    "ai_performance": false,
+    "finance_performance": false
+  },
+  "total_tests": 8,
+  "passed_tests": 3,
+  "readiness_score": 37.5
+}

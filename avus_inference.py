@@ -58,6 +58,7 @@ REPO_ROOT = _find_repo_root()
 
 # Weight search order
 WEIGHT_PATHS = [
+    REPO_ROOT / "avus_3b_weights.pt",  # Real 3B weights downloaded from KaggleHub
     REPO_ROOT / "avus_1b_weights.pt",
     REPO_ROOT / "weights" / "avus_1b_weights.pt",
     Path("/kaggle/working/avus_1b_weights.pt"),
@@ -66,13 +67,13 @@ WEIGHT_PATHS = [
 ]
 
 CONFIG_PATHS = [
-    REPO_ROOT / "config_avus_70b.json",
-    REPO_ROOT / "config_avus_34b.json",
-    REPO_ROOT / "config_avus_13b.json",
-    REPO_ROOT / "config_avus_7b.json",
+    REPO_ROOT / "config_avus_1b.json",  # Fixed 1B config to match downloaded weights
     REPO_ROOT / "config_avus_3b.json",
     REPO_ROOT / "config_avus_1b .json",
-    REPO_ROOT / "config_avus_1b.json",
+    REPO_ROOT / "config_avus_7b.json",
+    REPO_ROOT / "config_avus_13b.json",
+    REPO_ROOT / "config_avus_34b.json",
+    REPO_ROOT / "config_avus_70b.json",
     Path("/kaggle/working/config_avus_1b.json"),
     Path("/kaggle/input/janus-avus-weights/config_avus_1b.json"),
 ]

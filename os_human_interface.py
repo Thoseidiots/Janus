@@ -37,8 +37,74 @@ class JanusOS:
         self.user32 = ctypes.windll.user32
         self.gdi32 = ctypes.windll.gdi32
         self.kernel32 = ctypes.windll.kernel32
+        self.monitors = self._enumerate_monitors()
+        
+    def _enumerate_monitors(self):
+        """Enumerate all monitors"""
+        monitors = []
+        
+        def callback(hMonitor, hdcMonitor, lprcMonitor, dwData):
+            monitors.append({
+                'handle': hMonitor,
+                'left': lprcMonitor.contents.left,
+                'top': lprcMonitor.contents.top,
+                'right': lprcMonitor.contents.right,
+                'bottom': lprcMonitor.contents.bottom,
+                'width': lprcMonitor.contents.right - lprcMonitor.contents.left,
+                'height': lprcMonitor.contents.bottom - lprcMonitor.contents.top
+            })
+            return True
+        
+        try:
+            MonitorEnumProc = ctypes.WINFUNCTYPE(
+                ctypes.c_bool,
+                ctypes.c_ulong,
+                ctypes.c_ulong,
+                ctypes.POINTER(wintypes.RECT),
+                ctypes.c_double
+            )
+            
+            self.user32.EnumDisplayMonitors(
+                None, None, MonitorEnumProc(callback), 0
+            )
+        except:
+            # Fallback to primary monitor
+            monitors = [{
+                'handle': 0,
+                'left': 0,
+                'top': 0,
+                'right': self.user32.GetSystemMetrics(0),
+                'bottom': self.user32.GetSystemMetrics(1),
+                'width': self.user32.GetSystemMetrics(0),
+                'height': self.user32.GetSystemMetrics(1)
+            }]
+        
+        return monitors
+    
+    def get_monitor_count(self):
+        """Get number of monitors"""
+        return len(self.monitors)
+    
+    def get_monitor_info(self, monitor_index=0):
+        """Get info for specific monitor"""
+        if 0 <= monitor_index < len(self.monitors):
+            return self.monitors[monitor_index]
+        return self.monitors[0] if self.monitors else None
+    
+    def get_virtual_screen_size(self):
+        """Get total virtual screen size (all monitors combined)"""
+        if not self.monitors:
+            return self.get_screen_size()
+        
+        min_x = min(m['left'] for m in self.monitors)
+        min_y = min(m['top'] for m in self.monitors)
+        max_x = max(m['right'] for m in self.monitors)
+        max_y = max(m['bottom'] for m in self.monitors)
+        
+        return (max_x - min_x, max_y - min_y)
         
     def get_screen_size(self):
+        """Get primary monitor size"""
         return self.user32.GetSystemMetrics(0), self.user32.GetSystemMetrics(1)
 
     def move_mouse(self, x, y):

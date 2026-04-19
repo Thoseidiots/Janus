@@ -31,7 +31,7 @@ from dataclasses import dataclass, field
 
 from avus_brain import AvusBrain, get_brain
 from janus_binary_decider import BinaryHBMDecider, DecisionResult
-from janus_loop_detector import JanusLoopDetector, Action, LoopResult
+from janus_loop_detector import JanusLoopDetector, Action, LoopDetection as LoopResult
 from janus_ghost_code_detector import (
     JanusGhostCodeDetector,
     ObservabilityReport,
@@ -324,9 +324,9 @@ class EnhancedAvusBrain(AvusBrain):
                 warnings.append(
                     f"🔄 LOOP DETECTED: {loop_status.recommendation}"
                 )
-                if loop_status.pattern_detected:
+                if loop_status.loop_pattern:
                     warnings.append(
-                        f"Pattern: {loop_status.loop_pattern} (x{loop_status.similar_count})"
+                        f"Pattern: {loop_status.loop_pattern} (x{loop_status.repetition_count})"
                     )
 
         # Stage 3: Execute (if we got this far, it's safe enough)
@@ -397,15 +397,16 @@ class EnhancedAvusBrain(AvusBrain):
         # Binary decider stats
         if self.decider:
             health["binary_decisions"] = {
-                "total_decisions": self.decider.total_decisions,
-                "halt_count": self.decider.halt_count,
-                "loop_count": self.decider.loop_count,
+                "total_decisions": getattr(self.decider, "total_decisions", 0),
+                "halt_count": getattr(self.decider, "halt_count", 0),
+                "loop_count": getattr(self.decider, "loop_count", 0),
                 "halt_rate": (
-                    self.decider.halt_count / max(self.decider.total_decisions, 1)
+                    getattr(self.decider, "halt_count", 0) /
+                    max(getattr(self.decider, "total_decisions", 1), 1)
                 ),
                 "avg_confidence": (
-                    sum(self.decider.confidence_history) /
-                    max(len(self.decider.confidence_history), 1)
+                    sum(getattr(self.decider, "confidence_history", [0])) /
+                    max(len(getattr(self.decider, "confidence_history", [1])), 1)
                 ),
             }
 

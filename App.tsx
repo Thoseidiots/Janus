@@ -1,24 +1,65 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+
+// ── Daemon API ────────────────────────────────────────────────────────────────
+const DAEMON_URL = "http://localhost:8006";
+const JC_API_URL = "http://localhost:8004";
+const POLL_MS    = 5000;
+
+interface DaemonStatus {
+  status:         string;
+  uptime_seconds: number;
+  restart_count:  number;
+  last_error:     string;
+  cycle_count:    number;
+  current_mood:   string;
+  current_energy: number;
+  timestamp:      string;
+}
+
+interface JCNetworkStats {
+  total_jc_in_circulation:  number;
+  total_accounts:           number;
+  total_transactions:       number;
+  total_compute_contributed:number;
+}
+
+async function fetchDaemonStatus(): Promise<DaemonStatus | null> {
+  try {
+    const r = await fetch(`${DAEMON_URL}/status`, { signal: AbortSignal.timeout(2000) });
+    if (!r.ok) return null;
+    return await r.json();
+  } catch { return null; }
+}
+
+async function fetchJCStats(): Promise<JCNetworkStats | null> {
+  try {
+    const r = await fetch(`${JC_API_URL}/jc/network`, { signal: AbortSignal.timeout(2000) });
+    if (!r.ok) return null;
+    return await r.json();
+  } catch { return null; }
+}
 
 // ── Seeded RNG ────────────────────────────────────────────────────────────────
-function seededRng(seed) {
-let s = seed >>> 0;
-return () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 0xffffffff; };
+function seededRng(seed: number): () => number {
+  let s = seed >>> 0;
+  return () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 0xffffffff; };
 }
 
 // ── Generate 80-point valence history ────────────────────────────────────────
-function genHistory() {
-const rng = seededRng(42);
-const h = []; let p=0.2,a=0.1,c=0.5,f=0.15,conf=0.55;
-for (let i=0;i<80;i++) {
-p    = Math.max(-1,Math.min(1, p    +(rng()-0.48)*0.08));
-a    = Math.max(-1,Math.min(1, a    +(rng()-0.48)*0.07));
-c    = Math.max( 0,Math.min(1, c    +(rng()-0.45)*0.05));
-f    = Math.max( 0,Math.min(1, f    +(rng()-0.52)*0.06));
-conf = Math.max( 0,Math.min(1, conf +(rng()-0.47)*0.04));
-h.push({i, p:+p.toFixed(3), a:+a.toFixed(3), c:+c.toFixed(3), f:+f.toFixed(3), conf:+conf.toFixed(3)});
-}
-return h;
+interface ValencePoint { i: number; p: number; a: number; c: number; f: number; conf: number; }
+
+function genHistory(): ValencePoint[] {
+  const rng = seededRng(42);
+  const h: ValencePoint[] = []; let p=0.2,a=0.1,c=0.5,f=0.15,conf=0.55;
+  for (let i=0;i<80;i++) {
+    p    = Math.max(-1,Math.min(1, p    +(rng()-0.48)*0.08));
+    a    = Math.max(-1,Math.min(1, a    +(rng()-0.48)*0.07));
+    c    = Math.max( 0,Math.min(1, c    +(rng()-0.45)*0.05));
+    f    = Math.max( 0,Math.min(1, f    +(rng()-0.52)*0.06));
+    conf = Math.max( 0,Math.min(1, conf +(rng()-0.47)*0.04));
+    h.push({i, p:+p.toFixed(3), a:+a.toFixed(3), c:+c.toFixed(3), f:+f.toFixed(3), conf:+conf.toFixed(3)});
+  }
+  return h;
 }
 
 const INIT_HIST = genHistory();
@@ -85,9 +126,9 @@ failed:  { bg:"#ef4444",label:"✗ failed" },
 const RISK_COL = { low:"#10b981",medium:"#f59e0b",high:"#ef4444" };
 
 // ── Gauge ──────────────────────────────────────────────────────────────────────
-function Gauge({ value, color, label, sz=76 }) {
-const r=sz/2-7, cx=sz/2, cy=sz/2, circ=2*Math.PI*r;
-const norm = Math.max(0, Math.min(1, (value+1)/2));
+function Gauge({ value, color, label, sz=76 }: { value: number; color: string; label: string; sz?: number }) {
+  const r=sz/2-7, cx=sz/2, cy=sz/2, circ=2*Math.PI*r;
+  const norm = Math.max(0, Math.min(1, (value+1)/2));
 return (
 <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
 <svg width={sz} height={sz}>
@@ -108,45 +149,48 @@ style={{transition:"stroke-dasharray 0.8s ease"}} />
 }
 
 // ── SVG valence chart ─────────────────────────────────────────────────────────
-function ValChart({ hist }) {
-const W=520, H=130, PL=30, PR=8, PT=6, PB=16;
-const cw=W-PL-PR, ch=H-PT-PB;
-const sl = hist.slice(-60);
-const sx = i => PL + (i/(sl.length-1||1))*cw;
-const sy = v => PT + ((1-(v+1)/2)*ch);
-const dims=[
-{k:"p",col:"#10b981"},{k:"a",col:"#f59e0b"},{k:"c",col:"#60a5fa"},
-{k:"f",col:"#f87171"},{k:"conf",col:"#a78bfa"},
-];
-const labels=["Pleasure","Arousal","Curiosity","Frustration","Confidence"];
-return (
-<svg viewBox={`0 0 ${W} ${H}`} style={{width:"100%",height:H}}>
-{[-1,-0.5,0,0.5,1].map(v=>(
-<g key={v}>
-<line x1={PL} x2={W-PR} y1={sy(v)} y2={sy(v)} stroke="#1e293b" strokeWidth="0.8"/>
-<text x={PL-3} y={sy(v)+3} textAnchor="end" fontSize="7" fill="#334155">{v}</text>
-</g>
-))}
-{dims.map(d=>{
-const pts=sl.map((pt,i)=>`${sx(i).toFixed(1)},${sy(pt[d.k]).toFixed(1)}`).join(" ");
-return <polyline key={d.k} points={pts} fill="none" stroke={d.col}
-strokeWidth="1.8" strokeLinejoin="round" opacity="0.9"/>;
-})}
-{dims.map((d,i)=>(
-<g key={d.k} transform={`translate(${PL+i*100},${H-4})`}>
-<line x1="0" x2="10" y1="0" y2="0" stroke={d.col} strokeWidth="2"/>
-<text x="13" y="3" fontSize="8" fill={d.col}>{labels[i]}</text>
-</g>
-))}
-</svg>
-);
+function ValChart({ hist }: { hist: ValencePoint[] }) {
+  const W=520, H=130, PL=30, PR=8, PT=6, PB=16;
+  const cw=W-PL-PR, ch=H-PT-PB;
+  const sl = hist.slice(-60);
+  const sx = (i: number) => PL + (i/(sl.length-1||1))*cw;
+  const sy = (v: number) => PT + ((1-(v+1)/2)*ch);
+  const dims=[
+    {k:"p" as keyof ValencePoint,col:"#10b981"},{k:"a" as keyof ValencePoint,col:"#f59e0b"},
+    {k:"c" as keyof ValencePoint,col:"#60a5fa"},{k:"f" as keyof ValencePoint,col:"#f87171"},
+    {k:"conf" as keyof ValencePoint,col:"#a78bfa"},
+  ];
+  const labels=["Pleasure","Arousal","Curiosity","Frustration","Confidence"];
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} style={{width:"100%",height:H}}>
+      {[-1,-0.5,0,0.5,1].map((v: number)=>(
+        <g key={v}>
+          <line x1={PL} x2={W-PR} y1={sy(v)} y2={sy(v)} stroke="#1e293b" strokeWidth="0.8"/>
+          <text x={PL-3} y={sy(v)+3} textAnchor="end" fontSize="7" fill="#334155">{v}</text>
+        </g>
+      ))}
+      {dims.map(d=>{
+        const pts=sl.map((pt,i)=>`${sx(i).toFixed(1)},${sy(pt[d.k] as number).toFixed(1)}`).join(" ");
+        return <polyline key={d.k} points={pts} fill="none" stroke={d.col}
+          strokeWidth="1.8" strokeLinejoin="round" opacity="0.9"/>;
+      })}
+      {dims.map((d,i)=>(
+        <g key={d.k} transform={`translate(${PL+i*100},${H-4})`}>
+          <line x1="0" x2="10" y1="0" y2="0" stroke={d.col} strokeWidth="2"/>
+          <text x="13" y="3" fontSize="8" fill={d.col}>{labels[i]}</text>
+        </g>
+      ))}
+    </svg>
+  );
 }
 
 // ── Goal node ─────────────────────────────────────────────────────────────────
-function GoalNode({ goal, map, depth=0 }) {
-const [open,setOpen]=useState(depth<1);
-const children=(goal.children||[]).map(id=>map[id]).filter(Boolean);
-const s=STATUS[goal.status]||STATUS.pending;
+interface GoalData { id: string; title: string; status: string; progress: number; children: string[]; parent?: string; }
+
+function GoalNode({ goal, map, depth=0 }: { goal: GoalData; map: Record<string, GoalData>; depth?: number }) {
+  const [open,setOpen]=useState(depth<1);
+  const children=(goal.children||[]).map((id: string)=>map[id]).filter(Boolean);
+  const s=STATUS[goal.status as keyof typeof STATUS]||STATUS.pending;
 const pct=Math.round(goal.progress*100);
 return (
 <div style={{marginLeft:depth*14,marginTop:5}}>
@@ -165,13 +209,13 @@ transition:"width 0.6s"}}/>
 <span style={{fontSize:9,color:"#475569",width:24,textAlign:"right"}}>{pct}%</span>
 {children.length>0&&<span style={{fontSize:9,color:"#475569"}}>{open?"▾":"▸"}</span>}
 </div>
-{open&&children.map(c=><GoalNode key={c.id} goal={c} map={map} depth={depth+1}/>)}
+{open&&children.map((c: GoalData)=><GoalNode key={c.id} goal={c} map={map} depth={depth+1}/>)}
 </div>
 );
 }
 
 // ── Card ──────────────────────────────────────────────────────────────────────
-function Card({ title, badge, accent="#1e293b", children }) {
+function Card({ title, badge, accent="#1e293b", children }: { title: string; badge?: string | number | null; accent?: string; children: React.ReactNode }) {
 return (
 <div style={{
 background:"linear-gradient(135deg,#0d1929 0%,#0a1222 100%)",
@@ -192,7 +236,7 @@ fontFamily:"monospace"}}>{badge}</span>}
 }
 
 // ── Dot ───────────────────────────────────────────────────────────────────────
-function Dot({ color }) {
+function Dot({ color }: { color: string }) {
 return (
 <span style={{position:"relative",display:"inline-flex",width:9,height:9}}>
 <span style={{position:"absolute",inset:0,borderRadius:"50%",background:color,
@@ -209,46 +253,155 @@ const [live,setLive]=useState(INIT_HIST[INIT_HIST.length-1]);
 const [cycle,setCycle]=useState(47);
 const [phaseIdx,setPhaseIdx]=useState(0);
 const [events,setEvents]=useState(INIT_EVENTS);
-const logRef=useRef(null);
-const phase=PHASES[phaseIdx];
-const pCol=PHASE_COLOR[phase];
+const logRef=useRef<HTMLDivElement>(null);
 
+// ── Live daemon state ─────────────────────────────────────────────────────
+const [daemonStatus, setDaemonStatus] = useState<DaemonStatus | null>(null);
+const [jcStats, setJcStats]           = useState<JCNetworkStats | null>(null);
+const [daemonOnline, setDaemonOnline] = useState(false);
+
+const pollLiveData = useCallback(async () => {
+  const [ds, jc] = await Promise.all([fetchDaemonStatus(), fetchJCStats()]);
+  setDaemonStatus(ds);
+  setJcStats(jc);
+  setDaemonOnline(ds !== null);
+
+  if (ds) {
+    // Sync cycle count from daemon
+    setCycle(ds.cycle_count || 47);
+    // Derive a phase index from cycle count
+    setPhaseIdx(ds.cycle_count % 5);
+    // Add a live event from daemon
+    const now = new Date();
+    const ts = `${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}:${String(now.getSeconds()).padStart(2,"0")}`;
+    setEvents(prev => [{
+      ts,
+      kind: "cycle_start",
+      data: `cycle=${ds.cycle_count} mood=${ds.current_mood} energy=${(ds.current_energy*100).toFixed(0)}%`,
+    }, ...prev.slice(0, 24)]);
+  }
+}, []);
+
+// Poll daemon every POLL_MS
+useEffect(() => {
+  pollLiveData();
+  const id = setInterval(pollLiveData, POLL_MS);
+  return () => clearInterval(id);
+}, [pollLiveData]);
+
+// Simulated valence drift (keeps chart alive when daemon is offline)
 useEffect(()=>{
 const id=setInterval(()=>{
-const bump=(v,lo,hi,d)=>Math.max(lo,Math.min(hi,v+(Math.random()-d)*0.04));
-setLive(prev=>{
-const n={
-...prev,
-p:   bump(prev.p,   -1, 1, 0.48),
-a:   bump(prev.a,   -1, 1, 0.48),
-c:   bump(prev.c,    0, 1, 0.45),
-f:   bump(prev.f,    0, 1, 0.52),
-conf:bump(prev.conf, 0, 1, 0.47),
-i:prev.i+1,
-};
-setHist(h=>[...h.slice(-79),n]);
-return n;
-});
-setCycle(c=>c+1);
-setPhaseIdx(i=>(i+1)%5);
-setEvents(prev=>{
-const kinds=["observe","apply_ok","perception_event","verify","plan","cycle_start"];
-const dataMap={observe:"entities=[person] scene=workspace",apply_ok:"tool=memory_query → 2 hits",
-perception_event:"source=vision type=scene_change",verify:"safe=2 blocked=0",
-plan:"sub_goals=3 intent=homeostasis",cycle_start:`cycle=${cycle+1}`};
-const k=kinds[Math.floor(Math.random()*kinds.length)];
-const now=new Date();
-const ts=`${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}:${String(now.getSeconds()).padStart(2,"0")}`;
-return [{ts,kind:k,data:dataMap[k]},...prev.slice(0,24)];
-});
+  if (daemonOnline) return; // daemon provides real data — skip simulation
+  const bump=(v: number,lo: number,hi: number,d: number)=>Math.max(lo,Math.min(hi,v+(Math.random()-d)*0.04));
+  setLive(prev=>{
+    const n={
+      ...prev,
+      p:   bump(prev.p,   -1, 1, 0.48),
+      a:   bump(prev.a,   -1, 1, 0.48),
+      c:   bump(prev.c,    0, 1, 0.45),
+      f:   bump(prev.f,    0, 1, 0.52),
+      conf:bump(prev.conf, 0, 1, 0.47),
+      i:prev.i+1,
+    };
+    setHist(h=>[...h.slice(-79),n]);
+    return n;
+  });
+  setCycle(c=>c+1);
+  setPhaseIdx(i=>(i+1)%5);
+  setEvents(prev=>{
+    const kinds=["observe","apply_ok","perception_event","verify","plan","cycle_start"];
+    const dataMap: Record<string,string>={
+      observe:"entities=[person] scene=workspace",
+      apply_ok:"tool=memory_query → 2 hits",
+      perception_event:"source=vision type=scene_change",
+      verify:"safe=2 blocked=0",
+      plan:"sub_goals=3 intent=homeostasis",
+      cycle_start:`cycle=${cycle+1}`,
+    };
+    const k=kinds[Math.floor(Math.random()*kinds.length)];
+    const now=new Date();
+    const ts=`${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}:${String(now.getSeconds()).padStart(2,"0")}`;
+    return [{ts,kind:k,data:dataMap[k]},...prev.slice(0,24)];
+  });
 },1300);
 return ()=>clearInterval(id);
-},[]);
+},[daemonOnline, cycle]);
+
+// Sync live valence from daemon energy/mood when online
+useEffect(() => {
+  if (!daemonStatus) return;
+  const energy = daemonStatus.current_energy ?? 1.0;
+  const moodMap: Record<string, Partial<ValencePoint>> = {
+    excited:  { p: 0.8,  a: 0.7,  c: 0.8,  f: 0.1,  conf: 0.85 },
+    content:  { p: 0.6,  a: 0.3,  c: 0.5,  f: 0.1,  conf: 0.75 },
+    positive: { p: 0.5,  a: 0.4,  c: 0.6,  f: 0.15, conf: 0.7  },
+    stressed: { p: -0.3, a: 0.7,  c: 0.3,  f: 0.7,  conf: 0.4  },
+    sad:      { p: -0.4, a: 0.2,  c: 0.2,  f: 0.5,  conf: 0.35 },
+    low:      { p: -0.2, a: 0.2,  c: 0.3,  f: 0.4,  conf: 0.45 },
+    alert:    { p: 0.3,  a: 0.8,  c: 0.7,  f: 0.2,  conf: 0.65 },
+    neutral:  { p: 0.1,  a: 0.3,  c: 0.5,  f: 0.15, conf: 0.6  },
+  };
+  const base = moodMap[daemonStatus.current_mood] ?? moodMap.neutral;
+  const energyScale = energy;
+  setLive(prev => {
+    const n: ValencePoint = {
+      ...prev,
+      p:    +(((base.p    ?? prev.p)    * energyScale)).toFixed(3),
+      a:    +(((base.a    ?? prev.a)    * energyScale)).toFixed(3),
+      c:    +(((base.c    ?? prev.c)    * energyScale)).toFixed(3),
+      f:    +(((base.f    ?? prev.f)    * (2 - energyScale))).toFixed(3),
+      conf: +(((base.conf ?? prev.conf) * energyScale)).toFixed(3),
+      i: prev.i + 1,
+    };
+    setHist(h => [...h.slice(-79), n]);
+    return n;
+  });
+}, [daemonStatus]);
 
 useEffect(()=>{if(logRef.current)logRef.current.scrollTop=0;},[events.length]);
 
+const phase=PHASES[phaseIdx];
+const pCol=PHASE_COLOR[phase as keyof typeof PHASE_COLOR];
 const goalMap=Object.fromEntries(GOALS.map(g=>[g.id,g]));
 const roots=GOALS.filter(g=>!g.parent);
+
+// ── Derived stats from live data ──────────────────────────────────────────
+const uptimeStr = daemonStatus
+  ? (() => {
+      const s = Math.floor(daemonStatus.uptime_seconds);
+      if (s < 60)   return `${s}s`;
+      if (s < 3600) return `${Math.floor(s/60)}m`;
+      return `${Math.floor(s/3600)}h ${Math.floor((s%3600)/60)}m`;
+    })()
+  : "52m";
+
+const statsStrip = [
+  {
+    lbl: "JC CIRCULATING",
+    val: jcStats ? jcStats.total_jc_in_circulation.toFixed(1) : "—",
+    sub: jcStats ? `${jcStats.total_accounts} accounts` : "daemon offline",
+    col: "#60a5fa",
+  },
+  {
+    lbl: "MOOD",
+    val: daemonStatus ? daemonStatus.current_mood.toUpperCase().slice(0,7) : "—",
+    sub: daemonStatus ? `energy ${(daemonStatus.current_energy*100).toFixed(0)}%` : "daemon offline",
+    col: "#a78bfa",
+  },
+  {
+    lbl: "RESTARTS",
+    val: daemonStatus ? String(daemonStatus.restart_count) : "—",
+    sub: daemonStatus ? (daemonStatus.last_error ? "last err: " + daemonStatus.last_error.slice(0,20) : "no errors") : "daemon offline",
+    col: "#fb923c",
+  },
+  {
+    lbl: "UPTIME",
+    val: uptimeStr,
+    sub: `cycle #${cycle}`,
+    col: "#10b981",
+  },
+];
 
 return (
 <div style={{minHeight:"100vh",background:"#060d17",color:"#e2e8f0",
@@ -273,7 +426,10 @@ fontFamily:"'Space Mono','Courier New',monospace",paddingBottom:40}}>
             <span style={{color:"#e2e8f0",fontWeight:700}}> COGNITION</span>
           </div>
           <div style={{fontSize:9,color:"#334155",letterSpacing:"0.14em",textTransform:"uppercase",marginTop:2}}>
-            Autonomous Cognitive Monitor · v0.9
+            Autonomous Cognitive Monitor · v0.9 &nbsp;·&nbsp;
+            <span style={{color: daemonOnline ? "#10b981" : "#ef4444"}}>
+              {daemonOnline ? "● LIVE" : "○ OFFLINE"}
+            </span>
           </div>
         </div>
       </div>
@@ -337,7 +493,7 @@ fontFamily:"'Space Mono','Courier New',monospace",paddingBottom:40}}>
         ))}
         <div style={{marginTop:10,height:3,background:"#0a1222",borderRadius:2,overflow:"hidden"}}>
           <div style={{
-            height:"100%",width:"60%",borderRadius:2,
+            height:"100%",borderRadius:2,
             background:"linear-gradient(90deg,#10b981,#3b82f6)",
             transition:"width 1.2s ease",
             width:`${50+30*Math.sin(Date.now()/2000)}%`
@@ -429,12 +585,7 @@ fontFamily:"'Space Mono','Courier New',monospace",paddingBottom:40}}>
 
     {/* ── Stats strip ── */}
     <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10}}>
-      {[
-        {lbl:"MEMORIES",  val:"204", sub:"11 compressed",  col:"#60a5fa"},
-        {lbl:"GOALS",     val:"7",   sub:"3 active",       col:"#a78bfa"},
-        {lbl:"TOOL CALLS",val:"515", sub:"since boot",     col:"#fb923c"},
-        {lbl:"UPTIME",    val:"52m", sub:`cycle #${cycle}`,col:"#10b981"},
-      ].map(s=>(
+      {statsStrip.map(s=>(
         <div key={s.lbl} style={{
           background:"#0d1929",border:"1px solid #0f172a",
           borderRadius:10,padding:"11px 13px",
