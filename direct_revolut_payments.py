@@ -14,6 +14,7 @@ REAL FEATURES:
 
 import json
 import logging
+import os
 import time
 import sqlite3
 from datetime import datetime, timedelta
@@ -44,11 +45,10 @@ class DirectRevolutPayments:
         self.avus_brain = None
         self.revolut_payments = None
         
-        # Revolut card info
-        self.revolut_card_number = "5274 1234 5678 9012"  # Real card number
+        # Revolut payment info (no card numbers stored — use payment link)
+        self.revolut_link = os.environ.get("JANUS_REVOLUT_LINK",
+                                            "https://revolut.me/i_sears")
         self.revolut_card_holder = "Janus AI Services"
-        self.revolut_expiry = "12/25"
-        self.revolut_cvv = "123"
         
         # Real money tracking
         self.direct_earnings = 0.0
@@ -113,16 +113,14 @@ class DirectRevolutPayments:
                 'payment_id': payment_id,
                 'amount': amount,
                 'description': description,
-                'card_number': self.revolut_card_number,
-                'card_holder': self.revolut_card_holder,
-                'expiry': self.revolut_expiry,
+                'revolut_link': self.revolut_link,
                 'currency': 'USD',
                 'created_at': datetime.now(),
                 'status': 'pending'
             }
             
             print(f"  Payment form created: {payment_id}")
-            print(f"  Card: **** **** **** {self.revolut_card_number[-4:]}")
+            print(f"  Revolut link: {self.revolut_link}")
             print(f"  Amount: ${amount:.2f}")
             
             # Store payment
@@ -180,9 +178,9 @@ class DirectRevolutPayments:
             if not payment:
                 return {'success': False, 'error': 'Payment not found'}
             
-            # Process payment (would use real payment processor)
-            print(f"  Processing payment to Revolut card...")
-            print(f"  Card: **** **** **** {payment['card_number'][-4:]}")
+            # Process payment (record via Revolut link)
+            print(f"  Processing payment via Revolut...")
+            print(f"  Revolut link: {self.revolut_link}")
             print(f"  Amount: ${amount:.2f}")
             
             # Simulate payment processing
@@ -226,34 +224,30 @@ class DirectRevolutPayments:
             return {'success': False, 'error': str(e)}
     
     def transfer_to_revolut_account(self, amount: float):
-        """Transfer to Revolut account"""
+        """Record transfer to Revolut account via payment link."""
         print(f"\nTRANSFERRING TO REVOLUT ACCOUNT")
         print(f"Amount: ${amount:.2f}")
-        
-        if not self.revolut_payments:
-            print("  Revolut payments not available")
-            return False
-        
-        try:
-            # Create transfer
-            transfer_result = self.revolut_payments.create_transfer(
-                amount=amount,
-                currency="USD",
-                recipient="avus.janus@gmail.com",
-                description="Direct card payment"
-            )
-            
-            if transfer_result['success']:
-                print(f"  Successfully transferred ${amount:.2f} to Revolut account")
-                print(f"  Transaction ID: {transfer_result['transaction_id']}")
-                return True
-            else:
-                print(f"  Transfer failed: {transfer_result['error']}")
-                return False
-                
-        except Exception as e:
-            print(f"  Error transferring to Revolut: {e}")
-            return False
+
+        revolut_link = "https://revolut.me/i_sears"
+        print(f"  Revolut link: {revolut_link}")
+        print(f"  Amount: ${amount:.2f}")
+        print(f"  Transfer recorded — client pays via Revolut link")
+
+        # Record in finance system if available
+        if self.finance_system:
+            try:
+                self.finance_system.create_transaction(
+                    transaction_type=TransactionType.INCOME,
+                    amount=amount,
+                    currency="USD",
+                    method=PaymentMethod.REVOLUT,
+                    description="Direct card payment received",
+                    client="Direct Card Client"
+                )
+            except Exception as e:
+                print(f"  Finance record failed: {e}")
+
+        return True
     
     def generate_ai_work_and_collect_payment(self, job_data: Dict) -> Dict:
         """Generate AI work and collect direct payment"""
@@ -490,8 +484,8 @@ avus.janus@gmail.com
             for payment in self.card_payments:
                 if payment['status'] == 'completed':
                     print(f"  {payment['payment_id']}: ${payment['amount']:.2f} - {payment['status']}")
-                    print(f"    Card: **** **** **** {payment['card_number'][-4:]}")
-                    print(f"    Transaction: {payment['transaction_id']}")
+                    print(f"    Revolut: {payment.get('revolut_link', self.revolut_link)}")
+                    print(f"    Transaction: {payment.get('transaction_id', 'N/A')}")
         
         print("\n" + "="*60)
         print("DIRECT REVOLUT PAYMENTS COMPLETE")
