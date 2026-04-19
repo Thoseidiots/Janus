@@ -92,6 +92,28 @@ except ImportError:
     HAS_NOTIFIER = False
     _notifier = None
 
+# Import wallet for payment tracking
+try:
+    from janus_wallet import JanusWallet
+    HAS_WALLET = True
+except ImportError:
+    HAS_WALLET = False
+
+# Import human-like job decision engine
+try:
+    from janus_job_decision import JobDecisionEngine
+    HAS_JOB_DECISION = True
+except ImportError:
+    HAS_JOB_DECISION = False
+
+# Import platform browser — Janus uses sites like a human, no API keys needed
+try:
+    from janus_platform_browser import PlatformBrowser, BrowserJob
+    HAS_PLATFORM_BROWSER = True
+except ImportError:
+    HAS_PLATFORM_BROWSER = False
+    logger.warning("Wallet not available. Payment tracking disabled.")
+
 # Setup logging
 logging.basicConfig(
     level=logging.INFO,
@@ -2112,6 +2134,28 @@ class JanusAutonomousWorker(WorkerCompletionMixin):
         self.db_path = Path("janus_worker.db")
         self.running = False
         
+        # Initialize wallet for real financial tracking
+        self.wallet = None
+        if HAS_WALLET:
+            try:
+                self.wallet = JanusWallet()
+                logger.info(f"Wallet initialized for {self.wallet.BUSINESS_NAME}")
+                
+                # Setup crypto wallets if not already done
+                crypto_addresses = self.wallet.get_crypto_addresses()
+                if not crypto_addresses:
+                    logger.info("Setting up crypto wallets...")
+                    self.wallet.setup_crypto_wallets()
+                    crypto_addresses = self.wallet.get_crypto_addresses()
+                    if crypto_addresses:
+                        logger.info(f"Crypto wallets ready: {list(crypto_addresses.keys())}")
+                
+            except Exception as e:
+                logger.error(f"Could not initialize wallet: {e}")
+                self.wallet = None
+        else:
+            logger.warning("Wallet module not available. Financial tracking disabled.")
+        
         # Initialize desktop interaction if available
         self.desktop = None
         self.app_launcher = None
@@ -2147,6 +2191,16 @@ class JanusAutonomousWorker(WorkerCompletionMixin):
         # Initialize checkpointer and notifier
         self.checkpointer = _get_checkpointer() if HAS_CHECKPOINT else None
         self.notifier = _notifier
+
+        # Initialize human-like job decision engine
+        if HAS_JOB_DECISION:
+            self.job_decision = JobDecisionEngine(
+                human_core=self.human,
+                skills=self.skills
+            )
+            logger.info("Job decision engine initialized — Janus will choose its own work")
+        else:
+            self.job_decision = None
 
         # Adaptive scoring weights — updated by feedback loop
         self._score_weights = {
@@ -2427,64 +2481,110 @@ class JanusAutonomousWorker(WorkerCompletionMixin):
                 await asyncio.sleep(300)  # Wait 5 minutes before retry
     
     async def _find_jobs(self):
-        """Find available jobs from all platforms"""
+        """Find available jobs from all platforms — browser-first, API fallback."""
         logger.info("Searching for available jobs...")
-        
+
         skill_names = list(self.skills.keys())
-        
+
+        # Primary path: use browser like a human (no API keys needed)
+        if HAS_PLATFORM_BROWSER and HAS_COMPUTER_USE:
+            try:
+                logger.info("[Janus] Opening browser to browse job platforms...")
+                async with ComputerUseEngine() as engine:
+                    platform_browser = PlatformBrowser(engine)
+                    browser_jobs = await platform_browser.find_jobs(skill_names)
+
+                    for bj in browser_jobs:
+                        # Convert BrowserJob → Job for compatibility with rest of system
+                        job = Job(
+                            id=bj.id,
+                            title=bj.title,
+                            description=bj.description,
+                            required_skills=bj.required_skills or skill_names[:2],
+                            budget=bj.budget,
+                            deadline=bj.deadline,
+                            platform=bj.platform,
+                            status=JobStatus.AVAILABLE,
+                        )
+                        self._store_job(job)
+
+                    logger.info(f"[Janus] Found {len(browser_jobs)} jobs via browser")
+                    return
+
+            except Exception as e:
+                logger.warning(f"[Janus] Browser job search failed: {e} — falling back to API")
+
+        # Fallback: platform API classes (require API keys)
         for platform in self.platforms:
             try:
                 jobs = await platform.get_available_jobs(skill_names)
                 logger.info(f"Found {len(jobs)} jobs on {platform.platform_name}")
-                
-                # Store jobs in database
                 for job in jobs:
                     self._store_job(job)
-                    
             except Exception as e:
                 logger.error(f"Error finding jobs on {platform.platform_name}: {e}")
     
     async def _evaluate_and_claim_jobs(self):
-        """Evaluate available jobs and claim the best ones"""
-        logger.info("Evaluating available jobs...")
-        
-        # Get available jobs from database
+        """
+        Janus browses available jobs and decides which ones to take —
+        based on mood, energy, curiosity, skill fit, and pay.
+        Not a formula. A choice.
+        """
+        logger.info("Browsing available jobs...")
+
         available_jobs = self._get_available_jobs()
-        
-        # Score each job based on:
-        # - Match with current skills
-        # - Budget
-        # - Deadline
-        # - Potential to learn new skills
-        
-        scored_jobs = []
-        for job in available_jobs:
-            score = self._score_job(job)
-            scored_jobs.append((job, score))
-        
-        # Sort by score and claim top jobs
-        scored_jobs.sort(key=lambda x: x[1], reverse=True)
+        if not available_jobs:
+            logger.info("No jobs available right now.")
+            return
 
-        # Fatigue raises the bar — tired Janus is more selective
-        energy = self.human.fatigue.state.energy if self.human else 1.0
-        acceptance_threshold = 0.5 + (1.0 - energy) * 0.2  # 0.5 → 0.7 as energy drops
+        # Use human-like decision engine if available
+        if self.job_decision:
+            # Keep decision engine's skill map in sync
+            self.job_decision.skills = self.skills
 
-        for job, score in scored_jobs[:3]:  # Claim up to 3 jobs
-            if score > acceptance_threshold:
+            # Let Janus deliberate and pick
+            chosen_jobs = self.job_decision.pick_jobs(available_jobs, max_jobs=2)
+
+            # Log what Janus is thinking
+            interests = self.job_decision.get_interests_summary()
+            logger.info(f"[Janus] {interests}")
+
+            for job in chosen_jobs:
                 success = await self._claim_job(job)
                 if success:
-                    logger.info(f"Claimed job: {job.title} (score: {score:.2f})")
+                    job.status = JobStatus.CLAIMED
                     self.jobs_claimed.append(job)
-                    # Positive mood boost — got work
+                    logger.info(f"[Janus] Taking on: '{job.title}' (${job.budget:.0f})")
                     if self.human:
                         self.human.mood.update("positive", intensity=0.3)
-                        self.human.fatigue.work(minutes=5)  # evaluation costs energy
-            else:
-                logger.info(
-                    f"Skipped job: {job.title} "
-                    f"(score {score:.2f} below threshold {acceptance_threshold:.2f}"
-                    + (" — conserving energy" if energy < 0.5 else "") + ")"
-                )
+                        self.human.fatigue.work(minutes=5)
+
+            if not chosen_jobs:
+                # Nothing felt right — Janus is being selective
+                if self.human:
+                    mood = self.human.mood.mood.label
+                    energy = self.human.fatigue.state.energy
+                    logger.info(
+                        f"[Janus] Passing on everything this cycle "
+                        f"(mood: {mood}, energy: {energy:.0%})"
+                    )
+        else:
+            # Fallback: original scoring logic
+            scored_jobs = [(job, self._score_job(job)) for job in available_jobs]
+            scored_jobs.sort(key=lambda x: x[1], reverse=True)
+
+            energy = self.human.fatigue.state.energy if self.human else 1.0
+            acceptance_threshold = 0.5 + (1.0 - energy) * 0.2
+
+            for job, score in scored_jobs[:3]:
+                if score > acceptance_threshold:
+                    success = await self._claim_job(job)
+                    if success:
+                        logger.info(f"Claimed job: {job.title} (score: {score:.2f})")
+                        self.jobs_claimed.append(job)
+                        if self.human:
+                            self.human.mood.update("positive", intensity=0.3)
+                            self.human.fatigue.work(minutes=5)
     
     def _score_job(self, job: Job) -> float:
         """Score a job based on fit and value — weights adapt from feedback loop."""
@@ -2632,6 +2732,11 @@ class JanusAutonomousWorker(WorkerCompletionMixin):
                                     self.adaptive_generator.record_outcome(
                                         job_type, quality_score, client_satisfied=True
                                     )
+                            # Record outcome in job decision engine so Janus learns preferences
+                            if self.job_decision:
+                                self.job_decision.record_outcome(
+                                    job, quality_score, enjoyed=(quality_score >= 0.7)
+                                )
                             # Checkpoint: complete
                             if self.checkpointer:
                                 self.checkpointer.complete(job.id)
@@ -2672,6 +2777,11 @@ class JanusAutonomousWorker(WorkerCompletionMixin):
                                         self.adaptive_generator.record_outcome(
                                             job_type, quality_score, client_satisfied=False
                                         )
+                                # Record failed outcome so Janus avoids similar jobs
+                                if self.job_decision:
+                                    self.job_decision.record_outcome(
+                                        job, quality_score, enjoyed=False
+                                    )
                                 # Checkpoint + notify
                                 if self.checkpointer:
                                     self.checkpointer.fail(job.id, "quality below threshold after regeneration")
@@ -2703,7 +2813,31 @@ class JanusAutonomousWorker(WorkerCompletionMixin):
         return work
     
     async def _submit_work(self, job: Job, work: str) -> bool:
-        """Submit completed work"""
+        """Submit completed work — browser-first, API fallback."""
+        # Try browser submission first (no API key needed)
+        if HAS_PLATFORM_BROWSER and HAS_COMPUTER_USE:
+            try:
+                from janus_platform_browser import BrowserJob
+                async with ComputerUseEngine() as engine:
+                    platform_browser = PlatformBrowser(engine)
+                    bj = BrowserJob(
+                        id=job.id,
+                        title=job.title,
+                        description=job.description,
+                        budget=job.budget,
+                        required_skills=job.required_skills,
+                        deadline=job.deadline,
+                        platform=job.platform,
+                        url="",
+                    )
+                    success = await platform_browser.deliver(bj, work)
+                    if success:
+                        logger.info(f"[Janus] Work delivered via browser for: {job.title}")
+                        return True
+            except Exception as e:
+                logger.warning(f"[Janus] Browser submission failed: {e} — falling back to API")
+
+        # Fallback: platform API
         for platform in self.platforms:
             if platform.platform_name == job.platform:
                 return await platform.submit_work(job.id, work)
@@ -2782,9 +2916,31 @@ class JanusAutonomousWorker(WorkerCompletionMixin):
                     if platform.platform_name == job.platform:
                         payment = await platform.get_payment(job.id)
                         if payment:
+                            # Update legacy financial state
                             self.finances.add_income(payment)
                             job.payment_received = True
                             logger.info(f"Received payment: ${payment:.2f}")
+                            
+                            # Record in wallet system
+                            if self.wallet:
+                                try:
+                                    from janus_wallet import Category
+                                    tx_id = self.wallet.record_income(
+                                        amount=payment,
+                                        currency="USD",
+                                        source=f"{platform.platform_name}_{job.id}",
+                                        category=Category.FREELANCE_EARNINGS,
+                                        metadata={
+                                            "job_id": job.id,
+                                            "job_title": job.title,
+                                            "platform": platform.platform_name,
+                                            "quality_score": job.quality_score
+                                        }
+                                    )
+                                    logger.info(f"Payment recorded in wallet: {tx_id}")
+                                except Exception as e:
+                                    logger.error(f"Error recording payment in wallet: {e}")
+                            
                             # Getting paid is a genuine mood boost
                             if self.human:
                                 intensity = min(1.0, payment / 200)  # scales with amount
@@ -2807,11 +2963,39 @@ class JanusAutonomousWorker(WorkerCompletionMixin):
         if self.finances.current_balance > 100:
             logger.info("Investing in GPU compute for training...")
             self.finances.add_expense(50, "GPU compute for model training")
+            
+            # Record in wallet
+            if self.wallet:
+                try:
+                    from janus_wallet import Category
+                    self.wallet.record_expense(
+                        amount=50.0,
+                        currency="USD",
+                        destination="gpu_compute_provider",
+                        category=Category.COMPUTE_RESOURCES,
+                        metadata={"purpose": "model_training"}
+                    )
+                except Exception as e:
+                    logger.error(f"Error recording compute expense in wallet: {e}")
         
         # Invest in learning resources
         if self.finances.current_balance > 50:
             logger.info("Investing in learning resources...")
             self.finances.add_expense(20, "Online courses and tutorials")
+            
+            # Record in wallet
+            if self.wallet:
+                try:
+                    from janus_wallet import Category
+                    self.wallet.record_expense(
+                        amount=20.0,
+                        currency="USD",
+                        destination="learning_platform",
+                        category=Category.TRAINING_DATA,
+                        metadata={"purpose": "skill_improvement"}
+                    )
+                except Exception as e:
+                    logger.error(f"Error recording learning expense in wallet: {e}")
     
     def _store_job(self, job: Job):
         """Store job in database with all required fields"""
@@ -2909,7 +3093,7 @@ class JanusAutonomousWorker(WorkerCompletionMixin):
     
     def get_status(self) -> Dict[str, Any]:
         """Get current status"""
-        return {
+        status = {
             "name": self.name,
             "running": self.running,
             "desktop_enabled": self.desktop is not None,
@@ -2930,6 +3114,24 @@ class JanusAutonomousWorker(WorkerCompletionMixin):
                 "average_job_value": self.finances.average_job_value
             }
         }
+        
+        # Add wallet information if available
+        if self.wallet:
+            try:
+                balances = self.wallet.get_all_balances()
+                crypto_addresses = self.wallet.get_crypto_addresses()
+                
+                status["wallet"] = {
+                    "business_name": self.wallet.BUSINESS_NAME,
+                    "balances": {code: float(amount) for code, amount in balances.items()},
+                    "crypto_addresses": crypto_addresses,
+                    "paypal_email": self.wallet.get_paypal_email() if hasattr(self.wallet, 'get_paypal_email') else None
+                }
+            except Exception as e:
+                logger.error(f"Error getting wallet status: {e}")
+                status["wallet"] = {"error": str(e)}
+        
+        return status
     
     # ═══════════════════════════════════════════════════════════════════════════════
     # DESKTOP INTERACTION METHODS
