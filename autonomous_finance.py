@@ -1,5 +1,6 @@
 
 import json
+import os
 import time
 import uuid
 from dataclasses import dataclass, field, asdict
@@ -10,7 +11,11 @@ import qrcode # Assuming qrcode library is available or will be installed
 
 # --- Configuration ---
 LEDGER_FILE = "autonomous_finance_ledger.json"
-REVOLUT_QR_PATH = "/home/ubuntu/upload/IMG_6058.PNG" # User-provided Revolut QR code
+# Revolut QR path — override with JANUS_REVOLUT_QR env var if you have a QR image
+REVOLUT_QR_PATH = os.environ.get(
+    "JANUS_REVOLUT_QR",
+    os.path.join(os.path.dirname(__file__), "revolut_qr.png")
+)
 
 # --- Enums ---
 class TransactionType(str, Enum):
@@ -182,7 +187,7 @@ class AutonomousFinance:
 
         try:
             img = qrcode.make(trans.qr_code_data)
-            file_path = f"/home/ubuntu/Janus/{filename}.png"
+            file_path = os.path.join(os.path.dirname(__file__), f"{filename}.png")
             img.save(file_path)
             print(f"[AutonomousFinance] QR code saved to {file_path}")
             return file_path
