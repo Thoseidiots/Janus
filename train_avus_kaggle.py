@@ -72,6 +72,48 @@ KAGGLE_GRAD_ACCUM     = 16
 import os, sys, json, random, gc, math, shutil, time
 from pathlib import Path
 from typing import List, Set, Dict, Optional
+import sqlite3
+import io
+
+DB_PATH = Path("/kaggle/working/model_epoch_weights.db")
+
+def init_db():
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS epoch_weights (
+                epoch INTEGER PRIMARY KEY,
+                weights_blob BLOB NOT NULL,
+                loss REAL NOT NULL
+            )
+        ''')
+        conn.commit()
+    except Exception as e:
+        print(f"[db] Failed to init DB: {e}")
+    finally:
+        conn.close()
+
+def save_epoch_to_db(epoch: int, model_state: dict, loss: float):
+    buffer = io.BytesIO()
+    import torch
+    torch.save(model_state, buffer)
+    weights_bytes = buffer.getvalue()
+    
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        conn.execute('''
+            INSERT INTO epoch_weights (epoch, weights_blob, loss)
+            VALUES (?, ?, ?)
+            ON CONFLICT(epoch) DO UPDATE SET
+                weights_blob = excluded.weights_blob,
+                loss = excluded.loss
+        ''', (epoch, sqlite3.Binary(weights_bytes), loss))
+        conn.commit()
+        print(f"[db] Saved epoch {epoch} weights to SQLite DB. Loss: {loss:.4f}")
+    except Exception as e:
+        print(f"[db] Failed to save weights for epoch {epoch}: {e}")
+    finally:
+        conn.close()
 
 import torch
 import torch.nn as nn
@@ -666,6 +708,7 @@ def _train_growing_avus(device):
 
 
 def _train_fixed_avus(device):
+    init_db()
     # ── Config ────────────────────────────────────────────────────────────────
     # In Kaggle mode, /kaggle/working has the correct config — check it first
     if KAGGLE_MODE:
@@ -1034,13 +1077,17 @@ def _train_fixed_avus(device):
 
         # Save checkpoint — strip DataParallel module. prefix if present
         raw_model = model.module if hasattr(model, "module") else model
+        state_dict_raw = raw_model.state_dict()
         torch.save({
             "epoch":            epoch + 1,
-            "model_state_dict": raw_model.state_dict(),
+            "model_state_dict": state_dict_raw,
             "config":           cfg_dict,
             "loss":             avg_loss,
         }, str(WEIGHTS_OUT))
         print(f"[avus] Weights saved -> {WEIGHTS_OUT}")
+
+        # Save to SQLite DB explicitly
+        save_epoch_to_db(epoch + 1, state_dict_raw, avg_loss)
 
         # Save skill state and chart
         if skill_tree:
