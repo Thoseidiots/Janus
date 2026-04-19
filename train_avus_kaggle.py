@@ -1264,19 +1264,35 @@ def auto_push_weights(version_notes: str = "Auto-save"):
     api = KaggleApi()
     api.authenticate()
 
-    # Write dataset metadata so Kaggle knows which dataset to update
+    # Securely download existing Kaggle database to merge them so we don't accidentally drop past files
+    staging_dir = KAGGLE_WORKING / "upload_staging"
+    staging_dir.mkdir(exist_ok=True, parents=True)
+    
+    print(f"[push] Downloading existing dataset to prevent file loss...")
+    try:
+        api.dataset_download_files("ishmaelsears/janus-avus-weights", path=str(staging_dir), unzip=True)
+    except Exception as e:
+        print(f"[push] Warning: Could not download old dataset files (they might not exist yet): {e}")
+
+    # Copy all newly generated files from KAGGLE_WORKING into the staging dir (overwriting older equivalents)
+    import shutil
+    for f in KAGGLE_WORKING.iterdir():
+        if f.is_file() and f.name != "dataset-metadata.json":
+            shutil.copy(f, staging_dir / f.name)
+
+    # Write dataset metadata inside the staging dir so Kaggle knows which dataset to update
     meta = {
         "title": "janus-avus-weights",
         "id": "ishmaelsears/janus-avus-weights",
         "licenses": [{"name": "CC0-1.0"}],
     }
-    meta_path = KAGGLE_WORKING / "dataset-metadata.json"
+    meta_path = staging_dir / "dataset-metadata.json"
     meta_path.write_text(_json.dumps(meta, indent=2))
 
-    print(f"[push] Pushing weights to {creds['username']}/janus-weights ...")
+    print(f"[push] Pushing complete merged dataset to {creds['username']}/janus-weights ...")
     try:
         api.dataset_create_version(
-            str(KAGGLE_WORKING),
+            str(staging_dir),
             version_notes=version_notes,
             quiet=False,
             convert_to_csv=False,
