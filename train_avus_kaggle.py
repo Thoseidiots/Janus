@@ -36,9 +36,9 @@ Download and re-upload to "janus-weights" dataset to persist.
 
 MODEL_SIZE            = "1b"        # 1b | 3b | 7b | 13b | 34b | 70b | growing
 USE_GROWING_AVUS      = False       # True = GrowingAvus (no fixed size)
-AVUS_EPOCHS           = 20
-HBM_EPOCHS            = 10
-SAMPLES_PER_DATASET   = 10_000      # synthetic samples per curriculum
+AVUS_EPOCHS           = 2           # reduced from 20 for fast tests
+HBM_EPOCHS            = 1           # reduced from 10 for fast tests
+SAMPLES_PER_DATASET   = 100         # synthetic samples per curriculum (reduced from 10,000)
 BATCH_SIZE            = 1           # keep at 1 for T4 with large models
 GRAD_ACCUM_STEPS      = 8           # effective batch = BATCH_SIZE * GRAD_ACCUM
 USE_GRAD_CHECKPOINT   = True        # saves VRAM, slightly slower

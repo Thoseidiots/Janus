@@ -122,8 +122,8 @@ def train_model():
     optimizer = optim.Adam(model.parameters(), lr=0.01)
     criterion = nn.CrossEntropyLoss()
     
-    epochs = 10
-    dataset_size = 100
+    epochs = 2  # Reduced to 2 so it completes extremely quickly for testing!
+    dataset_size = 10
     
     inputs = torch.randn(dataset_size, 10)
     targets = torch.randint(0, 2, (dataset_size,))
@@ -138,11 +138,12 @@ def train_model():
         loss.backward()
         optimizer.step()
         
-        # Save weights to DB
+        # Save weights to DB (virtually instant)
         save_epoch_to_db(epoch, model, loss.item())
         
-        # Upload DB to kaggle
-        upload_db_to_kaggle(epoch)
+        # Only upload the DB to Kaggle on the FINAL epoch to avoid massive API lag 
+        if epoch == epochs:
+            upload_db_to_kaggle(epoch)
         
     logger.info("Training complete.")
 
