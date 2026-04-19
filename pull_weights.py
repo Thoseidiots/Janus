@@ -2,7 +2,7 @@
 pull_weights.py
 
 Downloads Avus weights from Kaggle on demand.
-Run this once after cloning the repo — no Git LFS needed.
+Run this once after cloning the repo - no Git LFS needed.
 
 Works on any platform: Windows (EliteDesk), Linux (Kaggle/Lightning), Mac.
 
