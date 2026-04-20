@@ -12,14 +12,15 @@ import sys
 def main():
     print("=== JANUS TRAINING LAUNCHER ===")
     
-    # Change to the correct directory
+    # Find the main training script file
     repo_path = "/kaggle/input/datasets/ishmaelsears/janus-repo/"
+    train_script = os.path.join(repo_path, "train_avus_kaggle.py")
     
-    if not os.path.exists(repo_path):
-        print(f"❌ Repository not found at: {repo_path}")
+    if not os.path.exists(train_script):
+        print(f"❌ Training script not found at: {train_script}")
         return
     
-    print(f"✅ Found repository at: {repo_path}")
+    print(f"✅ Found training script at: {train_script}")
     
     # Change to repository directory
     os.chdir(repo_path)
