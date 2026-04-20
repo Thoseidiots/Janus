@@ -101,6 +101,36 @@ def init_db():
     finally:
         conn.close()
 
+def cleanup_old_db_entries(keep_last_n: int = 2):
+    """Remove old epoch weights from database to save disk space, keeping only the last N epochs."""
+    if not DB_PATH.exists():
+        return
+    
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        # Get all epochs sorted
+        cursor = conn.execute("SELECT epoch FROM epoch_weights ORDER BY epoch DESC")
+        epochs = [row[0] for row in cursor.fetchall()]
+        
+        if len(epochs) <= keep_last_n:
+            return
+        
+        # Remove oldest epochs
+        epochs_to_remove = epochs[keep_last_n:]
+        for epoch in epochs_to_remove:
+            conn.execute("DELETE FROM epoch_weights WHERE epoch = ?", (epoch,))
+            conn.execute("DELETE FROM chunked_weights WHERE epoch = ?", (epoch,))
+        
+        # Optimize database
+        conn.execute("VACUUM")
+        conn.commit()
+        
+        print(f"[db] Cleaned up {len(epochs_to_remove)} old epochs from database (kept last {keep_last_n})")
+    except Exception as e:
+        print(f"[db] Failed to cleanup old entries: {e}")
+    finally:
+        conn.close()
+
 def save_epoch_to_db(epoch: int, model_state: dict, loss: float):
     buffer = io.BytesIO()
     import torch
@@ -139,6 +169,9 @@ def save_epoch_to_db(epoch: int, model_state: dict, loss: float):
                 
         conn.commit()
         print(f"[db] Saved epoch {epoch} weights to SQLite DB. Loss: {loss:.4f}")
+        
+        # Clean up old entries after saving new one
+        cleanup_old_db_entries(keep_last_n=2)
     except Exception as e:
         print(f"[db] Failed to save weights for epoch {epoch}: {e}")
     finally:
@@ -1261,6 +1294,69 @@ def print_summary():
         print(f"  {f.name}")
 
 
+def _cleanup_disk_space():
+    """Clean up temporary files and check available disk space before pushing."""
+    import shutil
+    
+    # Remove mid-epoch checkpoint since we have the final epoch weights
+    mid_ckpt = KAGGLE_WORKING / f"avus_{MODEL_SIZE}_midepoch.pt"
+    if mid_ckpt.exists():
+        mid_ckpt.unlink()
+        print(f"[cleanup] Removed mid-epoch checkpoint: {mid_ckpt.name}")
+    
+    # Remove any old staging directories
+    for staging_dir in [KAGGLE_WORKING / "upload_staging", KAGGLE_WORKING / "kaggle_dl_temp"]:
+        if staging_dir.exists():
+            shutil.rmtree(staging_dir, ignore_errors=True)
+            print(f"[cleanup] Removed staging directory: {staging_dir.name}")
+    
+    # Clean up old database entries to save space
+    try:
+        cleanup_old_db_entries(keep_last_n=1)  # Keep only the most recent epoch
+    except Exception as e:
+        print(f"[cleanup] Database cleanup failed: {e}")
+    
+    # Check available disk space
+    stat = os.statvfs(str(KAGGLE_WORKING))
+    free_gb = (stat.f_bavail * stat.f_frsize) / (1024**3)
+    print(f"[cleanup] Available disk space: {free_gb:.2f} GB")
+    
+    if free_gb < 2.0:  # Less than 2GB available
+        print(f"[cleanup] WARNING: Low disk space ({free_gb:.2f} GB). Attempting aggressive cleanup...")
+        
+        # Remove any .pyc files and __pycache__ directories
+        for pyc in KAGGLE_WORKING.rglob("*.pyc"):
+            try:
+                pyc.unlink()
+            except Exception:
+                pass
+        
+        for pycache in KAGGLE_WORKING.rglob("__pycache__"):
+            try:
+                shutil.rmtree(pycache, ignore_errors=True)
+            except Exception:
+                pass
+        
+        # Remove old weight files that aren't the latest
+        weight_files = list(KAGGLE_WORKING.glob(f"avus_{MODEL_SIZE}_*.pt"))
+        weight_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+        for old_weight in weight_files[1:]:  # Keep only the newest
+            try:
+                old_weight.unlink()
+                print(f"[cleanup] Removed old weight file: {old_weight.name}")
+            except Exception:
+                pass
+        
+        # Re-check space after cleanup
+        stat = os.statvfs(str(KAGGLE_WORKING))
+        free_gb = (stat.f_bavail * stat.f_frsize) / (1024**3)
+        print(f"[cleanup] Available disk space after cleanup: {free_gb:.2f} GB")
+        
+        if free_gb < 1.0:
+            raise RuntimeError(f"Insufficient disk space: {free_gb:.2f} GB available. Cannot proceed with push.")
+    
+    return free_gb
+
 def auto_push_weights(version_notes: str = "Auto-save"):
     """
     Push weights back to the janus-weights Kaggle dataset automatically.
@@ -1274,6 +1370,14 @@ def auto_push_weights(version_notes: str = "Auto-save"):
            Name:  KAGGLE_KEY
            Value: (paste full contents of kaggle.json)
     """
+    # Clean up disk space before attempting push
+    try:
+        _cleanup_disk_space()
+    except RuntimeError as e:
+        print(f"[push] {e}")
+        print("[push] Skipping auto-push due to insufficient disk space.")
+        return
+    
     try:
         from kaggle_secrets import UserSecretsClient
         token = UserSecretsClient().get_secret("Kiro")
