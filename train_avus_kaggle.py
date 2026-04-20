@@ -54,7 +54,7 @@ DATASET_NAME          = "janus-avus-weights"
 #   - GradScaler disabled (conflicts with CPU offload)
 #   - Device-aware forward pass (all tensors follow their block's device)
 #   - Single clean launcher cell — no patches needed
-KAGGLE_MODE           = False       # Set True when running on Kaggle T4 x2
+KAGGLE_MODE = True       # Set True when running on Kaggle T4 x2
 
 # ── Kaggle hardware profile ───────────────────────────────────────────────────
 # Only used when KAGGLE_MODE = True
