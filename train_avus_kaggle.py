@@ -948,14 +948,22 @@ def _train_fixed_avus(device):
     BATTERY_DISCHARGE_STEPS = 2000   # discharge after this many accumulated steps
     battery = None
     try:
-        from gradient_battery import GradientBattery
-        battery_path = KAGGLE_WORKING / "gradient_battery.pt"
-        battery = GradientBattery(str(battery_path),
-                                  device=str(device))
-        print(f"[avus] Gradient battery loaded")
+        from holographic_gradient_battery import HolographicGradientBattery
+        hgb_path = KAGGLE_WORKING / "gradient_battery.pt"
+        
+        # 4 million params -> ~16MB capacity dim. Stops the 20GB disk OOMs completely.
+        battery = HolographicGradientBattery(str(hgb_path), device=str(device), capacity_dim=2**22)
+        battery.load()
+        print(f"[avus] Holographic Gradient Battery (HGB) active!")
         print(battery.status())
     except ImportError:
-        print("[avus] gradient_battery.py not found — battery disabled")
+        try:
+            from gradient_battery import GradientBattery
+            battery_path = KAGGLE_WORKING / "gradient_battery.pt"
+            battery = GradientBattery(str(battery_path), device=str(device))
+            print(f"[avus] Heavy Disk Gradient battery loaded (Warning: Large Disk Footprint)")
+        except ImportError:
+            print("[avus] battery scripts not found — battery disabled")
 
     # ── Gradient clip tracker ─────────────────────────────────────────────────
     clip_count = 0
