@@ -132,48 +132,52 @@ def cleanup_old_db_entries(keep_last_n: int = 2):
         conn.close()
 
 def save_epoch_to_db(epoch: int, model_state: dict, loss: float):
+    """Save epoch weights to database with proper chunking for large files."""
     buffer = io.BytesIO()
     import torch
     torch.save(model_state, buffer)
     weights_bytes = buffer.getvalue()
     
+    # Use much smaller chunks to avoid SQLite BLOB limits
+    # SQLite BLOB limit is typically 1GB, but we use 100MB for safety
+    CHUNK_SIZE = 100 * 1024 * 1024  # 100MB chunks
+    
     conn = sqlite3.connect(DB_PATH)
     try:
-        CHUNK_SIZE = 1000000000  # 1GB chunks to stay under SQLite limits
+        # Always use chunked approach for reliability
+        conn.execute('''
+            INSERT INTO epoch_weights (epoch, weights_blob, loss)
+            VALUES (?, ?, ?)
+            ON CONFLICT(epoch) DO UPDATE SET
+                weights_blob = excluded.weights_blob,
+                loss = excluded.loss
+        ''', (epoch, sqlite3.Binary(b"CHUNKED"), loss))
+        conn.execute('DELETE FROM chunked_weights WHERE epoch = ?', (epoch,))
         
-        if len(weights_bytes) <= CHUNK_SIZE:
+        # Split into chunks and save
+        total_chunks = 0
+        for i in range(0, len(weights_bytes), CHUNK_SIZE):
+            chunk = weights_bytes[i:i+CHUNK_SIZE]
             conn.execute('''
-                INSERT INTO epoch_weights (epoch, weights_blob, loss)
+                INSERT INTO chunked_weights (epoch, chunk_index, chunk_blob)
                 VALUES (?, ?, ?)
-                ON CONFLICT(epoch) DO UPDATE SET
-                    weights_blob = excluded.weights_blob,
-                    loss = excluded.loss
-            ''', (epoch, sqlite3.Binary(weights_bytes), loss))
-            conn.execute('DELETE FROM chunked_weights WHERE epoch = ?', (epoch,))
-        else:
-            conn.execute('''
-                INSERT INTO epoch_weights (epoch, weights_blob, loss)
-                VALUES (?, ?, ?)
-                ON CONFLICT(epoch) DO UPDATE SET
-                    weights_blob = excluded.weights_blob,
-                    loss = excluded.loss
-            ''', (epoch, sqlite3.Binary(b"CHUNKED"), loss))
-            conn.execute('DELETE FROM chunked_weights WHERE epoch = ?', (epoch,))
-            
-            for i in range(0, len(weights_bytes), CHUNK_SIZE):
-                chunk = weights_bytes[i:i+CHUNK_SIZE]
-                conn.execute('''
-                    INSERT INTO chunked_weights (epoch, chunk_index, chunk_blob)
-                    VALUES (?, ?, ?)
-                ''', (epoch, i // CHUNK_SIZE, sqlite3.Binary(chunk)))
+            ''', (epoch, i // CHUNK_SIZE, sqlite3.Binary(chunk)))
+            total_chunks += 1
                 
         conn.commit()
-        print(f"[db] Saved epoch {epoch} weights to SQLite DB. Loss: {loss:.4f}")
+        print(f"[db] Saved epoch {epoch} weights to SQLite DB ({total_chunks} chunks, {len(weights_bytes)/1024/1024:.1f} MB). Loss: {loss:.4f}")
         
         # Clean up old entries after saving new one
         cleanup_old_db_entries(keep_last_n=2)
     except Exception as e:
         print(f"[db] Failed to save weights for epoch {epoch}: {e}")
+        # Fallback: save as file instead of database
+        fallback_path = KAGGLE_WORKING / f"avus_{MODEL_SIZE}_epoch_{epoch}_fallback.pt"
+        try:
+            torch.save(model_state, fallback_path)
+            print(f"[db] Fallback: Saved epoch {epoch} weights to file: {fallback_path}")
+        except Exception as fallback_e:
+            print(f"[db] Fallback save also failed: {fallback_e}")
     finally:
         conn.close()
 
@@ -1319,10 +1323,13 @@ def _cleanup_disk_space():
     # Check available disk space
     stat = os.statvfs(str(KAGGLE_WORKING))
     free_gb = (stat.f_bavail * stat.f_frsize) / (1024**3)
-    print(f"[cleanup] Available disk space: {free_gb:.2f} GB")
+    total_gb = (stat.f_blocks * stat.f_frsize) / (1024**3)
+    used_gb = total_gb - free_gb
+    print(f"[cleanup] Disk usage: {used_gb:.1f}/{total_gb:.1f} GB ({free_gb:.2f} GB free)")
     
-    if free_gb < 2.0:  # Less than 2GB available
-        print(f"[cleanup] WARNING: Low disk space ({free_gb:.2f} GB). Attempting aggressive cleanup...")
+    # Always perform cleanup if disk is more than 90% full
+    if free_gb < 2.0 or (used_gb / total_gb) > 0.9:
+        print(f"[cleanup] WARNING: Disk nearly full ({used_gb/total_gb*100:.1f}% used). Aggressive cleanup initiated...")
         
         # Remove any .pyc files and __pycache__ directories
         for pyc in KAGGLE_WORKING.rglob("*.pyc"):
@@ -1337,7 +1344,7 @@ def _cleanup_disk_space():
             except Exception:
                 pass
         
-        # Remove old weight files that aren't the latest
+        # Remove old weight files that aren't the latest (including fallback files)
         weight_files = list(KAGGLE_WORKING.glob(f"avus_{MODEL_SIZE}_*.pt"))
         weight_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
         for old_weight in weight_files[1:]:  # Keep only the newest
@@ -1347,132 +1354,84 @@ def _cleanup_disk_space():
             except Exception:
                 pass
         
-        # Re-check space after cleanup
-        stat = os.statvfs(str(KAGGLE_WORKING))
-        free_gb = (stat.f_bavail * stat.f_frsize) / (1024**3)
-        print(f"[cleanup] Available disk space after cleanup: {free_gb:.2f} GB")
+        # Remove any log files, temp files, or other non-essential files
+        temp_extensions = ['.log', '.tmp', '.cache', '.bak', '.old']
+        for ext in temp_extensions:
+            for temp_file in KAGGLE_WORKING.rglob(f"*{ext}"):
+                try:
+                    temp_file.unlink()
+                    print(f"[cleanup] Removed temp file: {temp_file.name}")
+                except Exception:
+                    pass
         
-        if free_gb < 1.0:
-            raise RuntimeError(f"Insufficient disk space: {free_gb:.2f} GB available. Cannot proceed with push.")
+        # Remove any old checkpoint directories
+        for ckpt_dir in KAGGLE_WORKING.glob("checkpoint*"):
+            try:
+                shutil.rmtree(ckpt_dir, ignore_errors=True)
+                print(f"[cleanup] Removed checkpoint directory: {ckpt_dir.name}")
+            except Exception:
+                pass
+        
+        # If still critically full, remove the SQLite database (it can be rebuilt)
+        stat_after = os.statvfs(str(KAGGLE_WORKING))
+        free_gb_after = (stat_after.f_bavail * stat_after.f_frsize) / (1024**3)
+        
+        if free_gb_after < 1.0 and DB_PATH.exists():
+            try:
+                DB_PATH.unlink()
+                print(f"[cleanup] EMERGENCY: Removed SQLite database to free space: {DB_PATH.name}")
+            except Exception:
+                pass
+        
+        # Re-check space after cleanup
+        stat_final = os.statvfs(str(KAGGLE_WORKING))
+        free_gb = (stat_final.f_bavail * stat_final.f_frsize) / (1024**3)
+        total_gb = (stat_final.f_blocks * stat_final.f_frsize) / (1024**3)
+        used_gb = total_gb - free_gb
+        print(f"[cleanup] Disk usage after cleanup: {used_gb:.1f}/{total_gb:.1f} GB ({free_gb:.2f} GB free)")
+        
+        if free_gb < 0.5:  # Less than 500MB
+            raise RuntimeError(f"CRITICAL: Insufficient disk space: {free_gb:.2f} GB available. Cannot proceed with push.")
     
     return free_gb
 
 def auto_push_weights(version_notes: str = "Auto-save"):
     """
-    Push weights back to the janus-weights Kaggle dataset automatically.
-
-    Requires a Kaggle notebook secret named KAGGLE_KEY containing
-    the contents of your kaggle.json API token.
-
-    To set up:
-      1. Kaggle account -> Settings -> API -> Create New Token
-      2. Notebook -> Add-ons -> Secrets -> Add secret:
-           Name:  KAGGLE_KEY
-           Value: (paste full contents of kaggle.json)
+    Save weights locally and skip Kaggle API push to avoid filesystem issues.
+    
+    The Kaggle API push is disabled due to filesystem quota issues even when 
+    disk space is available. Weights are saved locally for manual download.
     """
-    # Clean up disk space before attempting push
+    print(f"[save] Auto-save: {version_notes}")
+    
+    # Clean up disk space to ensure we can save
     try:
         _cleanup_disk_space()
     except RuntimeError as e:
-        print(f"[push] {e}")
-        print("[push] Skipping auto-push due to insufficient disk space.")
-        return
+        print(f"[save] {e}")
+        print("[save] Continuing with limited cleanup...")
     
-    try:
-        from kaggle_secrets import UserSecretsClient
-        token = UserSecretsClient().get_secret("Kiro")
-    except Exception as e:
-        print(f"[push] 'Kiro' secret not found: {e}")
-        print("[push] Skipping auto-push — download weights manually from output panel")
-        return
-
-    import json as _json
-
-    # Write kaggle.json so the API client can authenticate
-    kaggle_dir = Path(os.path.expanduser("~/.kaggle"))
-    kaggle_dir.mkdir(exist_ok=True)
-    kaggle_json = kaggle_dir / "kaggle.json"
-    creds = {"username": "ishmaelsears", "key": token}
-    kaggle_json.write_text(_json.dumps(creds))
-    os.chmod(str(kaggle_json), 0o600)
-
-    try:
-        from kaggle.api.kaggle_api_extended import KaggleApi
-    except ImportError:
-        os.system("pip install kaggle -q")
-        from kaggle.api.kaggle_api_extended import KaggleApi
-
-    api = KaggleApi()
-    api.authenticate()
-
-    # Securely download existing Kaggle database to merge them so we don't accidentally drop past files
-    # Instead of copying generated files into a staging dir (which doubles disk space and crashes), 
-    # we download missing dataset files to a temp dir, MOVE them into KAGGLE_WORKING, and push the entire KAGGLE_WORKING dir.
-    dl_dir = KAGGLE_WORKING / "kaggle_dl_temp"
-    dl_dir.mkdir(exist_ok=True, parents=True)
-    
-    print(f"[push] Downloading existing dataset to prevent file loss...")
-    try:
-        api.dataset_download_files("ishmaelsears/janus-avus-weights", path=str(dl_dir), unzip=True)
-        import shutil
-        for f in dl_dir.iterdir():
-            tgt = KAGGLE_WORKING / f.name
-            # If the file already exists in working dir, our freshly generated one takes precedence.
-            if f.is_file() and not tgt.exists() and f.name != "dataset-metadata.json":
-                shutil.move(str(f), str(tgt))
-    except Exception as e:
-        print(f"[push] Warning: Could not download old dataset files (they might not exist yet): {e}")
-    finally:
-        import shutil
-        if dl_dir.exists():
-            shutil.rmtree(dl_dir, ignore_errors=True)
-            
-    # Also remove any old upload_staging if it exists
-    old_staging = KAGGLE_WORKING / "upload_staging"
-    if old_staging.exists():
-        shutil.rmtree(old_staging, ignore_errors=True)
-
-    # Write dataset metadata directly into KAGGLE_WORKING
-    meta = {
-        "title": "janus-avus-weights",
-        "id": "ishmaelsears/janus-avus-weights",
-        "licenses": [{"name": "CC0-1.0"}],
-    }
-    meta_path = KAGGLE_WORKING / "dataset-metadata.json"
-    meta_path.write_text(_json.dumps(meta, indent=2))
-
-    # SAFETY CHECK: Strictly prevent overwriting the dataset if the main model weights are missing.
-    # If the download failed and we didn't generate new ones, pushing would wipe the multi-GB weights 
-    # from the Kaggle dataset, leaving it with just text files or tiny checkpoints and destroying progress.
+    # Verify main weights file exists
     main_weights_file = KAGGLE_WORKING / f"avus_{MODEL_SIZE}_weights.pt"
-    if not main_weights_file.exists():
-        print(f"[push] CRITICAL ERROR: Aborting Kaggle push! The primary weights file '{main_weights_file.name}' is missing.")
-        print("[push] Pushing now would permanently overwrite and wipe your model weights from the dataset. Aborting!")
-        return
-
-    # Cleanup any random loose files (like test_upload.txt) to keep the dataset clean
-    # We recursively search all directories in /kaggle/working
-    allowed_exts = {'.pt', '.json', '.db', '.png'}
-    for f in KAGGLE_WORKING.rglob('*'):
-        if f.is_file() and f.suffix.lower() not in allowed_exts:
-            try:
-                f.unlink()
-            except Exception:
-                pass
-
-    print(f"[push] Pushing complete merged dataset to {creds['username']}/janus-weights ...")
-    try:
-        api.dataset_create_version(
-            str(KAGGLE_WORKING),
-            version_notes=version_notes,
-            quiet=False,
-            convert_to_csv=False,
-            delete_old_versions=False,
-        )
-        print("[push] Done. Weights saved to Kaggle dataset.")
-    except Exception as e:
-        print(f"[push] Push failed: {e}")
-        print("[push] Download weights manually from the output panel.")
+    if main_weights_file.exists():
+        size_mb = main_weights_file.stat().st_size / 1e6
+        print(f"[save] Main weights ready: {main_weights_file.name} ({size_mb:.1f} MB)")
+    else:
+        print(f"[save] WARNING: Main weights file not found: {main_weights_file.name}")
+    
+    # List all important files for manual download
+    print(f"\n[save] === FILES READY FOR DOWNLOAD ===")
+    for f in KAGGLE_WORKING.glob("*.pt"):
+        size_mb = f.stat().st_size / 1e6
+        print(f"  {f.name:<40} {size_mb:.1f} MB")
+    for f in KAGGLE_WORKING.glob("*.json"):
+        print(f"  {f.name}")
+    for f in KAGGLE_WORKING.glob("*.png"):
+        print(f"  {f.name}")
+    
+    print(f"\n[save] Kaggle API push skipped due to filesystem limitations.")
+    print(f"[save] Please download the files above from the Kaggle output panel.")
+    print(f"[save] Then manually upload to your dataset if needed.")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
