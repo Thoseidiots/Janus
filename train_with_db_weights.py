@@ -78,6 +78,19 @@ def upload_db_to_kaggle(epoch: int):
         from kaggle.api.kaggle_api_extended import KaggleApi
         api = KaggleApi()
         api.authenticate() # Automatically picks up KAGGLE_USERNAME and KAGGLE_KEY from env
+        # Download existing files first to prevent wiping out model weights!
+        logger.info("Downloading existing dataset to preserve files...")
+        try:
+            api.dataset_download_files("ishmaelsears/janus-avus-weights", path=str(upload_dir), unzip=True)
+        except Exception as e:
+            logger.warning(f"Could not download existing dataset: {e}")
+
+        # SAFETY CHECK: Prevent wiping out historical dataset if we only have small text/log files
+        has_weights = any(f.suffix in {'.pt', '.db'} or (f.stat().st_size > 10 * 1024 * 1024) for f in upload_dir.iterdir() if f.is_file())
+        if not has_weights:
+            logger.warning("Aborting Kaggle push: No .pt or .db weight files found in setup. Prevents dataset wipe via text file.")
+            return
+
         api.dataset_create_version(
             str(upload_dir), 
             version_notes=f"Epoch {epoch} SQLite checkpoint update", 
