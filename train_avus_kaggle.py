@@ -1347,9 +1347,10 @@ def auto_push_weights(version_notes: str = "Auto-save"):
         return
 
     # Cleanup any random loose files (like test_upload.txt) to keep the dataset clean
+    # We recursively search all directories in /kaggle/working
     allowed_exts = {'.pt', '.json', '.db', '.png'}
-    for f in KAGGLE_WORKING.iterdir():
-        if f.is_file() and f.suffix not in allowed_exts:
+    for f in KAGGLE_WORKING.rglob('*'):
+        if f.is_file() and f.suffix.lower() not in allowed_exts:
             try:
                 f.unlink()
             except Exception:
