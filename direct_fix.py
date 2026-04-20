@@ -15,15 +15,15 @@ def apply_direct_fix():
     
     print("=== APPLYING DIRECT FIX FOR COMPLEX NUMBERS ===")
     
-    # Find the HBM core file
+    # Find the janus-repo dataset in /kaggle/input
     REPO = None
     for root, dirs, files in os.walk("/kaggle/input"):
-        if "holographic_brain_memory" in dirs:
-            REPO = root
+        if "janus-repo" in dirs:
+            REPO = os.path.join(root, "janus-repo")
             break
     
     if REPO is None:
-        print("HBM directory not found")
+        print("janus-repo not found in /kaggle/input")
         return False
     
     hbm_core_path = os.path.join(REPO, "holographic_brain_memory", "core.py")
@@ -104,10 +104,11 @@ def verify_fix():
     
     print("\n=== VERIFYING FIX ===")
     
+    # Find the janus-repo dataset
     REPO = None
     for root, dirs, files in os.walk("/kaggle/input"):
-        if "holographic_brain_memory" in dirs:
-            REPO = root
+        if "janus-repo" in dirs:
+            REPO = os.path.join(root, "janus-repo")
             break
     
     if REPO is None:
