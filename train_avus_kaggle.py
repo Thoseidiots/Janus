@@ -43,7 +43,7 @@ BATCH_SIZE            = 1           # keep at 1 for T4 with large models
 GRAD_ACCUM_STEPS      = 8           # effective batch = BATCH_SIZE * GRAD_ACCUM
 USE_GRAD_CHECKPOINT   = True        # saves VRAM, slightly slower
 USE_TORCH_COMPILE     = False       # torch.compile: faster kernels (PyTorch 2.0+, skip on Kaggle)
-MAX_SEQ_LEN           = 256         # capped for T4 safety
+MAX_SEQ_LEN           = 512         # capped for T4 safety
 DATASET_NAME          = "janus-avus-weights"
 
 # ── Kaggle Mode ───────────────────────────────────────────────────────────────
@@ -54,7 +54,7 @@ DATASET_NAME          = "janus-avus-weights"
 #   - GradScaler disabled (conflicts with CPU offload)
 #   - Device-aware forward pass (all tensors follow their block's device)
 #   - Single clean launcher cell — no patches needed
-KAGGLE_MODE = True       # Set True when running on Kaggle T4 x2
+KAGGLE_MODE           = False       # Set True when running on Kaggle T4 x2
 
 # ── Kaggle hardware profile ───────────────────────────────────────────────────
 # Only used when KAGGLE_MODE = True
@@ -87,6 +87,14 @@ def init_db():
                 loss REAL NOT NULL
             )
         ''')
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS chunked_weights (
+                epoch INTEGER,
+                chunk_index INTEGER,
+                chunk_blob BLOB,
+                PRIMARY KEY (epoch, chunk_index)
+            )
+        ''')
         conn.commit()
     except Exception as e:
         print(f"[db] Failed to init DB: {e}")
@@ -101,13 +109,34 @@ def save_epoch_to_db(epoch: int, model_state: dict, loss: float):
     
     conn = sqlite3.connect(DB_PATH)
     try:
-        conn.execute('''
-            INSERT INTO epoch_weights (epoch, weights_blob, loss)
-            VALUES (?, ?, ?)
-            ON CONFLICT(epoch) DO UPDATE SET
-                weights_blob = excluded.weights_blob,
-                loss = excluded.loss
-        ''', (epoch, sqlite3.Binary(weights_bytes), loss))
+        CHUNK_SIZE = 1000000000  # 1GB chunks to stay under SQLite limits
+        
+        if len(weights_bytes) <= CHUNK_SIZE:
+            conn.execute('''
+                INSERT INTO epoch_weights (epoch, weights_blob, loss)
+                VALUES (?, ?, ?)
+                ON CONFLICT(epoch) DO UPDATE SET
+                    weights_blob = excluded.weights_blob,
+                    loss = excluded.loss
+            ''', (epoch, sqlite3.Binary(weights_bytes), loss))
+            conn.execute('DELETE FROM chunked_weights WHERE epoch = ?', (epoch,))
+        else:
+            conn.execute('''
+                INSERT INTO epoch_weights (epoch, weights_blob, loss)
+                VALUES (?, ?, ?)
+                ON CONFLICT(epoch) DO UPDATE SET
+                    weights_blob = excluded.weights_blob,
+                    loss = excluded.loss
+            ''', (epoch, sqlite3.Binary(b"CHUNKED"), loss))
+            conn.execute('DELETE FROM chunked_weights WHERE epoch = ?', (epoch,))
+            
+            for i in range(0, len(weights_bytes), CHUNK_SIZE):
+                chunk = weights_bytes[i:i+CHUNK_SIZE]
+                conn.execute('''
+                    INSERT INTO chunked_weights (epoch, chunk_index, chunk_blob)
+                    VALUES (?, ?, ?)
+                ''', (epoch, i // CHUNK_SIZE, sqlite3.Binary(chunk)))
+                
         conn.commit()
         print(f"[db] Saved epoch {epoch} weights to SQLite DB. Loss: {loss:.4f}")
     except Exception as e:
@@ -1286,7 +1315,13 @@ def auto_push_weights(version_notes: str = "Auto-save"):
     import shutil
     for f in KAGGLE_WORKING.iterdir():
         if f.is_file() and f.name != "dataset-metadata.json":
-            shutil.copy(f, staging_dir / f.name)
+            tgt = staging_dir / f.name
+            if tgt.exists():
+                tgt.unlink()
+            try:
+                os.link(str(f), str(tgt))
+            except Exception:
+                shutil.copy(str(f), str(tgt))
 
     # Write dataset metadata inside the staging dir so Kaggle knows which dataset to update
     meta = {
