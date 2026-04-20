@@ -1302,46 +1302,63 @@ def auto_push_weights(version_notes: str = "Auto-save"):
     api.authenticate()
 
     # Securely download existing Kaggle database to merge them so we don't accidentally drop past files
-    staging_dir = KAGGLE_WORKING / "upload_staging"
-    staging_dir.mkdir(exist_ok=True, parents=True)
+    # Instead of copying generated files into a staging dir (which doubles disk space and crashes), 
+    # we download missing dataset files to a temp dir, MOVE them into KAGGLE_WORKING, and push the entire KAGGLE_WORKING dir.
+    dl_dir = KAGGLE_WORKING / "kaggle_dl_temp"
+    dl_dir.mkdir(exist_ok=True, parents=True)
     
     print(f"[push] Downloading existing dataset to prevent file loss...")
     try:
-        api.dataset_download_files("ishmaelsears/janus-avus-weights", path=str(staging_dir), unzip=True)
+        api.dataset_download_files("ishmaelsears/janus-avus-weights", path=str(dl_dir), unzip=True)
+        import shutil
+        for f in dl_dir.iterdir():
+            tgt = KAGGLE_WORKING / f.name
+            # If the file already exists in working dir, our freshly generated one takes precedence.
+            if f.is_file() and not tgt.exists() and f.name != "dataset-metadata.json":
+                shutil.move(str(f), str(tgt))
     except Exception as e:
         print(f"[push] Warning: Could not download old dataset files (they might not exist yet): {e}")
+    finally:
+        import shutil
+        if dl_dir.exists():
+            shutil.rmtree(dl_dir, ignore_errors=True)
+            
+    # Also remove any old upload_staging if it exists
+    old_staging = KAGGLE_WORKING / "upload_staging"
+    if old_staging.exists():
+        shutil.rmtree(old_staging, ignore_errors=True)
 
-    # Copy all newly generated files from KAGGLE_WORKING into the staging dir (overwriting older equivalents)
-    import shutil
-    for f in KAGGLE_WORKING.iterdir():
-        if f.is_file() and f.name != "dataset-metadata.json":
-            tgt = staging_dir / f.name
-            if tgt.exists():
-                tgt.unlink()
-            try:
-                os.link(str(f), str(tgt))
-            except Exception:
-                shutil.copy(str(f), str(tgt))
-
-    # Write dataset metadata inside the staging dir so Kaggle knows which dataset to update
+    # Write dataset metadata directly into KAGGLE_WORKING
     meta = {
         "title": "janus-avus-weights",
         "id": "ishmaelsears/janus-avus-weights",
         "licenses": [{"name": "CC0-1.0"}],
     }
-    meta_path = staging_dir / "dataset-metadata.json"
+    meta_path = KAGGLE_WORKING / "dataset-metadata.json"
     meta_path.write_text(_json.dumps(meta, indent=2))
 
-    # SAFETY CHECK: Prevent wiping out historical dataset if we only have small text/log files
-    has_weights = any(f.suffix in {'.pt', '.db'} or (f.stat().st_size > 10 * 1024 * 1024) for f in staging_dir.iterdir() if f.is_file())
-    if not has_weights:
-        print("[push] Aborting Kaggle push: No .pt or .db weight files found in setup. Prevents dataset wipe via text file.")
+    # SAFETY CHECK: Strictly prevent overwriting the dataset if the main model weights are missing.
+    # If the download failed and we didn't generate new ones, pushing would wipe the multi-GB weights 
+    # from the Kaggle dataset, leaving it with just text files or tiny checkpoints and destroying progress.
+    main_weights_file = KAGGLE_WORKING / f"avus_{MODEL_SIZE}_weights.pt"
+    if not main_weights_file.exists():
+        print(f"[push] CRITICAL ERROR: Aborting Kaggle push! The primary weights file '{main_weights_file.name}' is missing.")
+        print("[push] Pushing now would permanently overwrite and wipe your model weights from the dataset. Aborting!")
         return
+
+    # Cleanup any random loose files (like test_upload.txt) to keep the dataset clean
+    allowed_exts = {'.pt', '.json', '.db', '.png'}
+    for f in KAGGLE_WORKING.iterdir():
+        if f.is_file() and f.suffix not in allowed_exts:
+            try:
+                f.unlink()
+            except Exception:
+                pass
 
     print(f"[push] Pushing complete merged dataset to {creds['username']}/janus-weights ...")
     try:
         api.dataset_create_version(
-            str(staging_dir),
+            str(KAGGLE_WORKING),
             version_notes=version_notes,
             quiet=False,
             convert_to_csv=False,
