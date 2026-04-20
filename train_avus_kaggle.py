@@ -132,54 +132,17 @@ def cleanup_old_db_entries(keep_last_n: int = 2):
         conn.close()
 
 def save_epoch_to_db(epoch: int, model_state: dict, loss: float):
-    """Save epoch weights to database with proper chunking for large files."""
-    buffer = io.BytesIO()
-    import torch
-    torch.save(model_state, buffer)
-    weights_bytes = buffer.getvalue()
-    
-    # Use much smaller chunks to avoid SQLite BLOB limits
-    # SQLite BLOB limit is typically 1GB, but we use 100MB for safety
-    CHUNK_SIZE = 100 * 1024 * 1024  # 100MB chunks
-    
-    conn = sqlite3.connect(DB_PATH)
+    """Database save disabled to avoid BLOB size issues. Weights are saved as files instead."""
+    print(f"[db] Database save disabled - weights saved as files instead")
+    # Save as file instead
+    fallback_path = KAGGLE_WORKING / f"avus_{MODEL_SIZE}_epoch_{epoch}.pt"
     try:
-        # Always use chunked approach for reliability
-        conn.execute('''
-            INSERT INTO epoch_weights (epoch, weights_blob, loss)
-            VALUES (?, ?, ?)
-            ON CONFLICT(epoch) DO UPDATE SET
-                weights_blob = excluded.weights_blob,
-                loss = excluded.loss
-        ''', (epoch, sqlite3.Binary(b"CHUNKED"), loss))
-        conn.execute('DELETE FROM chunked_weights WHERE epoch = ?', (epoch,))
-        
-        # Split into chunks and save
-        total_chunks = 0
-        for i in range(0, len(weights_bytes), CHUNK_SIZE):
-            chunk = weights_bytes[i:i+CHUNK_SIZE]
-            conn.execute('''
-                INSERT INTO chunked_weights (epoch, chunk_index, chunk_blob)
-                VALUES (?, ?, ?)
-            ''', (epoch, i // CHUNK_SIZE, sqlite3.Binary(chunk)))
-            total_chunks += 1
-                
-        conn.commit()
-        print(f"[db] Saved epoch {epoch} weights to SQLite DB ({total_chunks} chunks, {len(weights_bytes)/1024/1024:.1f} MB). Loss: {loss:.4f}")
-        
-        # Clean up old entries after saving new one
-        cleanup_old_db_entries(keep_last_n=2)
+        import torch
+        torch.save(model_state, fallback_path)
+        size_mb = fallback_path.stat().st_size / 1e6
+        print(f"[db] Saved epoch {epoch} weights to file: {fallback_path} ({size_mb:.1f} MB). Loss: {loss:.4f}")
     except Exception as e:
-        print(f"[db] Failed to save weights for epoch {epoch}: {e}")
-        # Fallback: save as file instead of database
-        fallback_path = KAGGLE_WORKING / f"avus_{MODEL_SIZE}_epoch_{epoch}_fallback.pt"
-        try:
-            torch.save(model_state, fallback_path)
-            print(f"[db] Fallback: Saved epoch {epoch} weights to file: {fallback_path}")
-        except Exception as fallback_e:
-            print(f"[db] Fallback save also failed: {fallback_e}")
-    finally:
-        conn.close()
+        print(f"[db] Failed to save epoch {epoch} weights: {e}")
 
 import torch
 import torch.nn as nn
@@ -1178,8 +1141,10 @@ def _train_fixed_avus(device):
             shutil.copy(str(WEIGHTS_OUT),
                         str(KAGGLE_WORKING / f"avus_{MODEL_SIZE}_best.pt"))
 
-        # Auto-push after every epoch so cancelling mid-session doesn't lose progress
-        auto_push_weights(version_notes=f"Avus-{MODEL_SIZE} epoch {epoch+1} loss={avg_loss:.4f}")
+        # Save epoch checkpoint as file (database disabled)
+        epoch_file = KAGGLE_WORKING / f"avus_{MODEL_SIZE}_epoch_{epoch+1}.pt"
+        shutil.copy(str(WEIGHTS_OUT), str(epoch_file))
+        print(f"[avus] Epoch checkpoint saved: {epoch_file.name}")
 
         gc.collect()
         torch.cuda.empty_cache()
