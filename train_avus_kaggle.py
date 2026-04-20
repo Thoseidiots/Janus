@@ -43,7 +43,7 @@ BATCH_SIZE            = 1           # keep at 1 for T4 with large models
 GRAD_ACCUM_STEPS      = 8           # effective batch = BATCH_SIZE * GRAD_ACCUM
 USE_GRAD_CHECKPOINT   = True        # saves VRAM, slightly slower
 USE_TORCH_COMPILE     = False       # torch.compile: faster kernels (PyTorch 2.0+, skip on Kaggle)
-MAX_SEQ_LEN           = 512         # capped for T4 safety
+MAX_SEQ_LEN           = 256         # capped for T4 safety
 DATASET_NAME          = "janus-avus-weights"
 
 # ── Kaggle Mode ───────────────────────────────────────────────────────────────
@@ -54,7 +54,7 @@ DATASET_NAME          = "janus-avus-weights"
 #   - GradScaler disabled (conflicts with CPU offload)
 #   - Device-aware forward pass (all tensors follow their block's device)
 #   - Single clean launcher cell — no patches needed
-KAGGLE_MODE           = False       # Set True when running on Kaggle T4 x2
+KAGGLE_MODE           = True       # Set True when running on Kaggle T4 x2
 
 # ── Kaggle hardware profile ───────────────────────────────────────────────────
 # Only used when KAGGLE_MODE = True
