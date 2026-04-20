@@ -782,7 +782,7 @@ def _train_fixed_avus(device):
     resume_step = 0
     for wpath in [WEIGHTS_OUT, WEIGHTS_IN]:
         if wpath.exists():
-            ckpt = torch.load(str(wpath), map_location=device)
+            ckpt = torch.load(str(wpath), map_location="cpu")
             sd   = ckpt.get("model_state_dict", ckpt)
             sd   = {k.replace("module.", ""): v for k, v in sd.items()}
             drop = [k for k in sd if any(x in k for x in
@@ -799,7 +799,7 @@ def _train_fixed_avus(device):
     _mid_path = KAGGLE_WORKING / f"avus_{MODEL_SIZE}_midepoch.pt"
     if _mid_path.exists():
         try:
-            mid = torch.load(str(_mid_path), map_location=device)
+            mid = torch.load(str(_mid_path), map_location="cpu")
             mid_epoch = mid.get("epoch", -1)
             mid_step  = mid.get("step", 0)
             if mid_epoch == start_epoch and mid_step > 0:
