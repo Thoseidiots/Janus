@@ -43,7 +43,7 @@ BATCH_SIZE            = 1           # keep at 1 for T4 with large models
 GRAD_ACCUM_STEPS      = 8           # effective batch = BATCH_SIZE * GRAD_ACCUM
 USE_GRAD_CHECKPOINT   = True        # saves VRAM, slightly slower
 USE_TORCH_COMPILE     = False       # torch.compile: faster kernels (PyTorch 2.0+, skip on Kaggle)
-MAX_SEQ_LEN           = 512         # capped for T4 safety
+MAX_SEQ_LEN           = 256         # capped for T4 safety
 DATASET_NAME          = "janus-avus-weights"
 
 # ── Kaggle Mode ───────────────────────────────────────────────────────────────
