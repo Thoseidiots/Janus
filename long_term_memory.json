@@ -1,0 +1,61 @@
+{
+  "saved_at": "2026-04-17T00:29:17.298776",
+  "total_memories": 5,
+  "memories": [
+    {
+      "id": "mem_1776400046.455417",
+      "content": "Lesson: Failed steps: Process the content: Skipped: dependencies failed; Save results: Skipped: dependencies failed (from: Read TODO.md and summarize the top 3 priorities)",
+      "category": "lesson",
+      "importance": 0.7,
+      "created_at": "2026-04-17T00:27:26.455417",
+      "last_accessed": "2026-04-17T00:29:17.273212",
+      "access_count": 4,
+      "reinforcement_count": 0,
+      "decay_score": 0.8200000000000001
+    },
+    {
+      "id": "mem_1776400103.892503",
+      "content": "Successfully completed goal: Read TODO.md and summarize the top 3 priorities",
+      "category": "outcome",
+      "importance": 0.6,
+      "created_at": "2026-04-17T00:28:23.892503",
+      "last_accessed": "2026-04-17T00:28:30.742279",
+      "access_count": 1,
+      "reinforcement_count": 0,
+      "decay_score": 0.76
+    },
+    {
+      "id": "mem_1776400111.749536",
+      "content": "Lesson: Failed steps: List directory contents: Failed after 3 attempts: Tool failed: Directory not found: the; Tool failed: Directory not found: the; Tool failed: Directory not found: the; Summarize findings: Skipped: dependencies failed (from: List all Python files in the current directory)",
+      "category": "lesson",
+      "importance": 0.7,
+      "created_at": "2026-04-17T00:28:31.749536",
+      "last_accessed": "2026-04-17T00:29:17.273212",
+      "access_count": 2,
+      "reinforcement_count": 0,
+      "decay_score": 0.8200000000000001
+    },
+    {
+      "id": "mem_1776400138.597404",
+      "content": "Successfully completed goal: List all Python files in the current directory",
+      "category": "outcome",
+      "importance": 0.6,
+      "created_at": "2026-04-17T00:28:58.597404",
+      "last_accessed": "2026-04-17T00:28:58.597404",
+      "access_count": 0,
+      "reinforcement_count": 0,
+      "decay_score": 0.76
+    },
+    {
+      "id": "mem_1776400157.298776",
+      "content": "Successfully completed goal: Run 'echo Hello from Janus autonomous agent'",
+      "category": "outcome",
+      "importance": 0.6,
+      "created_at": "2026-04-17T00:29:17.298776",
+      "last_accessed": "2026-04-17T00:29:17.298776",
+      "access_count": 0,
+      "reinforcement_count": 0,
+      "decay_score": 0.76
+    }
+  ]
+}
