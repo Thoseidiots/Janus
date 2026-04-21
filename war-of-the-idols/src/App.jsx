@@ -90,9 +90,12 @@ export default function App() {
   const startGame = useCallback((savedData = null) => {
     setAppState(GAME_STATES.PLAYING);
 
-    // Give React time to render the canvas
-    setTimeout(() => {
-      if (!canvasRef.current) return;
+    // Use rAF to ensure canvas is visible and sized before engine init
+    const initEngine = () => {
+      if (!canvasRef.current) {
+        requestAnimationFrame(initEngine);
+        return;
+      }
 
       // Clean up existing engine
       if (engineRef.current) {
@@ -106,7 +109,9 @@ export default function App() {
       const engine = new GameEngine(canvasRef.current, gameStateRef.current, handleStateChange);
       engineRef.current = engine;
       engine.init(savedData);
-    }, 100);
+    };
+
+    requestAnimationFrame(initEngine);
   }, [handleStateChange]);
 
   const handleNewGame = useCallback(() => {
@@ -203,11 +208,14 @@ export default function App() {
   return (
     <div className="w-full h-full relative bg-black">
 
-      {/* Three.js Canvas — always rendered when playing */}
+      {/* Three.js Canvas — always in DOM, hidden via visibility not display */}
       <canvas
         ref={canvasRef}
         className="absolute inset-0 w-full h-full"
-        style={{ display: appState === GAME_STATES.PLAYING ? 'block' : 'none' }}
+        style={{
+          visibility: appState === GAME_STATES.PLAYING ? 'visible' : 'hidden',
+          pointerEvents: appState === GAME_STATES.PLAYING ? 'auto' : 'none',
+        }}
       />
 
       {/* Main Menu */}
