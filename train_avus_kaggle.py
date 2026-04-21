@@ -340,14 +340,61 @@ if KAGGLE_MODE:
 
 KAGGLE_INPUT   = Path("/kaggle/input")
 KAGGLE_WORKING = Path("/kaggle/working")
-DATASET_DIR    = KAGGLE_INPUT / DATASET_NAME
 
-WEIGHTS_IN     = DATASET_DIR  / f"avus_{MODEL_SIZE}_weights.pt"
+# Kaggle mounts datasets at different paths depending on how they were added.
+# Try all known mount patterns and use the first one that exists.
+_DATASET_CANDIDATES = [
+    KAGGLE_INPUT / "datasets" / "ishmaelsears" / DATASET_NAME,  # /kaggle/input/datasets/ishmaelsears/janus-avus-weights
+    KAGGLE_INPUT / DATASET_NAME,                                  # /kaggle/input/janus-avus-weights
+    KAGGLE_INPUT / "janus-avus-weights",                          # explicit fallback
+]
+
+DATASET_DIR = None
+for _candidate in _DATASET_CANDIDATES:
+    if _candidate.exists():
+        DATASET_DIR = _candidate
+        print(f"[setup] Weights dataset found at: {DATASET_DIR}")
+        break
+
+if DATASET_DIR is None:
+    # Not found — training from scratch, outputs still go to working dir
+    DATASET_DIR = KAGGLE_INPUT / DATASET_NAME
+    print(f"[setup] WARNING: Weights dataset not found. Tried:")
+    for _c in _DATASET_CANDIDATES:
+        print(f"  {_c}")
+    print(f"[setup] Training from scratch. Outputs → {KAGGLE_WORKING}")
+
+# Scan for any .pt file in the dataset dir (handles different naming conventions)
+def _find_weights(directory: Path, model_size: str) -> Path:
+    """Find the best matching weights file in a directory."""
+    if not directory.exists():
+        return directory / f"avus_{model_size}_weights.pt"  # canonical path (may not exist)
+
+    # Priority order: exact match → any avus weights → any .pt file
+    candidates = [
+        directory / f"avus_{model_size}_weights.pt",
+        directory / f"avus_{model_size}.pt",
+        *sorted(directory.glob(f"*{model_size}*.pt")),
+        *sorted(directory.glob("avus_*.pt")),
+        *sorted(directory.glob("*.pt")),
+    ]
+    for c in candidates:
+        if c.exists():
+            size_mb = c.stat().st_size / 1e6
+            print(f"[setup] Found weights: {c.name} ({size_mb:.1f} MB)")
+            return c
+
+    return directory / f"avus_{model_size}_weights.pt"  # canonical (doesn't exist yet)
+
+WEIGHTS_IN     = _find_weights(DATASET_DIR, MODEL_SIZE)
 SKILL_IN       = DATASET_DIR  / "skill_state.json"
 WEIGHTS_OUT    = KAGGLE_WORKING / f"avus_{MODEL_SIZE}_weights.pt"
 SKILL_OUT      = KAGGLE_WORKING / "skill_state.json"
 HBM_OUT        = KAGGLE_WORKING / "hbm_weights.pt"
 CHART_OUT      = KAGGLE_WORKING / "skill_chart.png"
+
+print(f"[setup] WEIGHTS_IN  = {WEIGHTS_IN}  (exists: {WEIGHTS_IN.exists()})")
+print(f"[setup] WEIGHTS_OUT = {WEIGHTS_OUT}")
 
 # ── Install dependencies ──────────────────────────────────────────────────────
 
@@ -641,7 +688,7 @@ def _train_growing_avus(device):
     )
 
     weights_path = KAGGLE_WORKING / "avus_growing_weights.pt"
-    weights_in   = DATASET_DIR / "avus_growing_weights.pt"
+    weights_in   = _find_weights(DATASET_DIR, "growing")
 
     model = GrowingAvus(gc).to(device)
     if weights_in.exists():
