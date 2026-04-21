@@ -133,13 +133,16 @@ class PhaseBrainLayer(nn.Module):
     def encode(self, x: torch.Tensor) -> torch.Tensor:
         """
         Encode input using phase-only weights.
-        
+
         Args:
-            x: Input tensor (batch_size, in_dim)
-            
+            x: Input tensor (batch_size, in_dim) — float or complex
+
         Returns:
             Encoded complex vector (batch_size, memory.dim)
         """
+        # Cast x to complex so matmul with complex phase_weights works
+        if not x.is_complex():
+            x = x.to(torch.complex64)
         # x: (batch, in_dim) -> (batch, memory.dim)
         encoded = torch.matmul(x.unsqueeze(1), self.phase_weights.unsqueeze(0)).squeeze(1)
         return encoded
@@ -147,25 +150,26 @@ class PhaseBrainLayer(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         Forward pass: encode input, write to memory, read back, and project.
-        
+
         Args:
             x: Input tensor (batch_size, in_dim)
-            
+
         Returns:
             Output tensor (batch_size, out_dim)
         """
-        # Encode input
+        # Encode input (returns complex)
         encoded = self.encode(x)
-        
-        # Write to memory
+
+        # Write each item to memory
         for i in range(encoded.shape[0]):
             self.memory.write(encoded[i], encoded[i], strength=0.1)
-        
-        # Read from memory
-        retrieved = self.memory.read(encoded[0])
-        
+
+        # Read back for every item in the batch
+        retrieved_list = []
+        for i in range(encoded.shape[0]):
+            retrieved_list.append(torch.real(self.memory.read(encoded[i])))
+        retrieved_real = torch.stack(retrieved_list, dim=0)  # (batch, memory.dim)
+
         # Project to output dimension
-        retrieved_real = torch.real(retrieved)
-        output = self.output_proj(retrieved_real.unsqueeze(0))
-        
+        output = self.output_proj(retrieved_real)
         return output
