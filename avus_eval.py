@@ -126,9 +126,8 @@ def build_arithmetic_tasks(n: int = 20, seed: int = 42) -> List[EvalTask]:
         else:
             a, b = rng.randint(2, 12), rng.randint(2, 12)
             ans = str(a * b)
-        prompt = (f"Calculate: {a} {op} {b}. "
-                  f"Step 1: Identify the operation ({op}). "
-                  f"Step 2: Apply it. Result:")
+        # Match the training format: direct Q→A
+        prompt = f"Q: What is {a} {op} {b}?\nA:"
         tasks.append(NumericTask(prompt, ans, "arithmetic", difficulty=1))
     return tasks
 
@@ -141,17 +140,15 @@ def build_logic_tasks(n: int = 20, seed: int = 42) -> List[EvalTask]:
     for _ in range(n):
         a, b = rng.sample(entities, 2)
         p1, p2 = rng.sample(props, 2)
-        # Valid syllogism — answer is always "Yes"
-        prompt = (f"Premise 1: All {p1} people are {p2}. "
-                  f"Premise 2: {a} is {p1}. "
-                  f"Question: Is {a} {p2}? Answer:")
+        prompt = (f"All {p1} people are {p2}. "
+                  f"{a} is {p1}. Is {a} {p2}?\nAnswer:")
         tasks.append(EvalTask(prompt, "yes", "reasoning", difficulty=2))
     return tasks
 
 
 def build_memory_tasks(n: int = 20, seed: int = 42) -> List[EvalTask]:
     rng = random.Random(seed)
-    names = ["Alex", "Jordan", "Morgan", "Taylor", "Casey"]
+    names  = ["Alex", "Jordan", "Morgan", "Taylor", "Casey"]
     cities = ["Berlin", "Tokyo", "Lagos", "Sydney", "Oslo"]
     jobs   = ["engineer", "teacher", "doctor", "designer", "pilot"]
     tasks = []
@@ -159,13 +156,8 @@ def build_memory_tasks(n: int = 20, seed: int = 42) -> List[EvalTask]:
         name = rng.choice(names)
         city = rng.choice(cities)
         job  = rng.choice(jobs)
-        # Add distractor facts
-        d_city = rng.choice([c for c in cities if c != city])
-        d_job  = rng.choice([j for j in jobs if j != job])
-        prompt = (f"Context: {name} was born in {city}. "
-                  f"{name} works as a {job}. "
-                  f"Jordan lives in {d_city}. Morgan is a {d_job}. "
-                  f"Question: Where was {name} born? Answer:")
+        prompt = (f"{name} was born in {city} and works as a {job}. "
+                  f"Where was {name} born?\nAnswer:")
         tasks.append(EvalTask(prompt, city.lower(), "memory_recall", difficulty=2))
     return tasks
 

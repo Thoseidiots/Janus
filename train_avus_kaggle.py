@@ -36,9 +36,9 @@ Download and re-upload to "janus-weights" dataset to persist.
 
 MODEL_SIZE            = "1b"        # 1b | 3b | 7b | 13b | 34b | 70b | growing
 USE_GROWING_AVUS      = False       # True = GrowingAvus (no fixed size)
-AVUS_EPOCHS           = 2           # reduced from 20 for fast tests
-HBM_EPOCHS            = 1           # reduced from 10 for fast tests
-SAMPLES_PER_DATASET   = 100         # synthetic samples per curriculum (reduced from 10,000)
+AVUS_EPOCHS           = 5           # more epochs = better answer completion
+HBM_EPOCHS            = 1
+SAMPLES_PER_DATASET   = 2000        # 2k per generator = ~8k+ total examples
 BATCH_SIZE            = 1           # keep at 1 for T4 with large models
 GRAD_ACCUM_STEPS      = 8           # effective batch = BATCH_SIZE * GRAD_ACCUM
 USE_GRAD_CHECKPOINT   = True        # saves VRAM, slightly slower
@@ -526,33 +526,12 @@ def generate_screen_action_pairs(n: int = 10_000) -> List[str]:
     return out
 
 
-def generate_language_pairs(n: int = 10_000) -> List[str]:
-    """Language comprehension curriculum."""
-    topics = [
-        "machine learning", "neural networks", "transformers", "attention mechanisms",
-        "gradient descent", "backpropagation", "reinforcement learning",
-        "computer vision", "natural language processing", "robotics",
-    ]
-    templates = [
-        "Explain {topic} in simple terms.",
-        "What is {topic}?",
-        "How does {topic} work?",
-        "Describe the key concepts of {topic}.",
-        "What are the applications of {topic}?",
-    ]
-    out = []
-    for _ in range(n):
-        topic    = _rc(topics)
-        template = _rc(templates)
-        question = template.format(topic=topic)
-        answer   = f"{topic.capitalize()} is a fundamental concept in AI that involves processing and learning from data."
-        text = f"<|startoftext|>{question} {answer}<|endoftext|>"
-        out.append(text)
-    return out
-
-
 def generate_reasoning_pairs(n: int = 10_000) -> List[str]:
-    """Reasoning and cognitive loop curriculum."""
+    """
+    Arithmetic and reasoning curriculum.
+    Uses varied, direct Q→A formats so the model learns to OUTPUT answers,
+    not echo the question structure.
+    """
     out = []
     for _ in range(n):
         a, b = _ri(1, 100), _ri(1, 100)
@@ -560,10 +539,101 @@ def generate_reasoning_pairs(n: int = 10_000) -> List[str]:
         if op == "+":   result = a + b
         elif op == "-": result = a - b
         else:           result = a * b
-        text = (f"<|startoftext|>Calculate: {a} {op} {b}. "
-                f"Step 1: Identify the operation ({op}). "
-                f"Step 2: Apply it. "
-                f"Result: {result}<|endoftext|>")
+
+        # Vary the format heavily — prevents template memorisation
+        fmt = _ri(0, 5)
+        if fmt == 0:
+            text = f"<|startoftext|>Q: What is {a} {op} {b}?\nA: {result}<|endoftext|>"
+        elif fmt == 1:
+            text = f"<|startoftext|>{a} {op} {b} = {result}<|endoftext|>"
+        elif fmt == 2:
+            text = f"<|startoftext|>Calculate {a} {op} {b}. The answer is {result}.<|endoftext|>"
+        elif fmt == 3:
+            text = f"<|startoftext|>Math: {a} {op} {b}\nResult: {result}<|endoftext|>"
+        elif fmt == 4:
+            text = f"<|startoftext|>Solve: {a} {op} {b} = ?  Answer: {result}<|endoftext|>"
+        else:
+            text = f"<|startoftext|>If you compute {a} {op} {b} you get {result}.<|endoftext|>"
+        out.append(text)
+
+    # Add logic / syllogism pairs
+    entities = ["Alice", "Bob", "Carol", "Dave", "Eve", "Frank"]
+    props = ["smart", "fast", "kind", "brave", "honest", "tall"]
+    for _ in range(n // 4):
+        a, b = _rc(entities), _rc(entities)
+        p1, p2 = _rc(props), _rc(props)
+        fmt = _ri(0, 2)
+        if fmt == 0:
+            text = (f"<|startoftext|>All {p1} people are {p2}. "
+                    f"{a} is {p1}. Is {a} {p2}?\nAnswer: Yes.<|endoftext|>")
+        elif fmt == 1:
+            text = (f"<|startoftext|>Premise: Every {p1} person is also {p2}. "
+                    f"{a} is {p1}. Therefore {a} is {p2}.<|endoftext|>")
+        else:
+            text = (f"<|startoftext|>Q: {a} is {p1}. All {p1} people are {p2}. "
+                    f"What can we conclude about {a}?\nA: {a} is {p2}.<|endoftext|>")
+        out.append(text)
+
+    # Add memory / fact recall pairs
+    names  = ["Alex", "Jordan", "Morgan", "Taylor", "Casey", "Riley"]
+    cities = ["Berlin", "Tokyo", "Lagos", "Sydney", "Oslo", "Cairo"]
+    jobs   = ["engineer", "teacher", "doctor", "designer", "pilot", "chef"]
+    for _ in range(n // 4):
+        name = _rc(names)
+        city = _rc(cities)
+        job  = _rc(jobs)
+        fmt  = _ri(0, 2)
+        if fmt == 0:
+            text = (f"<|startoftext|>{name} was born in {city} and works as a {job}. "
+                    f"Where was {name} born?\nAnswer: {city}.<|endoftext|>")
+        elif fmt == 1:
+            text = (f"<|startoftext|>Fact: {name} lives in {city}. "
+                    f"Q: Where does {name} live?\nA: {city}.<|endoftext|>")
+        else:
+            text = (f"<|startoftext|>{name} is a {job} from {city}. "
+                    f"What is {name}'s job? {job.capitalize()}.<|endoftext|>")
+        out.append(text)
+
+    return out
+
+
+def generate_language_pairs(n: int = 10_000) -> List[str]:
+    """Language comprehension curriculum with varied Q→A formats."""
+    topics = [
+        "machine learning", "neural networks", "transformers", "attention mechanisms",
+        "gradient descent", "backpropagation", "reinforcement learning",
+        "computer vision", "natural language processing", "robotics",
+        "Python programming", "data structures", "algorithms", "databases",
+    ]
+    answers = {
+        "machine learning": "a method where computers learn patterns from data without being explicitly programmed",
+        "neural networks": "computational models inspired by the brain, made of layers of connected nodes",
+        "transformers": "a neural network architecture that uses attention to process sequences in parallel",
+        "attention mechanisms": "a technique that lets models focus on relevant parts of the input",
+        "gradient descent": "an optimisation algorithm that minimises loss by following the steepest downhill direction",
+        "backpropagation": "the algorithm that computes gradients by propagating errors backward through the network",
+        "reinforcement learning": "a learning paradigm where an agent learns by receiving rewards for good actions",
+        "computer vision": "the field of AI that enables machines to interpret and understand images and video",
+        "natural language processing": "the branch of AI that deals with understanding and generating human language",
+        "robotics": "the field combining AI and engineering to build machines that can act in the physical world",
+        "Python programming": "a high-level, readable programming language widely used in AI and data science",
+        "data structures": "ways of organising data in memory, such as lists, trees, and hash maps",
+        "algorithms": "step-by-step procedures for solving computational problems efficiently",
+        "databases": "systems for storing, querying, and managing structured data",
+    }
+    out = []
+    for _ in range(n):
+        topic = _rc(topics)
+        ans   = answers.get(topic, f"a key concept in AI and computer science")
+        fmt   = _ri(0, 3)
+        if fmt == 0:
+            text = f"<|startoftext|>What is {topic}?\n{topic.capitalize()} is {ans}.<|endoftext|>"
+        elif fmt == 1:
+            text = f"<|startoftext|>Explain {topic}: {ans}.<|endoftext|>"
+        elif fmt == 2:
+            text = f"<|startoftext|>Q: How would you describe {topic}?\nA: {topic.capitalize()} is {ans}.<|endoftext|>"
+        else:
+            text = f"<|startoftext|>Define {topic}. Definition: {ans}.<|endoftext|>"
         out.append(text)
     return out
 
