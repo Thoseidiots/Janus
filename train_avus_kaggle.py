@@ -132,17 +132,8 @@ def cleanup_old_db_entries(keep_last_n: int = 2):
         conn.close()
 
 def save_epoch_to_db(epoch: int, model_state: dict, loss: float):
-    """Database save disabled to avoid BLOB size issues. Weights are saved as files instead."""
-    print(f"[db] Database save disabled - weights saved as files instead")
-    # Save as file instead
-    fallback_path = KAGGLE_WORKING / f"avus_{MODEL_SIZE}_epoch_{epoch}.pt"
-    try:
-        import torch
-        torch.save(model_state, fallback_path)
-        size_mb = fallback_path.stat().st_size / 1e6
-        print(f"[db] Saved epoch {epoch} weights to file: {fallback_path} ({size_mb:.1f} MB). Loss: {loss:.4f}")
-    except Exception as e:
-        print(f"[db] Failed to save epoch {epoch} weights: {e}")
+    """No-op — weights are saved directly to WEIGHTS_OUT each epoch."""
+    print(f"[db] Epoch {epoch} weights saved to {WEIGHTS_OUT}. Loss: {loss:.4f}")
 
 import torch
 import torch.nn as nn
@@ -855,6 +846,23 @@ def _train_growing_avus(device):
 
 def _train_fixed_avus(device):
     init_db()
+
+    # ── Disk space check ──────────────────────────────────────────────────────
+    import shutil as _shutil
+    total, used, free = _shutil.disk_usage(str(KAGGLE_WORKING))
+    free_gb = free / 1e9
+    print(f"[avus] Disk: {free_gb:.1f} GB free in {KAGGLE_WORKING}")
+    if free_gb < 6:
+        print(f"[avus] WARNING: Low disk space ({free_gb:.1f} GB). "
+              f"Cleaning up old checkpoints...")
+        for old in KAGGLE_WORKING.glob(f"avus_{MODEL_SIZE}_epoch_*.pt"):
+            old.unlink()
+            print(f"[avus] Removed {old.name}")
+        for old in KAGGLE_WORKING.glob(f"avus_{MODEL_SIZE}_best.pt"):
+            old.unlink()
+            print(f"[avus] Removed {old.name}")
+        _, _, free = _shutil.disk_usage(str(KAGGLE_WORKING))
+        print(f"[avus] Disk after cleanup: {free/1e9:.1f} GB free")
     # ── Config ────────────────────────────────────────────────────────────────
     # In Kaggle mode, /kaggle/working has the correct config — check it first
     if KAGGLE_MODE:
@@ -1253,15 +1261,15 @@ def _train_fixed_avus(device):
                 print(f"[avus] Chart failed: {e}")
             print(f"[avus] Next priority: {skill_tree.best_skill_to_train()}")
 
+        # Track best loss — no copy needed, WEIGHTS_OUT is already the latest
         if avg_loss < best_loss:
             best_loss = avg_loss
-            shutil.copy(str(WEIGHTS_OUT),
-                        str(KAGGLE_WORKING / f"avus_{MODEL_SIZE}_best.pt"))
+            print(f"[avus] New best loss: {best_loss:.4f} (epoch {epoch+1})")
 
-        # Save epoch checkpoint as file (database disabled)
-        epoch_file = KAGGLE_WORKING / f"avus_{MODEL_SIZE}_epoch_{epoch+1}.pt"
-        shutil.copy(str(WEIGHTS_OUT), str(epoch_file))
-        print(f"[avus] Epoch checkpoint saved: {epoch_file.name}")
+        # Skip per-epoch file copies — /kaggle/working is only 20GB and
+        # a 4GB model copied 5 times would fill the disk.
+        # WEIGHTS_OUT is overwritten each epoch and is always the latest.
+        print(f"[avus] Epoch {epoch+1} weights saved: {WEIGHTS_OUT}")
 
         gc.collect()
         torch.cuda.empty_cache()
