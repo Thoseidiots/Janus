@@ -1161,6 +1161,7 @@ def _train_fixed_avus(device):
                         battery.reset()
             else:
                 # Standard training loop (Kaggle mode or no JanusOptimizer)
+                _fwd_start = time.perf_counter()
                 with torch.amp.autocast("cuda", enabled=(device.type == "cuda" and not KAGGLE_MODE)):
                     logits, _ = model(x)
                     loss = focal_cross_entropy(
@@ -1170,6 +1171,21 @@ def _train_fixed_avus(device):
                     )
                     if loss.dim() > 0:
                         loss = loss.mean()
+                _fwd_elapsed = time.perf_counter() - _fwd_start
+
+                # ── Speed incentive ───────────────────────────────────────────
+                # Target: 1 second per forward pass.
+                # If the model takes longer, add a small penalty to the loss.
+                # This trains the model to produce confident, fast outputs.
+                # Penalty = 0.01 * max(0, elapsed - target) — small enough not
+                # to dominate the task loss, large enough to signal over time.
+                _SPEED_TARGET_SEC  = 1.0
+                _SPEED_PENALTY_W   = 0.01
+                _speed_penalty = _SPEED_PENALTY_W * max(0.0, _fwd_elapsed - _SPEED_TARGET_SEC)
+                if _speed_penalty > 0:
+                    loss = loss + _speed_penalty
+                    if step % 200 == 0:
+                        print(f"  [speed] fwd={_fwd_elapsed:.2f}s  penalty={_speed_penalty:.4f}")
 
                 scaler.scale(loss / GRAD_ACCUM_STEPS).backward()
 
