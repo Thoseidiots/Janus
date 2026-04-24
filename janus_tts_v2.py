@@ -6,6 +6,7 @@ Architecture: TextEncoder → DurationPredictor → LengthRegulator → Decoder 
 
 import re
 import math
+import time
 import wave
 import struct
 import pathlib
@@ -828,7 +829,12 @@ class JanusTTSv2:
         self._set_train()
         self.vocoder.train()
 
+        _SPEED_TARGET = 0.5   # target seconds per step
+        _SPEED_W      = 0.005 # penalty weight
+
         for step in range(steps):
+            _t0 = time.perf_counter()
+
             # ── Acoustic model step ──────────────────────────────────────
             opt_acoustic.zero_grad()
             encoded    = self.text_encoder(ids_tensor)
@@ -846,18 +852,22 @@ class JanusTTSv2:
 
             # ── Vocoder step — train on real mel → real waveform ─────────
             opt_vocoder.zero_grad()
-            wav_pred = self.vocoder(target_mel)  # (1, T_pred)
+            wav_pred = self.vocoder(target_mel)
 
-            # Align lengths for loss
             tw = min(wav_pred.shape[1], target_wav.shape[1])
             voc_loss = F.l1_loss(wav_pred[:, :tw], target_wav[:, :tw])
             voc_loss.backward()
             torch.nn.utils.clip_grad_norm_(self.vocoder.parameters(), 1.0)
             opt_vocoder.step()
 
+            # ── Speed incentive ───────────────────────────────────────────
+            _elapsed = time.perf_counter() - _t0
+            _speed_penalty = _SPEED_W * max(0.0, _elapsed - _SPEED_TARGET)
+
             if (step + 1) % 20 == 0:
+                spd = f"  ⚡{_elapsed:.2f}s" if _elapsed <= _SPEED_TARGET else f"  🐢{_elapsed:.2f}s(+{_speed_penalty:.4f})"
                 print(f"  [fine-tune] step {step+1}/{steps} "
-                      f"mel={mel_loss.item():.4f}  voc={voc_loss.item():.4f}")
+                      f"mel={mel_loss.item():.4f}  voc={voc_loss.item():.4f}{spd}")
 
         self._set_eval()
         self.vocoder.eval()
