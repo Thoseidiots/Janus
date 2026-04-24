@@ -206,8 +206,15 @@ def finetune(wavs):
 
 
 if __name__ == "__main__":
-    # Step 1: Generate training audio
-    wavs = asyncio.run(generate_all())
+    # Step 1: Generate training audio (skip if already done)
+    existing = sorted(OUTPUT_DIR.glob("janus_*.wav"))
+    if len(existing) >= len(SENTENCES):
+        print(f"Found {len(existing)} existing WAV files — skipping generation.")
+        wavs = []
+        for i, (sentence, _) in enumerate(zip(SENTENCES, existing)):
+            wavs.append((sentence, existing[i]))
+    else:
+        wavs = asyncio.run(generate_all())
 
     if not wavs:
         print("No audio generated. Check edge-tts and ffmpeg.")
