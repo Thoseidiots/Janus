@@ -601,7 +601,17 @@ class JanusTTS:
             return text
 
     def _edge_synthesize(self, text: str, speed: float = 1.0):
-        """Use Microsoft Edge TTS — en-US-AnaNeural, plain text."""
+        """
+        Primary synthesis — tries Kokoro (local, no internet) first,
+        then falls back to Edge TTS (requires internet).
+        Kokoro af_heart voice: warm, natural, human-sounding.
+        """
+        # Try Kokoro first — fully local, no internet needed
+        kokoro_audio = self._kokoro_synthesize(text, speed)
+        if kokoro_audio is not None:
+            return kokoro_audio
+
+        # Fall back to Edge TTS
         import asyncio, tempfile, os as _os
 
         rate_pct = int((speed - 1.0) * 100)
@@ -628,6 +638,68 @@ class JanusTTS:
         except Exception as e:
             print(f"[JanusTTS] Edge TTS failed: {e}")
             return None
+
+    def _kokoro_synthesize(self, text: str, speed: float = 1.0):
+        """
+        Synthesize using Kokoro (local neural TTS, af_heart voice).
+        Returns float32 numpy array at SAMPLE_RATE, or None if unavailable.
+        """
+        try:
+            import numpy as np
+            from kokoro import KPipeline
+
+            if not hasattr(self, '_kokoro_pipeline'):
+                self._kokoro_pipeline = KPipeline(lang_code='a')
+                print("[JanusTTS] Kokoro loaded (af_heart voice)")
+
+            # Fix pronunciation before passing to Kokoro's phonemizer
+            # "Janus" → "Yah-nus" (Kokoro reads J as JH, we want Y)
+            kokoro_text = self._fix_pronunciations(text)
+
+            generator = self._kokoro_pipeline(
+                kokoro_text, voice='af_heart', speed=speed
+            )
+            chunks = []
+            for _, _, audio in generator:
+                chunks.append(audio)
+
+            if not chunks:
+                return None
+
+            full = np.concatenate(chunks)
+            # Kokoro outputs at 24000 Hz — resample to SAMPLE_RATE if different
+            if 24000 != SAMPLE_RATE:
+                n = int(len(full) * SAMPLE_RATE / 24000)
+                full = np.interp(
+                    np.linspace(0, len(full)-1, n),
+                    np.arange(len(full)), full
+                ).astype(np.float32)
+
+            print(f"[JanusTTS] Kokoro (af_heart)")
+            return full
+
+        except ImportError:
+            return None
+        except Exception as e:
+            print(f"[JanusTTS] Kokoro failed: {e}")
+            return None
+
+    def _fix_pronunciations(self, text: str) -> str:
+        """
+        Fix words Kokoro mispronounces before synthesis.
+        Uses phonetic respellings that Kokoro's English phonemizer handles correctly.
+        """
+        import re
+        fixes = {
+            # "Janus" → sounds like "Yanus" — no hyphen, Kokoro reads hyphens as pauses
+            r'\bJanus\b': 'Yanus',
+            r'\bjanus\b': 'yanus',
+            r'\bJANUS\b': 'YANUS',
+        }
+        result = text
+        for pattern, replacement in fixes.items():
+            result = re.sub(pattern, replacement, result)
+        return result
 
     def _mp3_to_float32(self, mp3_path: str):
         """Decode MP3 → float32 numpy at SAMPLE_RATE. Tries pydub, soundfile, ffmpeg."""
