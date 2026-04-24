@@ -419,8 +419,61 @@ async def generate_all():
 
 
 def finetune(wavs):
-    """Fine-tune janus_tts_v2 on the generated audio."""
-    print("\nFine-tuning janus_tts_v2 on generated audio...")
+    """Fine-tune janus_tts_v2 on the generated audio, with STT verification."""
+    print("\nVerifying audio quality with STT...")
+
+    # Load Whisper for verification
+    stt = None
+    try:
+        from faster_whisper import WhisperModel
+        stt = WhisperModel("tiny", device="cpu", compute_type="int8")
+        print("  Whisper tiny loaded for STT verification")
+    except Exception as e:
+        print(f"  STT unavailable ({e}) — skipping verification")
+
+    def transcribe(wav_path: str) -> str:
+        if stt is None:
+            return ""
+        try:
+            segments, _ = stt.transcribe(str(wav_path), language="en")
+            return " ".join(s.text.strip() for s in segments).strip().lower()
+        except Exception:
+            return ""
+
+    def words_match(expected: str, transcribed: str, threshold: float = 0.5) -> bool:
+        """Check if enough words from expected appear in transcription."""
+        if not transcribed:
+            return True  # can't verify, keep it
+        exp_words = set(expected.lower().split())
+        got_words = set(transcribed.split())
+        # Remove punctuation for comparison
+        import re
+        exp_words = {re.sub(r'[^a-z]', '', w) for w in exp_words}
+        got_words = {re.sub(r'[^a-z]', '', w) for w in got_words}
+        exp_words.discard('')
+        got_words.discard('')
+        if not exp_words:
+            return True
+        overlap = len(exp_words & got_words) / len(exp_words)
+        return overlap >= threshold
+
+    # Verify and filter
+    verified = []
+    rejected = []
+    for text, wav_path in wavs:
+        transcribed = transcribe(wav_path)
+        if transcribed and not words_match(text, transcribed):
+            rejected.append((text, transcribed))
+            print(f"  ✗ REJECTED: '{text[:50]}'")
+            print(f"    Got:      '{transcribed[:50]}'")
+        else:
+            verified.append((text, wav_path))
+
+    print(f"\n  Verified: {len(verified)}/{len(wavs)} samples")
+    if rejected:
+        print(f"  Rejected: {len(rejected)} samples (STT mismatch)")
+
+    print("\nFine-tuning janus_tts_v2 on verified audio...")
 
     from janus_tts_v2 import JanusTTSv2
 
@@ -431,8 +484,8 @@ def finetune(wavs):
 
     tts = JanusTTSv2(weights)
 
-    total = len(wavs)
-    for i, (text, wav_path) in enumerate(wavs):
+    total = len(verified)
+    for i, (text, wav_path) in enumerate(verified):
         print(f"\n[{i+1}/{total}] Fine-tuning on: {text[:60]}")
         try:
             tts.train_on_sample(
