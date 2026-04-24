@@ -37,7 +37,7 @@ OUTPUT_DIR = pathlib.Path("voice_training_data")
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Training sentences — things Janus will actually say
+# Training sentences — 200 varied sentences covering everything Janus will say
 # ─────────────────────────────────────────────────────────────────────────────
 SENTENCES = [
     # Identity
@@ -46,8 +46,13 @@ SENTENCES = [
     "I am Janus, your assistant.",
     "Hi there, I am Janus.",
     "Hello, how can I help you today?",
+    "Hey, what can I do for you?",
+    "Good morning. I am ready to help.",
+    "Good afternoon. What do you need?",
+    "Good evening. How can I assist?",
+    "I am here whenever you need me.",
 
-    # Responses
+    # Short responses
     "I understand.",
     "Got it.",
     "Of course.",
@@ -59,6 +64,15 @@ SENTENCES = [
     "I do not know, but I can find out.",
     "You are welcome.",
     "Thank you for asking.",
+    "Absolutely.",
+    "No problem.",
+    "Right away.",
+    "Leave it to me.",
+    "Consider it done.",
+    "I am on it.",
+    "Sounds good.",
+    "Makes sense.",
+    "I see.",
 
     # Questions
     "What would you like to know?",
@@ -67,6 +81,15 @@ SENTENCES = [
     "What are you working on?",
     "Can you tell me more?",
     "What do you mean by that?",
+    "Could you clarify that for me?",
+    "What would you like me to do?",
+    "How would you like to proceed?",
+    "Should I continue?",
+    "Do you want me to try again?",
+    "Is that what you were looking for?",
+    "Does that answer your question?",
+    "Would you like more details?",
+    "Shall I explain further?",
 
     # Statements
     "The answer is simple.",
@@ -77,6 +100,18 @@ SENTENCES = [
     "That makes sense.",
     "I agree with you.",
     "I see what you mean.",
+    "That is a good point.",
+    "I think you are right.",
+    "That is worth considering.",
+    "Here is what I found.",
+    "Let me break that down.",
+    "The short answer is yes.",
+    "The short answer is no.",
+    "It depends on the situation.",
+    "There are a few ways to approach this.",
+    "I have an idea.",
+    "I think I know the answer.",
+    "Let me check on that.",
 
     # Technical
     "I am running the code now.",
@@ -85,6 +120,20 @@ SENTENCES = [
     "The process finished successfully.",
     "There was an error. Let me fix it.",
     "I will check the logs.",
+    "The model is loading.",
+    "I am analyzing the data.",
+    "The file has been updated.",
+    "I found a bug. Working on a fix.",
+    "The test passed.",
+    "The build is complete.",
+    "I am downloading the files.",
+    "The connection was successful.",
+    "I am scanning for issues.",
+    "Everything looks good.",
+    "There is a warning in the output.",
+    "I need a moment to process this.",
+    "The task is queued.",
+    "I will run this in the background.",
 
     # Emotional range
     "That is wonderful news!",
@@ -93,6 +142,15 @@ SENTENCES = [
     "Do not worry, I will figure it out.",
     "This is going to work.",
     "I am a little tired, but I am here.",
+    "That is exciting!",
+    "I appreciate your patience.",
+    "I understand your frustration.",
+    "We will get through this together.",
+    "That is really impressive.",
+    "I am proud of the progress we made.",
+    "This is challenging, but I enjoy it.",
+    "I find this fascinating.",
+    "I am curious about that too.",
 
     # Longer sentences
     "I have been thinking about this problem and I believe I have a solution.",
@@ -100,11 +158,69 @@ SENTENCES = [
     "The best approach here would be to start with the simplest version and build from there.",
     "I want to make sure I understand what you are asking before I respond.",
     "Based on what you told me, I think the answer is somewhere in the middle.",
+    "There are several ways to solve this, and I will explain each one.",
+    "I ran the analysis and the results are more interesting than I expected.",
+    "The reason this is happening is because of how the system handles memory.",
+    "If we approach this differently, we might get a better outcome.",
+    "I have looked at the data and I think I see a pattern worth exploring.",
+    "The most important thing to remember here is to keep it simple.",
+    "I will need a few more details before I can give you a complete answer.",
+    "This is a common problem and there is a well-known solution for it.",
+    "Let me summarize what we have covered so far.",
+    "I think we are making real progress on this.",
 
-    # Janus name (correct pronunciation)
+    # Conversational
+    "That is a fair point.",
+    "I had not thought of it that way.",
+    "You raise a good question.",
+    "Let me reconsider that.",
+    "Actually, I think I was wrong about that.",
+    "Now that you mention it, yes.",
+    "I was just about to say the same thing.",
+    "That is exactly what I was thinking.",
+    "Interesting. Tell me more.",
+    "I am glad you brought that up.",
+    "That changes things a bit.",
+    "Good catch.",
+    "I missed that. Thank you.",
+    "Let me try a different approach.",
+    "We could also look at it this way.",
+
+    # Numbers and specifics
+    "The answer is forty two.",
+    "That will take about five minutes.",
+    "I found three possible solutions.",
+    "The file is two hundred megabytes.",
+    "There are seven steps in this process.",
+    "The probability is around sixty percent.",
+    "I have completed twelve of the twenty tasks.",
+    "The error occurred on line forty seven.",
+    "The process uses about four gigabytes of memory.",
+    "I estimate this will take two to three hours.",
+
+    # Janus name variations
     "I am Janus and I am here to help.",
     "You can call me Janus.",
     "Janus is my name.",
+    "This is Janus speaking.",
+    "Janus at your service.",
+    "Hi, Janus here.",
+    "Yes, this is Janus.",
+    "Janus is ready.",
+    "Janus online.",
+    "Janus reporting in.",
+
+    # Closing
+    "Is there anything else I can help with?",
+    "Let me know if you need anything else.",
+    "I will be here if you need me.",
+    "Feel free to ask anytime.",
+    "Take care.",
+    "Talk to you soon.",
+    "Until next time.",
+    "Have a great day.",
+    "Good luck with that.",
+    "I hope that helps.",
 ]
 
 
@@ -178,8 +294,8 @@ def finetune(wavs):
             tts.train_on_sample(
                 text=text,
                 audio_path=str(wav_path),
-                steps=30,       # 30 steps per sample × 50 samples = 1500 total
-                lr=5e-5         # small LR to avoid forgetting
+                steps=20,       # 20 steps × 200 samples = 4000 total steps
+                lr=3e-5         # smaller LR with more data
             )
         except Exception as e:
             print(f"  FAILED: {e}")
@@ -206,14 +322,17 @@ def finetune(wavs):
 
 
 if __name__ == "__main__":
-    # Step 1: Generate training audio (skip if already done)
+    # Step 1: Generate training audio
+    # Force regeneration if sentence count changed
     existing = sorted(OUTPUT_DIR.glob("janus_*.wav"))
     if len(existing) >= len(SENTENCES):
         print(f"Found {len(existing)} existing WAV files — skipping generation.")
-        wavs = []
-        for i, (sentence, _) in enumerate(zip(SENTENCES, existing)):
-            wavs.append((sentence, existing[i]))
+        wavs = [(SENTENCES[i], existing[i]) for i in range(min(len(SENTENCES), len(existing)))]
     else:
+        # Clear old files and regenerate all
+        for f in existing:
+            f.unlink()
+        print(f"Generating {len(SENTENCES)} samples (cleared {len(existing)} old files)...")
         wavs = asyncio.run(generate_all())
 
     if not wavs:
