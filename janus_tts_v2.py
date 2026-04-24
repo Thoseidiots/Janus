@@ -776,8 +776,8 @@ class JanusTTSv2:
                         steps: int = 100, lr: float = 1e-4):
         """
         Fine-tune on a single (text, audio) pair.
-        Updates: TextEncoder, DurationPredictor, Decoder.
-        StyleEncoder is frozen — it just encodes the reference.
+        Updates: TextEncoder, DurationPredictor, Decoder, AND Vocoder.
+        The vocoder learns to reconstruct the actual waveform from mel.
         """
         import scipy.io.wavfile as wavfile
 
@@ -799,47 +799,68 @@ class JanusTTSv2:
             ).astype(np.float32)
 
         # Compute target mel and style
-        target_mel_np = _audio_to_mel_np(audio)              # (T, 80)
-        target_mel = torch.from_numpy(target_mel_np).unsqueeze(0)  # (1, T, 80)
+        target_mel_np = _audio_to_mel_np(audio)
+        target_mel    = torch.from_numpy(target_mel_np).unsqueeze(0)  # (1, T, 80)
+
+        # Target waveform tensor
+        target_wav = torch.from_numpy(audio).unsqueeze(0)  # (1, T_samples)
 
         with torch.no_grad():
-            style = self.style_encoder(target_mel)           # (1, 512)
+            style = self.style_encoder(target_mel)
         self.set_style(style)
 
         # Phonemize
-        phonemes = self.phonemizer.text_to_phonemes(text)
-        ids = self.phonemizer.phonemes_to_ids(phonemes)
+        phonemes  = self.phonemizer.text_to_phonemes(text)
+        ids       = self.phonemizer.phonemes_to_ids(phonemes)
         ids_tensor = torch.tensor([ids], dtype=torch.long)
 
-        # Trainable params: TextEncoder + DurationPredictor + Decoder
-        params = (
+        # Phase 1: Train decoder on mel targets (acoustic model)
+        acoustic_params = (
             list(self.text_encoder.parameters()) +
             list(self.duration_predictor.parameters()) +
             list(self.decoder.parameters())
         )
-        optimizer = torch.optim.Adam(params, lr=lr)
+        opt_acoustic = torch.optim.Adam(acoustic_params, lr=lr)
+
+        # Phase 2: Train vocoder on real waveform (waveform reconstruction)
+        opt_vocoder = torch.optim.Adam(self.vocoder.parameters(), lr=lr * 2)
 
         self._set_train()
+        self.vocoder.train()
+
         for step in range(steps):
-            optimizer.zero_grad()
-            encoded = self.text_encoder(ids_tensor)
-            durations = self.duration_predictor(encoded)
+            # ── Acoustic model step ──────────────────────────────────────
+            opt_acoustic.zero_grad()
+            encoded    = self.text_encoder(ids_tensor)
+            durations  = self.duration_predictor(encoded)
             frame_feats = length_regulate(encoded, durations)
-            mel_pred = self.decoder(frame_feats, self.style_vector)
+            mel_pred   = self.decoder(frame_feats, self.style_vector)
 
             t = min(mel_pred.shape[1], target_mel.shape[1])
             mel_loss = F.mse_loss(mel_pred[:, :t, :], target_mel[:, :t, :])
-            dur_loss = ((durations - 5.0) ** 2).mean() * 0.01
-            loss = mel_loss + dur_loss
-            loss.backward()
-            torch.nn.utils.clip_grad_norm_(params, 1.0)
-            optimizer.step()
+            dur_loss = ((durations - 6.0) ** 2).mean() * 0.01
+            acoustic_loss = mel_loss + dur_loss
+            acoustic_loss.backward()
+            torch.nn.utils.clip_grad_norm_(acoustic_params, 1.0)
+            opt_acoustic.step()
+
+            # ── Vocoder step — train on real mel → real waveform ─────────
+            opt_vocoder.zero_grad()
+            wav_pred = self.vocoder(target_mel)  # (1, T_pred)
+
+            # Align lengths for loss
+            tw = min(wav_pred.shape[1], target_wav.shape[1])
+            voc_loss = F.l1_loss(wav_pred[:, :tw], target_wav[:, :tw])
+            voc_loss.backward()
+            torch.nn.utils.clip_grad_norm_(self.vocoder.parameters(), 1.0)
+            opt_vocoder.step()
 
             if (step + 1) % 20 == 0:
                 print(f"  [fine-tune] step {step+1}/{steps} "
-                      f"mel={mel_loss.item():.4f} dur={dur_loss.item():.4f}")
+                      f"mel={mel_loss.item():.4f}  voc={voc_loss.item():.4f}")
 
         self._set_eval()
+        self.vocoder.eval()
         print(f"[JanusTTSv2] Fine-tuned on '{audio_path}'.")
 
 
