@@ -574,63 +574,53 @@ class ResidualBlock(nn.Module):
 
 class iSTFTNetVocoder(nn.Module):
     """
-    Mel spectrogram → waveform via learned upsampling + iSTFT.
-    4 upsampling stages: ×8, ×8, ×4, ×2 = ×512 total
-    Final conv → 2 channels (magnitude + phase) → iSTFT → waveform
-    Output: float32 waveform at SAMPLE_RATE Hz
+    Mel spectrogram → waveform.
+    4 upsampling stages (×8×8×4×2 = ×512) + residual dilated convs.
+    Final conv → 1 channel (waveform directly, no iSTFT needed).
+    Output: float32 waveform at SAMPLE_RATE Hz.
     """
 
-    UPSAMPLE_RATES = (8, 8, 4, 2)
+    UPSAMPLE_RATES    = (8, 8, 4, 2)
     UPSAMPLE_CHANNELS = (512, 256, 128, 64)
-    RESBLOCK_KERNEL = 3
+    RESBLOCK_KERNEL   = 3
     RESBLOCK_DILATIONS = (1, 3, 5)
 
     def __init__(self, n_mels: int = N_MELS,
                  n_fft: int = N_FFT, hop_length: int = HOP_LENGTH,
                  win_length: int = WIN_LENGTH):
         super().__init__()
-        self.n_fft = n_fft
-        self.hop_length = hop_length
-        self.win_length = win_length
-        self.n_freqs = n_fft // 2 + 1
+        self.n_fft       = n_fft
+        self.hop_length  = hop_length
+        self.win_length  = win_length
+        self.n_freqs     = n_fft // 2 + 1
 
-        # Input projection: n_mels → first upsample channel
         self.input_conv = nn.Conv1d(n_mels, self.UPSAMPLE_CHANNELS[0],
                                     kernel_size=7, padding=3)
 
-        # Upsampling stages
-        self.ups = nn.ModuleList()
+        self.ups        = nn.ModuleList()
         self.res_blocks = nn.ModuleList()
         in_ch = self.UPSAMPLE_CHANNELS[0]
-        for i, (rate, out_ch) in enumerate(
-                zip(self.UPSAMPLE_RATES, self.UPSAMPLE_CHANNELS)):
+        for rate, out_ch in zip(self.UPSAMPLE_RATES, self.UPSAMPLE_CHANNELS):
             self.ups.append(
-                nn.ConvTranspose1d(
-                    in_ch, out_ch,
-                    kernel_size=rate * 2, stride=rate,
-                    padding=rate // 2
-                )
+                nn.ConvTranspose1d(in_ch, out_ch,
+                                   kernel_size=rate * 2, stride=rate,
+                                   padding=rate // 2)
             )
             self.res_blocks.append(
                 ResidualBlock(out_ch, self.RESBLOCK_KERNEL, self.RESBLOCK_DILATIONS)
             )
             in_ch = out_ch
 
-        # Final conv → 2 channels: magnitude + phase
-        self.final_conv = nn.Conv1d(in_ch, 2 * self.n_freqs,
-                                    kernel_size=7, padding=3)
-
-        # Hann window for iSTFT (registered as buffer, not parameter)
-        window = torch.hann_window(win_length)
-        self.register_buffer("window", window)
+        # Output directly as waveform — no iSTFT, avoids double-upsampling bug
+        self.final_conv = nn.Conv1d(in_ch, 1, kernel_size=7, padding=3)
 
     def forward(self, mel: torch.Tensor) -> torch.Tensor:
         """
         mel: (batch, T_frames, n_mels)
         Returns: (batch, T_samples) waveform
         """
-        x = mel.transpose(1, 2)          # (batch, n_mels, T)
-        x = self.input_conv(x)           # (batch, C, T)
+        x = mel.transpose(1, 2)   # (batch, n_mels, T)
+        x = self.input_conv(x)
 
         for up, res in zip(self.ups, self.res_blocks):
             x = F.leaky_relu(x, 0.1)
@@ -638,44 +628,9 @@ class iSTFTNetVocoder(nn.Module):
             x = res(x)
 
         x = F.leaky_relu(x, 0.1)
-        x = self.final_conv(x)           # (batch, 2*n_freqs, T_up)
+        x = self.final_conv(x)    # (batch, 1, T_samples)
         x = torch.tanh(x)
-
-        # Split into magnitude and phase
-        mag, phase = x.chunk(2, dim=1)   # each (batch, n_freqs, T_up)
-
-        # Convert phase to angle in [-π, π]
-        phase = math.pi * phase
-
-        # iSTFT via torch
-        waveform = self._istft_torch(mag, phase)
-        return waveform
-
-    def _istft_torch(self, magnitude: torch.Tensor,
-                     phase: torch.Tensor) -> torch.Tensor:
-        """
-        magnitude, phase: (batch, n_freqs, T)
-        Returns: (batch, T_samples)
-        """
-        batch = magnitude.shape[0]
-        # Reconstruct complex spectrogram
-        real = magnitude * torch.cos(phase)
-        imag = magnitude * torch.sin(phase)
-        complex_spec = torch.complex(real, imag)  # (batch, n_freqs, T)
-
-        # torch.istft expects (batch, n_freqs, T) complex
-        waveforms = []
-        for b in range(batch):
-            wav = torch.istft(
-                complex_spec[b],
-                n_fft=self.n_fft,
-                hop_length=self.hop_length,
-                win_length=self.win_length,
-                window=self.window,
-                return_complex=False,
-            )
-            waveforms.append(wav)
-        return torch.stack(waveforms, dim=0)  # (batch, T_samples)
+        return x.squeeze(1)       # (batch, T_samples)
 
 
 # ---------------------------------------------------------------------------
