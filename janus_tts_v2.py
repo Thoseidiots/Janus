@@ -947,7 +947,7 @@ class JanusTTSv2Trainer:
         return mel
 
     def _generate_training_data(self, n: int = 2000):
-        """Return list of (ids_tensor, mel_tensor) pairs."""
+        """Return list of (ids_tensor, mel_tensor, dur_tensor) pairs."""
         data = []
         texts = self._SAMPLE_TEXTS
         for i in range(n):
@@ -955,10 +955,13 @@ class JanusTTSv2Trainer:
             phonemes = self.phonemizer.text_to_phonemes(text)
             ids = self.phonemizer.phonemes_to_ids(phonemes)
             ids_tensor = torch.tensor(ids, dtype=torch.long)
-            n_frames = max(50, len(ids) * 5)
+            T_phon = len(ids)
+            # Target durations: 4-8 frames per phoneme (realistic speech rate)
+            dur_targets = torch.randint(4, 9, (T_phon,)).float()
+            n_frames = int(dur_targets.sum().item())
             mel_np = self._make_reference_mel(n_frames)
             mel_tensor = torch.from_numpy(mel_np)
-            data.append((ids_tensor, mel_tensor))
+            data.append((ids_tensor, mel_tensor, dur_targets))
         return data
 
     def train(self, epochs: int = 10, lr: float = 1e-3, n_samples: int = 2000,
@@ -990,32 +993,33 @@ class JanusTTSv2Trainer:
 
             for i in range(0, len(indices), batch_size):
                 batch = [data[j] for j in indices[i:i + batch_size]]
-                max_phon = max(ids.shape[0] for ids, _ in batch)
-                max_mel = max(mel.shape[0] for _, mel in batch)
+                max_phon = max(ids.shape[0] for ids, _, _ in batch)
+                max_mel  = max(mel.shape[0] for _, mel, _ in batch)
 
                 ids_batch = torch.zeros(len(batch), max_phon, dtype=torch.long)
                 mel_batch = torch.zeros(len(batch), max_mel, N_MELS)
-                for j, (ids, mel) in enumerate(batch):
+                dur_batch = torch.zeros(len(batch), max_phon)
+                for j, (ids, mel, dur) in enumerate(batch):
                     ids_batch[j, :ids.shape[0]] = ids
                     mel_batch[j, :mel.shape[0]] = mel
+                    dur_batch[j, :dur.shape[0]] = dur
 
-                # Padding mask: True where padded (id == 0)
                 pad_mask = (ids_batch == 0)
 
                 optimizer.zero_grad()
 
-                encoded = self.text_encoder(ids_batch, src_key_padding_mask=pad_mask)
+                encoded   = self.text_encoder(ids_batch, src_key_padding_mask=pad_mask)
                 durations = self.duration_predictor(encoded)
 
-                # Expand style to batch
                 style = self.style_vector.expand(len(batch), -1)
 
                 frame_feats = length_regulate(encoded, durations)
-                mel_pred = self.decoder(frame_feats, style)
+                mel_pred    = self.decoder(frame_feats, style)
 
                 t = min(mel_pred.shape[1], mel_batch.shape[1])
                 mel_loss = F.mse_loss(mel_pred[:, :t, :], mel_batch[:, :t, :])
-                dur_loss = ((durations - 5.0) ** 2).mean() * 0.01
+                # Supervise durations directly — teach realistic phoneme lengths
+                dur_loss = F.mse_loss(durations, dur_batch) * 0.1
                 loss = mel_loss + dur_loss
 
                 loss.backward()
