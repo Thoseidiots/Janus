@@ -1,686 +1,644 @@
-# Janus Autonomous Worker System - Design Document
+# Design Document: Janus Autonomous Worker Completion
 
 ## Overview
 
-Janus is a fully autonomous AI worker system that operates independently across multiple job platforms (Upwork, Fiverr), generates real work using the Avus AI brain, learns continuously from web resources, processes real payments, and reinvests earnings in self-improvement. This design specifies the complete architecture, component interactions, data flows, and integration patterns required for a production-ready autonomous worker.
+Janus is a fully autonomous AI worker that operates like a human professional on a physical EliteDesk machine. The defining architectural principle is **computer-use-first**: Janus interacts with job platforms, learning resources, and payment systems by opening Chrome and using them exactly as a human would — clicking buttons, reading screens, filling forms, and navigating pages. No API keys, no OAuth flows, no rate-limit headaches.
 
-The system operates in continuous cycles: discovering jobs → evaluating opportunities → generating work → submitting deliverables → processing payments → learning and improving → reinvesting earnings.
+This design completes the `janus_autonomous_worker.py` framework by wiring together the already-built subsystems (`janus_computer_use.py`, `janus_wallet.py`, `janus_platform_browser.py`) into a coherent, self-improving work loop.
+
+### Design Philosophy
+
+| Concern | Approach |
+|---|---|
+| Job discovery | `PlatformBrowser` opens Chrome → navigates Upwork/Fiverr → reads listings via OCR |
+| Job application | `UpworkBrowser.apply_to_job()` / `FiverrBrowser.search_buyer_requests()` |
+| Work delivery | `UpworkBrowser.submit_work()` / `FiverrBrowser.deliver_order()` |
+| Learning | `BrowserComputerUse` opens YouTube/Google → reads/watches → Avus extracts concepts |
+| Payment tracking | `JanusWallet` records income locally; PayPal browser check as optional verification |
+| AI work generation | `AvusBrain` (or `JanusGPT`) generates deliverables from job context |
+| Persistence | SQLite via existing `WalletLedger` pattern, extended for jobs/skills |
+| Monitoring | Structured logging to `janus_worker.log` |
+
+### Key Design Decisions
+
+- **No new API integrations**: All platform interaction goes through `janus_computer_use.py` + `janus_platform_browser.py`. The existing `UpworkIntegration` / `FiverrIntegration` API-key paths remain as dead-letter fallbacks only.
+- **Avus is the brain**: All work generation, concept extraction, job scoring, and market analysis are delegated to `AvusBrain.ask()` with structured prompts.
+- **Wallet is the ledger**: `JanusWallet` (already built) is the single source of truth for all financial state. No parallel financial tracking.
+- **Async throughout**: All I/O-bound operations use `asyncio`. CPU-bound work (scoring, analytics) runs synchronously.
+- **Graceful degradation**: Every subsystem has a fallback. If the browser fails, Janus logs the error, skips the job, and continues.
+
+---
 
 ## Architecture
 
-### High-Level System Architecture
+```mermaid
+graph TD
+    subgraph Core Loop
+        WC[WorkCycle] --> JD[JobDiscovery]
+        WC --> WG[WorkGenerator]
+        WC --> LE[LearningEngine]
+        WC --> IE[InvestmentEngine]
+        WC --> MON[MonitoringSystem]
+    end
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│             JANUS AUTONOMOUS WORKER                             │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │          ORCHESTRATION & DECISION ENGINE                │  │
-│  │  - Work Cycle Manager                                   │  │
-│  │  - Job Evaluation & Scoring                             │  │
-│  │  - Resource Allocation                                  │  │
-│  │  - Autonomous Decision Making                           │  │
-│  └──────────────────────────────────────────────────────────┘  │
-│             ▲                                                   │
-│             │                                                   │
-│  ┌────────────┬──────────────┼──────────────┬────────────────┐ │
-│  │            │              │              │                │ │
-│  ▼            ▼              ▼              ▼                ▼ │
-│ ┌──────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────┐ │
-│ │ Job  │  │ Work     │  │Learning  │  │Payment   │  │Error │ │
-│ │Finder│  │Generator │  │Engine    │  │Processor │  │Recov.│ │
-│ └──────┘  └──────────┘  └──────────┘  └──────────┘  └──────┘ │
-│    │          │             │             │            │      │
-│    └────────────────────────┼─────────────┴────────────┘      │
-│             │                                                   │
-│             ┌────────▼────────┐                                │
-│             │  Avus AI Brain  │                                │
-│             │  (Work Gen)     │                                │
-│             └─────────────────┘                                │
-│             │                                                   │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │          EXTERNAL INTEGRATIONS                          │  │
-│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐ │  │
-│  │  │ Upwork   │  │ Fiverr   │  │ YouTube  │  │ Web      │ │  │
-│  │  │ API      │  │ API      │  │ API      │  │ Search   │ │  │
-│  │  └──────────┘  └──────────┘  └──────────┘  └──────────┘ │  │
-│  └──────────────────────────────────────────────────────────┘  │
-│             │                                                   │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │          PERSISTENCE & STATE                            │  │
-│  │  ┌──────────────────────────────────────────────────┐   │  │
-│  │  │  SQLite Database                                 │   │  │
-│  │  │  - Jobs & Status                                 │   │  │
-│  │  │  - Skills & Experience                           │   │  │
-│  │  │  - Financial Transactions                        │   │  │
-│  │  │  - Learning History                              │   │  │
-│  │  │  - Performance Metrics                           │   │  │
-│  │  └──────────────────────────────────────────────────┘   │  │
-│  └──────────────────────────────────────────────────────────┘  │
-│             │                                                   │
-│  ┌──────────────────────────────────────────────────────────┐  │
-│  │          MONITORING & LOGGING                           │  │
-│  │  - Event Logging                                         │  │
-│  │  - Performance Metrics                                   │  │
-│  │  - Error Tracking                                        │  │
-│  │  - Financial Audit Trail                                │  │
-│  └──────────────────────────────────────────────────────────┘  │
-│             │                                                   │
-└─────────────────────────────────────────────────────────────────┘
+    subgraph Computer-Use Layer - Already Built
+        PB[PlatformBrowser]
+        UB[UpworkBrowser]
+        FB[FiverrBrowser]
+        BCU[BrowserComputerUse]
+        CUE[ComputerUseEngine]
+    end
+
+    subgraph AI Brain
+        AVS[AvusBrain / JanusGPT]
+    end
+
+    subgraph Persistence
+        DB[WorkerDatabase - SQLite]
+        WAL[JanusWallet - already built]
+    end
+
+    subgraph Decision Layer
+        DE[DecisionEngine]
+        QA[QualityAssurance]
+        MA[MarketAnalyzer]
+    end
+
+    JD --> PB
+    PB --> UB
+    PB --> FB
+    UB --> CUE
+    FB --> CUE
+    LE --> BCU
+    BCU --> CUE
+
+    WG --> AVS
+    DE --> AVS
+    LE --> AVS
+    MA --> AVS
+
+    WC --> DB
+    WC --> WAL
+    WC --> DE
+    WC --> QA
+    WC --> MA
 ```
 
-### Component Interactions
+### Work Cycle State Machine
 
-#### 1. Work Cycle Flow
-
-```
-START
-  │
-  ├─→ [Job Finder] Search for available jobs
-  │     │
-  │     ├─→ Query Upwork API
-  │     ├─→ Query Fiverr API
-  │     └─→ Store jobs in database
-  │
-  ├─→ [Decision Engine] Evaluate & score jobs
-  │     │
-  │     ├─→ Calculate skill match (40%)
-  │     ├─→ Calculate budget value (30%)
-  │     ├─→ Calculate deadline urgency (20%)
-  │     ├─→ Calculate learning opportunity (10%)
-  │     └─→ Claim top-scoring jobs (score > 0.5)
-  │
-  ├─→ [Work Generator] Generate work for claimed jobs
-  │     │
-  │     ├─→ Connect to Avus AI brain
-  │     ├─→ Generate work based on job context
-  │     ├─→ Validate quality (length, coherence, relevance)
-  │     ├─→ Regenerate if quality < 0.7
-  │     └─→ Submit to job platform
-  │
-  ├─→ [Payment Processor] Check for payments
-  │     │
-  │     ├─→ Query job platform for payment status
-  │     ├─→ Record transaction in database
-  │     ├─→ Update financial state
-  │     └─→ Retry on failure (exponential backoff)
-  │
-  ├─→ [Learning Engine] Improve skills
-  │     │
-  │     ├─→ Identify weak skills
-  │     ├─→ Search YouTube for tutorials
-  │     ├─→ Search web for resources
-  │     ├─→ Extract concepts from resources
-  │     └─→ Update skill proficiency
-  │
-  ├─→ [Investment Engine] Reinvest earnings
-  │     │
-  │     ├─→ Analyze balance
-  │     ├─→ Calculate ROI for investments
-  │     ├─→ Purchase compute resources (if balance > $100)
-  │     ├─→ Purchase training data (if needed)
-  │     └─→ Purchase courses (if balance > $50)
-  │
-  └─→ SLEEP (1 hour) → REPEAT
+```mermaid
+stateDiagram-v2
+    [*] --> Idle
+    Idle --> Discovering: cycle_start
+    Discovering --> Evaluating: jobs_found
+    Discovering --> Learning: no_jobs_found
+    Evaluating --> Working: jobs_selected
+    Evaluating --> Learning: no_jobs_qualify
+    Working --> QualityCheck: work_generated
+    QualityCheck --> Submitting: quality_ok
+    QualityCheck --> Working: quality_low_retry
+    QualityCheck --> Failing: quality_low_max_retries
+    Submitting --> PaymentTracking: submitted
+    Failing --> Learning: job_failed
+    PaymentTracking --> Investing: payment_recorded
+    Investing --> Learning: investments_made
+    Learning --> Idle: learning_complete
 ```
 
-#### 2. Work Generation Flow
+---
 
-```
-Job Claimed
-  │
-  ├─→ Extract job context
-  │     ├─ Title, description, required_skills
-  │     ├─ Budget, deadline, platform
-  │     └─ Client requirements
-  │
-  ├─→ Build AI prompt
-  │     ├─ Job type detection
-  │     ├─ Skill requirements
-  │     ├─ Quality expectations
-  │     └─ Format requirements
-  │
-  ├─→ Call Avus AI brain
-  │     ├─ Send prompt + context
-  │     ├─ Receive generated work
-  │     └─ Track generation time
-  │
-  ├─→ Validate quality
-  │     ├─ Check length (minimum words)
-  │     ├─ Check coherence (grammar, structure)
-  │     ├─ Check relevance (matches requirements)
-  │     └─ Calculate quality score
-  │
-  ├─→ Quality check
-  │     ├─ If score >= 0.7: Submit work
-  │     ├─ If score < 0.7: Regenerate with adjusted params
-  │     └─ If regeneration fails: Mark job as failed
-  │
-  └─→ Submit to platform
-```
+## Components and Interfaces
 
-#### 3. Learning Flow
+### WorkCycle (orchestrator)
 
-```
-Skill Improvement Needed
-  │
-  ├─→ Identify weak skills
-  │     └─ Skills with level < EXPERT
-  │
-  ├─→ Search for resources
-  │     ├─ YouTube search (skill name)
-  │     ├─ Web search (skill + tutorial)
-  │     └─ Rank by relevance & quality
-  │
-  ├─→ Select top resource
-  │     ├─ Fetch content
-  │     ├─ Extract metadata
-  │     └─ Get transcript (if available)
-  │
-  ├─→ Extract concepts
-  │     ├─ Use AI to analyze content
-  │     ├─ Identify key learning points
-  │     └─ Map to skill knowledge
-  │
-  ├─→ Update skill
-  │     ├─ Gain experience points
-  │     ├─ Check for level up
-  │     ├─ Update success rate
-  │     └─ Store in database
-  │
-  └─→ Track learning
-      └─ Log resource, concepts, timestamp
-```
-
-#### 4. Payment Processing Flow
-
-```
-Job Completed
-  │
-  ├─→ Query platform for payment status
-  │     ├─ Upwork: GET /jobs/{id}/payment
-  │     └─ Fiverr: GET /gigs/{id}/payment
-  │
-  ├─→ Payment received?
-  │     ├─ YES: Record transaction
-  │     └─ NO: Retry later (exponential backoff)
-  │
-  ├─→ Record transaction
-  │     ├─ Amount, timestamp, job_id
-  │     ├─ Platform, status
-  │     └─ Store in database
-  │
-  ├─→ Update finances
-  │     ├─ Add to total_earned
-  │     ├─ Add to current_balance
-  │     ├─ Update average_job_value
-  │     └─ Increment jobs_completed
-  │
-  └─→ Generate audit record
-      └─ For tax/compliance purposes
-```
-
-## Core Components
-
-### 1. Job Finder
-
-**Responsibility**: Discover available jobs from multiple platforms
-
-**Key Methods**:
-- `find_jobs(skills: List[str]) -> List[Job]`
-- `query_upwork(skills) -> List[Job]`
-- `query_fiverr(skills) -> List[Job]`
-- `store_job(job: Job) -> None`
-
-**Data Flow**:
-- Input: List of skills Janus has
-- Process: Query each platform's API
-- Output: List of available jobs stored in database
-
-**Error Handling**:
-- API timeout: Retry with exponential backoff
-- API error: Log and try alternative platform
-- Rate limit: Queue requests and retry after cooldown
-
-### 2. Decision Engine
-
-**Responsibility**: Evaluate jobs and make autonomous decisions
-
-**Key Methods**:
-- `score_job(job: Job) -> float`
-- `evaluate_and_claim_jobs() -> None`
-- `calculate_skill_match(job) -> float`
-- `calculate_budget_value(job) -> float`
-- `calculate_deadline_urgency(job) -> float`
-- `calculate_learning_opportunity(job) -> float`
-
-**Scoring Formula**:
-```
-score = (skill_match * 0.4) + (budget * 0.3) + (deadline * 0.2) + (learning * 0.1)
-```
-
-**Decision Rules**:
-- Claim job if score > 0.5
-- Claim up to 5 concurrent jobs
-- Prioritize high-budget jobs
-- Prioritize jobs with learning opportunities
-- Reject jobs with insufficient skill match
-
-### 3. Work Generator
-
-**Responsibility**: Generate high-quality work using Avus AI brain
-
-**Key Methods**:
-- `generate_work(job: Job) -> str`
-- `validate_quality(work: str, job: Job) -> float`
-- `build_prompt(job: Job) -> str`
-- `call_avus_brain(prompt: str) -> str`
-- `regenerate_if_needed(work: str, job: Job) -> str`
-
-**Quality Validation**:
-- Minimum length: 500 words (configurable by job type)
-- Coherence: Grammar, structure, readability
-- Relevance: Matches job requirements
-- Format: Correct file type/structure
-
-**Quality Score Calculation**:
-```
-quality_score = (length_score * 0.3) + (coherence_score * 0.4) + (relevance_score * 0.3)
-```
-
-**Regeneration Strategy**:
-- If quality < 0.7: Adjust prompt parameters
-- Increase detail level, add examples
-- Try alternative generation approach
-- Max 3 regeneration attempts per job
-
-### 4. Learning Engine
-
-**Responsibility**: Improve skills through continuous learning
-
-**Key Methods**:
-- `find_learning_resources(topic: str, skill: str) -> List[LearningResource]`
-- `search_youtube(topic: str) -> List[LearningResource]`
-- `search_web(topic: str) -> List[LearningResource]`
-- `learn_from_resource(resource: LearningResource) -> List[str]`
-- `extract_concepts(content: str) -> List[str]`
-- `update_skill(skill: Skill, concepts: List[str]) -> None`
-
-**Learning Process**:
-1. Identify weak skills (level < EXPERT)
-2. Search for educational resources
-3. Rank resources by relevance and quality
-4. Fetch and parse content
-5. Extract key concepts using AI
-6. Update skill knowledge and experience
-7. Track learning in database
-
-**Resource Prioritization**:
-- YouTube tutorials (high quality, structured)
-- Online courses (comprehensive, verified)
-- Blog posts and articles (quick reference)
-- Documentation (authoritative)
-
-### 5. Payment Processor
-
-**Responsibility**: Handle real money transactions
-
-**Key Methods**:
-- `check_payments() -> None`
-- `process_payment(job: Job) -> Optional[float]`
-- `record_transaction(amount: float, job_id: str) -> None`
-- `update_finances(amount: float) -> None`
-- `retry_failed_payment(job: Job) -> bool`
-
-**Payment Flow**:
-1. Query platform for payment status
-2. Validate amount matches job budget
-3. Record transaction in database
-4. Update financial state
-5. Generate audit record
-6. Retry on failure (max 5 attempts)
-
-**Retry Strategy**:
-- Exponential backoff: 1s, 2s, 4s, 8s, 16s
-- Max 5 retries per payment
-- Log all retry attempts
-- Alert on persistent failures
-
-### 6. Error Recovery System
-
-**Responsibility**: Handle failures gracefully and maintain reliability
-
-**Key Methods**:
-- `retry_with_backoff(func, max_retries=5) -> Any`
-- `handle_api_error(error: Exception) -> None`
-- `fallback_to_alternative_platform() -> None`
-- `queue_operation(operation: Operation) -> None`
-- `resume_queued_operations() -> None`
-
-**Error Handling Strategies**:
-- API timeout: Retry with increased timeout
-- API error: Log and try alternative platform
-- Network error: Queue operation and retry when online
-- Database error: Rollback transaction and retry
-- Critical error: Alert and pause operations
-
-**Retry Logic**:
-```
-backoff_time = base_delay * (2 ^ attempt_number)
-max_backoff = 300 seconds (5 minutes)
-max_retries = 5
-```
-
-### 7. Investment Engine
-
-**Responsibility**: Intelligently invest earnings in self-improvement
-
-**Key Methods**:
-- `analyze_investment_opportunities() -> List[Investment]`
-- `calculate_roi(investment: Investment) -> float`
-- `purchase_compute_resources() -> bool`
-- `purchase_training_data() -> bool`
-- `purchase_courses() -> bool`
-- `track_investment_roi(investment: Investment) -> None`
-
-**Investment Thresholds**:
-- GPU compute: Balance > $100
-- Training data: Balance > $75
-- Online courses: Balance > $50
-
-**ROI Calculation**:
-```
-roi = (expected_earnings_increase / investment_cost) * 100
-```
-
-**Investment Priorities**:
-1. Skills appearing in high-paying jobs
-2. Skills with high market demand
-3. Skills that unlock new job categories
-4. Compute resources for faster work generation
-
-## Data Models
-
-### Job
+The top-level coordinator. Runs the main `asyncio` event loop and sequences all subsystems.
 
 ```python
+class WorkCycle:
+    def __init__(
+        self,
+        db: WorkerDatabase,
+        wallet: JanusWallet,
+        decision_engine: DecisionEngine,
+        work_generator: WorkGenerator,
+        learning_engine: LearningEngine,
+        quality_assurance: QualityAssurance,
+        investment_engine: InvestmentEngine,
+        market_analyzer: MarketAnalyzer,
+        monitor: MonitoringSystem,
+        max_concurrent_jobs: int = 5,
+    ): ...
+
+    async def run_forever(self) -> None: ...
+    async def run_one_cycle(self) -> CycleSummary: ...
+    async def _discover_jobs(self) -> List[BrowserJob]: ...
+    async def _execute_job(self, job: BrowserJob) -> JobResult: ...
+    async def _run_learning_session(self) -> None: ...
+    async def _run_investment_check(self) -> None: ...
+```
+
+### JobDiscovery
+
+Wraps `PlatformBrowser` to find jobs matching Janus's current skills.
+
+```python
+class JobDiscovery:
+    def __init__(self, engine: ComputerUseEngine, skills: List[str]): ...
+    async def find_jobs(self, platforms: List[str] = ["upwork", "fiverr"]) -> List[BrowserJob]: ...
+    async def apply_to_job(self, job: BrowserJob, proposal: str) -> bool: ...
+```
+
+### WorkGenerator
+
+Calls `AvusBrain` to produce deliverables. Formats output by job type.
+
+```python
+class WorkGenerator:
+    def __init__(self, brain: Any): ...  # AvusBrain or JanusGPT
+
+    async def generate(self, job: BrowserJob) -> WorkResult: ...
+    def _build_prompt(self, job: BrowserJob) -> str: ...
+    def _format_output(self, raw: str, job_type: str) -> str: ...
+    def _validate_quality(self, work: str, job: BrowserJob) -> float: ...  # returns 0.0–1.0
+
 @dataclass
-class Job:
-    id: str
-    title: str
+class WorkResult:
+    content: str
+    job_type: str
+    quality_score: float
+    generation_time_seconds: float
+    attempts: int
+    metadata: Dict[str, Any]
+```
+
+### LearningEngine
+
+Opens a browser, searches YouTube or Google, reads content, and uses Avus to extract concepts.
+
+```python
+class LearningEngine:
+    def __init__(self, engine: ComputerUseEngine, brain: Any, db: WorkerDatabase): ...
+
+    async def learn_skill(self, skill_name: str) -> LearningResult: ...
+    async def _search_youtube(self, query: str) -> List[Dict]: ...
+    async def _search_web(self, query: str) -> List[Dict]: ...
+    async def _extract_concepts(self, content: str, skill: str) -> List[str]: ...
+    async def _map_concepts_to_skills(self, concepts: List[str]) -> Dict[str, float]: ...
+
+@dataclass
+class LearningResult:
+    skill_name: str
+    concepts_learned: List[str]
+    skill_delta: float          # improvement in proficiency (0.0–1.0)
+    resources_used: List[str]   # URLs visited
+    duration_seconds: float
+```
+
+### DecisionEngine
+
+Scores and selects jobs. Pure functions — no I/O.
+
+```python
+class DecisionEngine:
+    WEIGHTS = {"skill_match": 0.40, "budget": 0.30, "deadline": 0.20, "learning": 0.10}
+
+    def score_job(self, job: BrowserJob, skills: Dict[str, SkillLevel]) -> float: ...
+    def select_jobs(self, jobs: List[BrowserJob], skills: Dict[str, SkillLevel], max_jobs: int) -> List[BrowserJob]: ...
+    def _skill_match_score(self, required: List[str], available: Dict[str, SkillLevel]) -> float: ...
+    def _budget_score(self, budget: float, market_avg: float) -> float: ...
+    def _deadline_score(self, deadline: datetime) -> float: ...
+    def _learning_score(self, required: List[str], available: Dict[str, SkillLevel]) -> float: ...
+```
+
+### QualityAssurance
+
+Validates generated work before submission.
+
+```python
+class QualityAssurance:
+    MIN_QUALITY_THRESHOLD = 0.7
+    MAX_RETRIES = 3
+
+    def validate(self, work: WorkResult, job: BrowserJob) -> QAResult: ...
+    def _check_completeness(self, work: str, job: BrowserJob) -> float: ...
+    def _check_relevance(self, work: str, job: BrowserJob) -> float: ...
+    def _check_format(self, work: str, job_type: str) -> float: ...
+
+@dataclass
+class QAResult:
+    passed: bool
+    score: float                # 0.0–1.0
+    completeness: float
+    relevance: float
+    format_score: float
+    feedback: str
+```
+
+### InvestmentEngine
+
+Decides how to spend earned money. Delegates to `JanusWallet` for all financial operations.
+
+```python
+class InvestmentEngine:
+    COMPUTE_THRESHOLD = 100.0   # USD
+    COURSE_THRESHOLD = 50.0     # USD
+
+    def __init__(self, wallet: JanusWallet, brain: Any): ...
+    async def evaluate_and_invest(self) -> List[InvestmentAction]: ...
+    def _should_invest(self, balance: Decimal) -> bool: ...
+    def _prioritize_investments(self, balance: Decimal, weak_skills: List[str]) -> List[InvestmentAction]: ...
+
+@dataclass
+class InvestmentAction:
+    category: str               # "compute", "training", "course"
+    amount: Decimal
     description: str
-    required_skills: List[str]
-    budget: float
-    deadline: datetime
-    platform: str  # upwork, fiverr
-    status: JobStatus
-    claimed_by: Optional[str]
-    completion_time: Optional[float]
-    quality_score: Optional[float]
-    payment_received: bool
+    expected_roi: float
+    executed: bool = False
 ```
 
-### Skill
+### MarketAnalyzer
+
+Analyzes job history to identify trends. Pure functions over DB data.
 
 ```python
+class MarketAnalyzer:
+    def __init__(self, db: WorkerDatabase, brain: Any): ...
+
+    def analyze(self, job_history: List[JobRecord]) -> MarketAnalysis: ...
+    def trending_skills(self, history: List[JobRecord]) -> List[str]: ...
+    def high_paying_types(self, history: List[JobRecord]) -> List[str]: ...
+    def skill_roi(self, history: List[JobRecord]) -> Dict[str, float]: ...
+
 @dataclass
-class Skill:
-    name: str
-    level: SkillLevel  # BEGINNER, INTERMEDIATE, ADVANCED, EXPERT
-    experience_points: int
-    last_used: Optional[datetime]
+class MarketAnalysis:
+    trending_skills: List[str]
+    high_paying_job_types: List[str]
+    emerging_opportunities: List[str]
+    skill_roi: Dict[str, float]
+    confidence: float
+    data_sources: List[str]
+    recommendations: List[str]
+```
+
+### MonitoringSystem
+
+Structured logging and metrics aggregation.
+
+```python
+class MonitoringSystem:
+    def __init__(self, log_path: str = "janus_worker.log"): ...
+
+    def log_event(self, event_type: str, context: Dict[str, Any]) -> None: ...
+    def log_job_claimed(self, job: BrowserJob, rationale: str) -> None: ...
+    def log_work_generated(self, job_id: str, quality: float, time_s: float) -> None: ...
+    def log_job_completed(self, job_id: str, quality: float) -> None: ...
+    def log_payment(self, amount: Decimal, platform: str) -> None: ...
+    def log_skill_improved(self, skill: str, new_level: str, resources: List[str]) -> None: ...
+    def log_error(self, error_type: str, tb: str, recovery: str) -> None: ...
+    def get_metrics(self) -> PerformanceMetrics: ...
+
+@dataclass
+class PerformanceMetrics:
+    jobs_completed: int
+    total_earned: Decimal
+    average_job_value: Decimal
+    skill_levels: Dict[str, str]
+    error_rate: float
     success_rate: float
 ```
 
-### FinancialState
+---
+
+## Data Models
+
+### WorkerDatabase
+
+Extends the `WalletLedger` pattern with additional tables for jobs, skills, and learning.
 
 ```python
-@dataclass
-class FinancialState:
-    total_earned: float
-    total_spent: float
-    current_balance: float
-    jobs_completed: int
-    average_job_value: float
+class WorkerDatabase:
+    """SQLite persistence for all worker state beyond financial data."""
+
+    SCHEMA = """
+    CREATE TABLE IF NOT EXISTS jobs (
+        id              TEXT PRIMARY KEY,
+        title           TEXT NOT NULL,
+        description     TEXT NOT NULL DEFAULT '',
+        platform        TEXT NOT NULL,
+        budget          REAL NOT NULL DEFAULT 0,
+        status          TEXT NOT NULL DEFAULT 'available',
+        claimed_at      TEXT,
+        completed_at    TEXT,
+        quality_score   REAL,
+        payment_amount  REAL,
+        metadata        TEXT NOT NULL DEFAULT '{}'
+    );
+
+    CREATE TABLE IF NOT EXISTS skills (
+        name            TEXT PRIMARY KEY,
+        level           TEXT NOT NULL DEFAULT 'BEGINNER',
+        experience_pts  INTEGER NOT NULL DEFAULT 0,
+        success_rate    REAL NOT NULL DEFAULT 0.5,
+        last_used       TEXT,
+        last_improved   TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS learning_resources (
+        id              TEXT PRIMARY KEY,
+        url             TEXT NOT NULL,
+        title           TEXT NOT NULL DEFAULT '',
+        topic           TEXT NOT NULL,
+        resource_type   TEXT NOT NULL DEFAULT 'web',
+        concepts        TEXT NOT NULL DEFAULT '[]',
+        completed_at    TEXT,
+        skill_delta     REAL NOT NULL DEFAULT 0
+    );
+
+    CREATE TABLE IF NOT EXISTS cycle_summaries (
+        id              TEXT PRIMARY KEY,
+        started_at      TEXT NOT NULL,
+        completed_at    TEXT NOT NULL,
+        jobs_processed  INTEGER NOT NULL DEFAULT 0,
+        earnings        REAL NOT NULL DEFAULT 0,
+        skills_improved TEXT NOT NULL DEFAULT '[]',
+        errors          INTEGER NOT NULL DEFAULT 0
+    );
+    """
 ```
 
-### LearningResource
+### JobRecord (read model from DB)
 
 ```python
 @dataclass
-class LearningResource:
-    url: str
+class JobRecord:
+    id: str
     title: str
-    type: str  # youtube, article, tutorial
-    topic: str
-    duration_minutes: int
-    completed: bool
-    learned_concepts: List[str]
+    description: str
+    platform: str
+    budget: float
+    status: str
+    claimed_at: Optional[datetime]
+    completed_at: Optional[datetime]
+    quality_score: Optional[float]
+    payment_amount: Optional[float]
+    metadata: Dict[str, Any]
 ```
 
-## Database Schema
+### CycleSummary
 
-### jobs table
-```sql
-CREATE TABLE jobs (
-    id TEXT PRIMARY KEY,
-    title TEXT,
-    description TEXT,
-    budget REAL,
-    status TEXT,
-    platform TEXT,
-    completed_at TIMESTAMP,
-    payment_received REAL
-);
+```python
+@dataclass
+class CycleSummary:
+    cycle_id: str
+    started_at: datetime
+    completed_at: datetime
+    jobs_processed: int
+    earnings: Decimal
+    skills_improved: List[str]
+    errors: int
+    state: str   # "completed" | "partial" | "failed"
 ```
 
-### skills table
-```sql
-CREATE TABLE skills (
-    name TEXT PRIMARY KEY,
-    level INTEGER,
-    experience_points INTEGER,
-    success_rate REAL
-);
-```
-
-### learning table
-```sql
-CREATE TABLE learning (
-    url TEXT PRIMARY KEY,
-    title TEXT,
-    topic TEXT,
-    completed BOOLEAN,
-    learned_at TIMESTAMP
-);
-```
-
-### financials table
-```sql
-CREATE TABLE financials (
-    date TIMESTAMP,
-    type TEXT,
-    amount REAL,
-    description TEXT
-);
-```
-
-## Integration Points
-
-### Upwork API
-
-**Authentication**: OAuth2 or API key
-**Endpoints**:
-- `GET /profiles/v1/search/jobs` - Search for jobs
-- `POST /profiles/v1/jobs/{id}/apply` - Apply for job
-- `POST /profiles/v1/jobs/{id}/submit` - Submit work
-- `GET /profiles/v1/jobs/{id}/payment` - Get payment status
-
-### Fiverr API
-
-**Authentication**: API key
-**Endpoints**:
-- `GET /v1/gigs/search` - Search for gigs
-- `POST /v1/gigs/{id}/offer` - Submit offer
-- `POST /v1/gigs/{id}/submit` - Submit work
-- `GET /v1/gigs/{id}/payment` - Get payment status
-
-### YouTube API
-
-**Authentication**: API key
-**Endpoints**:
-- `GET /youtube/v3/search` - Search videos
-- `GET /youtube/v3/videos` - Get video metadata
-- `GET /youtube/v3/captions` - Get video transcript
-
-### Web Search API
-
-**Options**: Google Custom Search, Bing Search, DuckDuckGo
-**Endpoints**:
-- Search for learning resources
-- Rank by relevance and authority
-- Fetch and parse content
-
-### Avus AI Brain
-
-**Connection**: Local or remote inference
-**Input**: Job context + prompt
-**Output**: Generated work
-**Fallback**: Template-based generation if AI unavailable
-
-## Security Considerations
-
-### Credential Management
-
-- Store API keys in encrypted format (AES-256)
-- Load credentials only when needed
-- Never log or display credentials in plain text
-- Use environment variables for sensitive data
-- Rotate credentials on expiration
-
-### API Security
-
-- Use HTTPS for all API calls
-- Validate SSL certificates
-- Implement rate limiting
-- Handle authentication errors gracefully
-- Log security events
-
-### Data Protection
-
-- Encrypt sensitive data in database
-- Implement database backups
-- Audit financial transactions
-- Maintain transaction logs for compliance
-- Implement access controls
-
-## Monitoring & Observability
-
-### Key Metrics
-
-- Jobs discovered per cycle
-- Jobs claimed per cycle
-- Jobs completed per cycle
-- Average job value
-- Total earnings
-- Skill levels and experience
-- Work quality scores
-- Payment success rate
-- Error rate and types
-- API response times
-
-### Logging
-
-- Event logging: All significant events
-- Error logging: All errors with stack traces
-- Performance logging: Generation time, API latency
-- Financial logging: All transactions
-- Learning logging: Resources used, concepts learned
-
-### Alerts
-
-- Critical errors: Pause operations and alert
-- Payment failures: Alert after 3 retries
-- API unavailability: Switch to alternative platform
-- Low balance: Prioritize high-paying jobs
-- Skill degradation: Recommend learning
-
-## Deployment Architecture
-
-### Local Development
-
-- SQLite database
-- Mock API responses
-- Logging to console and file
-- Single-threaded execution
-
-### Production Deployment
-
-- PostgreSQL database (for scalability)
-- Real API integrations
-- Structured logging (JSON format)
-- Async/concurrent job processing
-- Docker containerization
-- Kubernetes orchestration (optional)
-
-### Scaling Considerations
-
-- Horizontal scaling: Multiple worker instances
-- Load balancing: Distribute jobs across workers
-- Database replication: Master-slave setup
-- Caching: Redis for frequently accessed data
-- Message queue: For async operations
+---
 
 ## Correctness Properties
 
-### Property 1: Financial Accuracy
+*A property is a characteristic or behavior that should hold true across all valid executions of a system — essentially, a formal statement about what the system should do. Properties serve as the bridge between human-readable specifications and machine-verifiable correctness guarantees.*
 
-**Specification**: All earnings must be accurately tracked and reconciled with platform records.
+### Property 1: Work prompt contains all job context fields
 
-**Implementation**:
-- Record every payment transaction
-- Validate amounts against job budget
-- Maintain audit trail
-- Reconcile daily with platform
+*For any* `BrowserJob` with non-empty `title`, `description`, and `required_skills`, the prompt built by `WorkGenerator._build_prompt()` SHALL contain the job title, description, and each required skill as substrings.
 
-### Property 2: Skill Consistency
+**Validates: Requirements 1.2**
 
-**Specification**: Skill levels must increase monotonically and reflect actual learning.
+---
 
-**Implementation**:
-- Track experience points
-- Validate level-up thresholds
-- Record learning resources
-- Prevent skill degradation without reason
+### Property 2: Quality validator score is always in [0.0, 1.0]
 
-### Property 3: Job Completion
+*For any* work string and job object passed to `QualityAssurance.validate()`, the returned `QAResult.score` SHALL be a float in the closed interval [0.0, 1.0], and each sub-score (`completeness`, `relevance`, `format_score`) SHALL also be in [0.0, 1.0].
 
-**Specification**: Every claimed job must be completed or explicitly failed.
+**Validates: Requirements 1.3, 14.1**
 
-**Implementation**:
-- Track job status transitions
-- Require completion or failure reason
-- Maintain job history
-- Alert on stuck jobs
+---
 
-### Property 4: Work Quality
+### Property 3: Low-quality work is never submitted
 
-**Specification**: All submitted work must meet minimum quality standards.
+*For any* `WorkResult` where `quality_score < 0.7`, the `WorkCycle` SHALL NOT call `PlatformBrowser.deliver()` or `UpworkBrowser.submit_work()` for that result.
 
-**Implementation**:
-- Validate quality before submission
-- Track quality scores
-- Regenerate if below threshold
-- Maintain quality metrics
+**Validates: Requirements 1.4, 14.3**
 
-### Property 5: Autonomous Operation
+---
 
-**Specification**: System must operate without human intervention for extended periods.
+### Property 4: Work metrics always contain required fields
 
-**Implementation**:
-- Implement error recovery
-- Handle edge cases gracefully
-- Maintain state across restarts
-- Alert on critical issues only
+*For any* completed call to `WorkGenerator.generate()`, the returned `WorkResult` SHALL have non-None values for `quality_score`, `generation_time_seconds`, and `attempts`, with `quality_score` in [0.0, 1.0] and `generation_time_seconds` ≥ 0.
 
+**Validates: Requirements 1.5, 8.3**
+
+---
+
+### Property 5: Concept extraction returns valid skill mappings
+
+*For any* non-empty transcript or article text passed to `LearningEngine._extract_concepts()`, the returned concept list SHALL be non-empty, and every skill name returned by `_map_concepts_to_skills()` SHALL exist in the known skills registry.
+
+**Validates: Requirements 2.4, 2.5**
+
+---
+
+### Property 6: Exponential backoff delays follow the correct sequence
+
+*For any* retry attempt number N in {1, 2, 3, 4, 5}, the computed backoff delay SHALL equal 2^(N-1) seconds (i.e., 1, 2, 4, 8, 16 seconds respectively).
+
+**Validates: Requirements 5.1**
+
+---
+
+### Property 7: Job score is always in [0.0, 1.0]
+
+*For any* `BrowserJob` and skill dictionary passed to `DecisionEngine.score_job()`, the returned score SHALL be a float in the closed interval [0.0, 1.0].
+
+**Validates: Requirements 6.1**
+
+---
+
+### Property 8: Weighted job score equals the formula
+
+*For any* four component scores `s_match`, `s_budget`, `s_deadline`, `s_learning` each in [0.0, 1.0], the total score computed by `DecisionEngine.score_job()` SHALL equal `0.40 * s_match + 0.30 * s_budget + 0.20 * s_deadline + 0.10 * s_learning` within floating-point tolerance (1e-9).
+
+**Validates: Requirements 6.2**
+
+---
+
+### Property 9: Selected jobs are always the top-N by score
+
+*For any* list of scored jobs and a capacity limit N, the jobs returned by `DecisionEngine.select_jobs()` SHALL be exactly the N jobs with the highest scores (or all jobs if fewer than N qualify), and no selected job SHALL have a score below 0.5.
+
+**Validates: Requirements 6.3, 6.4**
+
+---
+
+### Property 10: Active job count never exceeds configured maximum
+
+*For any* sequence of job claim and completion events processed by `WorkCycle`, the number of concurrently active jobs SHALL never exceed `max_concurrent_jobs` at any point in the sequence.
+
+**Validates: Requirements 17.1**
+
+---
+
+### Property 11: Job priority queue is ordered by deadline ascending
+
+*For any* set of active jobs with distinct deadlines, the priority order produced by `WorkCycle` SHALL place the job with the earliest deadline first (i.e., jobs are sorted by `deadline` ascending).
+
+**Validates: Requirements 17.4**
+
+---
+
+### Property 12: Financial aggregation is arithmetically correct
+
+*For any* list of `Transaction` objects, the values computed by `JanusWallet` SHALL satisfy: `total_earned = sum(tx.amount for tx if tx.tx_type == INCOME)`, `total_spent = sum(tx.amount for tx if tx.tx_type == EXPENSE)`, and `current_balance = total_earned - total_spent`.
+
+**Validates: Requirements 15.3**
+
+---
+
+### Property 13: Job persistence round-trip preserves all fields
+
+*For any* `JobRecord` written to `WorkerDatabase`, reading it back by `id` SHALL return a record where `id`, `title`, `description`, `platform`, `budget`, and `status` are identical to the original.
+
+**Validates: Requirements 9.3**
+
+---
+
+### Property 14: Skill persistence round-trip preserves all fields
+
+*For any* `Skill` object written to `WorkerDatabase`, reading it back by `name` SHALL return a record where `name`, `level`, `experience_pts`, and `success_rate` are identical to the original.
+
+**Validates: Requirements 9.4**
+
+---
+
+### Property 15: Performance metrics contain all required fields
+
+*For any* job and payment history passed to `MonitoringSystem.get_metrics()`, the returned `PerformanceMetrics` SHALL have non-None values for `jobs_completed`, `total_earned`, `average_job_value`, `skill_levels`, and `error_rate`.
+
+**Validates: Requirements 8.8**
+
+---
+
+### Property 16: Market analysis always returns required keys
+
+*For any* job history list (including empty) passed to `MarketAnalyzer.analyze()`, the returned `MarketAnalysis` SHALL have non-None values for `trending_skills`, `high_paying_job_types`, `emerging_opportunities`, `skill_roi`, and `recommendations`.
+
+**Validates: Requirements 19.1**
+
+---
+
+## Error Handling
+
+### Browser Interaction Failures
+
+`PlatformBrowser`, `UpworkBrowser`, and `FiverrBrowser` all return `bool` or empty lists on failure — they never raise. `WorkCycle` checks return values and falls back:
+
+1. If `UpworkBrowser` fails → try `FiverrBrowser`
+2. If both fail → skip discovery, run learning session instead
+3. Log all failures with `MonitoringSystem.log_error()`
+
+### Work Generation Failures
+
+`WorkGenerator.generate()` retries up to `MAX_RETRIES = 3` times with adjusted prompts. If all retries fail, it returns a `WorkResult` with `quality_score = 0.0`. `WorkCycle` marks the job as failed and moves on.
+
+### Database Failures
+
+All `WorkerDatabase` writes are wrapped in SQLite transactions. On `sqlite3.Error`, the transaction is rolled back and the operation is retried once. If the retry fails, the error is logged and the in-memory state is preserved for the current cycle.
+
+### Exponential Backoff
+
+Used for any retriable operation (browser navigation retries, Avus API calls):
+
+```python
+async def _with_backoff(coro, max_retries=5):
+    delays = [1, 2, 4, 8, 16]
+    for attempt, delay in enumerate(delays[:max_retries]):
+        try:
+            return await coro()
+        except Exception as e:
+            if attempt == max_retries - 1:
+                raise
+            await asyncio.sleep(delay)
+```
+
+### Critical Error Handling
+
+If `ComputerUseEngine` raises an unhandled exception during a job, `WorkCycle` catches it, logs the full traceback, marks the job as failed, and continues to the next cycle. The system never crashes on a single job failure.
+
+### Credential Security
+
+- All credentials loaded from environment variables (`.env` file, never committed)
+- Credentials never appear in log output (filtered by `MonitoringSystem`)
+- Browser sessions use the existing Chrome profile — no credential storage in code
+
+---
+
+## Testing Strategy
+
+### Dual Testing Approach
+
+Unit tests cover specific examples, edge cases, and error conditions. Property-based tests verify universal invariants across randomised inputs using **Hypothesis** (pytest-hypothesis).
+
+Each property test runs a minimum of **100 iterations** (`@settings(max_examples=100)`) and is tagged:
+
+```python
+# Feature: janus-autonomous-worker-completion, Property N: <property_text>
+```
+
+### Property-Based Tests (Hypothesis)
+
+| Test File | Properties Covered |
+|---|---|
+| `test_work_generator.py` | 1, 2, 3, 4 |
+| `test_learning_engine.py` | 5 |
+| `test_error_recovery.py` | 6 |
+| `test_decision_engine.py` | 7, 8, 9 |
+| `test_work_cycle.py` | 10, 11 |
+| `test_financial.py` | 12 |
+| `test_worker_database.py` | 13, 14 |
+| `test_monitoring.py` | 15 |
+| `test_market_analyzer.py` | 16 |
+
+### Unit Tests
+
+Focused on:
+- `WorkGenerator` prompt construction for each job type (code, document, design)
+- `QualityAssurance` threshold enforcement (score < 0.7 → reject)
+- `DecisionEngine` job selection with ties and edge cases
+- `LearningEngine` fallback from YouTube to web search
+- `InvestmentEngine` threshold checks ($100 compute, $50 course)
+- `WorkCycle` state transitions (discovering → evaluating → working → submitting)
+- `MonitoringSystem` log format and field presence
+- `WorkerDatabase` schema creation and migration
+
+All browser interactions (`PlatformBrowser`, `BrowserComputerUse`, `ComputerUseEngine`) are mocked using `unittest.mock.AsyncMock` so tests run without a display or network.
+
+### Integration Tests
+
+- Full cycle smoke test: mock browser returns 1 job, Avus returns valid work, verify DB has job record and wallet has income transaction
+- Browser fallback: mock Upwork browser failure, verify Fiverr browser is tried
+- Database persistence: write and read back all record types
+- Wallet integration: verify `JanusWallet.record_income()` is called after successful job delivery
+
+### Test File Structure
+
+```
+tests/
+  test_work_generator.py       # Properties 1–4 + unit tests
+  test_learning_engine.py      # Property 5 + unit tests
+  test_error_recovery.py       # Property 6 + unit tests
+  test_decision_engine.py      # Properties 7–9 + unit tests
+  test_work_cycle.py           # Properties 10–11 + unit tests
+  test_financial.py            # Property 12 + unit tests
+  test_worker_database.py      # Properties 13–14 + unit tests
+  test_monitoring.py           # Property 15 + unit tests
+  test_market_analyzer.py      # Property 16 + unit tests
+  test_integration.py          # End-to-end smoke tests
+```

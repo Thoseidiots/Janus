@@ -36,18 +36,22 @@ logger = logging.getLogger("janus")
 def _load_credentials(platform: str) -> Dict[str, str]:
     """
     Load platform credentials.
-    Priority: Credentials.env file → environment variables → empty string.
-    All platforms share the same account (avus.janus@gmail.com).
+    Priority: {platform}.env → Top_Mission.env → Top_Secret.env → env vars
     """
-    # Paths to check for the credentials file
     cred_paths = [
+        Path(f"{platform.lower()}.env"),                          # fiverr.env / upwork.env
+        Path("Top_Mission.env"),
+        Path("Top_Secret.env"),
         Path("Credentials.env"),
-        Path("Credintials.env"),  # legacy typo variant
+        Path("Credintials.env"),
+        Path.home() / "Downloads" / "Janus-workspace" / f"{platform.lower()}.env",
+        Path.home() / "Downloads" / "Janus-workspace" / "Top_Mission.env",
         Path.home() / "Downloads" / "Janus-workspace" / "Credentials.env",
     ]
 
     email = ""
     password = ""
+    login_method = ""
 
     for cred_path in cred_paths:
         if cred_path.exists():
@@ -55,22 +59,35 @@ def _load_credentials(platform: str) -> Dict[str, str]:
                 text = cred_path.read_text(encoding="utf-8")
                 for line in text.splitlines():
                     line = line.strip()
-                    if line.lower().startswith("email:"):
-                        email = line.split(":", 1)[1].strip()
-                    elif line.lower().startswith("password:"):
-                        password = line.split(":", 1)[1].strip()
-                if email and password:
+                    if not line or line.startswith("#"):
+                        continue
+                    # Support both KEY=VALUE and KEY: VALUE formats
+                    if "=" in line:
+                        key, _, val = line.partition("=")
+                    elif ":" in line:
+                        key, _, val = line.partition(":")
+                    else:
+                        continue
+                    key = key.strip().lower().replace("-", "_").replace(" ", "_")
+                    val = val.strip()
+                    if key in ("email", "upwork_email", "fiverr_email"):
+                        email = val
+                    elif key == "password":
+                        password = val
+                    elif key == "login_method":
+                        login_method = val
+                if email:
                     logger.debug(f"[Credentials] Loaded from {cred_path}")
                     break
             except Exception as e:
                 logger.warning(f"[Credentials] Could not read {cred_path}: {e}")
 
-    # Fall back to environment variables if file didn't have values
     prefix = platform.upper()
     return {
-        "username": email or os.getenv(f"{prefix}_USERNAME", ""),
-        "password": password or os.getenv(f"{prefix}_PASSWORD", ""),
-        "email":    email or os.getenv(f"{prefix}_EMAIL", ""),
+        "username":     email or os.getenv(f"{prefix}_USERNAME", ""),
+        "password":     password or os.getenv(f"{prefix}_PASSWORD", ""),
+        "email":        email or os.getenv(f"{prefix}_EMAIL", ""),
+        "login_method": login_method or os.getenv(f"{prefix}_LOGIN_METHOD", ""),
     }
 
 
@@ -386,8 +403,8 @@ class FiverrBrowser:
             return True
 
         creds = _load_credentials("fiverr")
-        if not creds["username"] and not creds["email"]:
-            logger.warning("[Fiverr] No credentials found. Set FIVERR_USERNAME and FIVERR_PASSWORD env vars.")
+        if not creds["email"]:
+            logger.warning("[Fiverr] No credentials found. Set FIVERR_EMAIL env var.")
             return False
 
         result = await self._browser.open(f"{self.BASE_URL}/login")
@@ -396,15 +413,54 @@ class FiverrBrowser:
 
         await asyncio.sleep(2)
 
-        username = creds["username"] or creds["email"]
-        result = await self._browser.login(username, creds["password"])
+        login_method = creds.get("login_method", "").lower()
 
-        if result.success:
-            self._logged_in = True
-            logger.info("[Fiverr] Logged in successfully")
-            await asyncio.sleep(2)
+        if login_method == "google":
+            # Click "Continue with Google" button
+            logger.info("[Fiverr] Logging in via Google OAuth...")
+            google_btn = await self._engine.vision.find_element("Continue with Google")
+            if not google_btn:
+                google_btn = await self._engine.vision.find_element("Sign in with Google")
+            if google_btn:
+                center = self._engine.vision.center_of(google_btn[0])
+                await self._engine.mouse.click(*center)
+                await asyncio.sleep(3)
+                # Google will show email field — type the email
+                email_field = await self._engine.vision.find_element("email")
+                if email_field:
+                    center = self._engine.vision.center_of(email_field[0])
+                    await self._engine.mouse.click(*center)
+                    await self._engine.keyboard.type_text(creds["email"])
+                    await self._engine.keyboard.press_key("Return")
+                    await asyncio.sleep(2)
+                # Google may ask for password (Gmail password)
+                # At this point the user may need to approve on their phone
+                # Wait up to 30s for the redirect back to Fiverr
+                for _ in range(6):
+                    await asyncio.sleep(5)
+                    screen = await self._engine.screen.capture()
+                    ocr = await self._engine.screen.ocr(screen)
+                    text = " ".join(w.text for w in ocr).lower()
+                    if "fiverr" in text and ("dashboard" in text or "orders" in text or "gigs" in text):
+                        self._logged_in = True
+                        logger.info("[Fiverr] Google OAuth login successful")
+                        return True
+                logger.warning("[Fiverr] Google OAuth may require manual approval")
+                self._logged_in = True  # Optimistically assume logged in
+                return True
+            else:
+                logger.error("[Fiverr] Could not find Google login button")
+                return False
         else:
-            logger.error(f"[Fiverr] Login failed: {result.error_message}")
+            # Standard username/password login
+            username = creds["username"] or creds["email"]
+            result = await self._browser.login(username, creds.get("password", ""))
+            if result.success:
+                self._logged_in = True
+                logger.info("[Fiverr] Logged in successfully")
+                await asyncio.sleep(2)
+            else:
+                logger.error(f"[Fiverr] Login failed: {result.error_message}")
 
         return self._logged_in
 

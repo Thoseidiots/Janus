@@ -147,6 +147,14 @@ def _build_app():
 
     app = FastAPI(title="Janus Daemon", version="1.0.0")
 
+    from fastapi.middleware.cors import CORSMiddleware
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
     @app.get("/health")
     def health():
         """Return a simple health check."""
@@ -171,6 +179,79 @@ def _build_app():
         _update_state(stop_requested=True, status="restarting")
         log.info("Restart requested via API.")
         return JSONResponse({"ok": True, "message": "Restart requested."})
+
+    @app.get("/wallet")
+    def wallet():
+        """Return wallet balance and monthly report."""
+        try:
+            from janus_wallet import JanusWallet, ReportPeriod
+            w = JanusWallet()
+            balances = w.get_all_balances()
+            report = w.get_report(ReportPeriod.MONTHLY)
+            return JSONResponse({
+                "balances": {k: str(v) for k, v in balances.items()},
+                "monthly_income": str(report.total_income),
+                "monthly_expenses": str(report.total_expenses),
+                "monthly_net": str(report.net),
+                "savings_rate": report.savings_rate,
+                "transaction_count": report.transaction_count,
+            })
+        except Exception as exc:
+            return JSONResponse({"error": str(exc)}, status_code=500)
+
+    @app.get("/jobs")
+    def jobs():
+        """Return recent jobs from WorkerDatabase."""
+        try:
+            from janus_worker_core import WorkerDatabase
+            db = WorkerDatabase()
+            recent = db.list_jobs(limit=20)
+            return JSONResponse({
+                "jobs": [
+                    {
+                        "id": j.id,
+                        "title": j.title,
+                        "platform": j.platform,
+                        "budget": j.budget,
+                        "status": j.status,
+                        "quality_score": j.quality_score,
+                        "payment_amount": j.payment_amount,
+                    }
+                    for j in recent
+                ],
+                "total": len(recent),
+            })
+        except Exception as exc:
+            return JSONResponse({"error": str(exc)}, status_code=500)
+
+    @app.get("/metrics")
+    def metrics():
+        """Return worker performance metrics."""
+        try:
+            from janus_worker_core import WorkerDatabase, SkillLevel
+            db = WorkerDatabase()
+            skills = db.list_skills()
+            jobs_all = db.list_jobs(limit=500)
+            completed = [j for j in jobs_all if j.status == "completed"]
+            failed = [j for j in jobs_all if j.status == "failed"]
+            total_earned = sum(j.payment_amount or 0 for j in completed)
+            avg_quality = (
+                sum(j.quality_score or 0 for j in completed) / len(completed)
+                if completed else 0.0
+            )
+            return JSONResponse({
+                "jobs_completed": len(completed),
+                "jobs_failed": len(failed),
+                "total_earned_usd": round(total_earned, 2),
+                "average_quality": round(avg_quality, 3),
+                "skill_count": len(skills),
+                "skills": [
+                    {"name": s.name, "level": s.level.value if hasattr(s.level, 'value') else str(s.level), "xp": s.experience_pts}
+                    for s in skills[:10]
+                ],
+            })
+        except Exception as exc:
+            return JSONResponse({"error": str(exc)}, status_code=500)
 
     return app, uvicorn
 

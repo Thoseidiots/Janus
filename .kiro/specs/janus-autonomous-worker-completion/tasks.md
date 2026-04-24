@@ -1,677 +1,207 @@
-# Janus Autonomous Worker Completion - Implementation Tasks
+# Implementation Plan: Janus Autonomous Worker Completion
 
 ## Overview
 
-This document outlines the implementation tasks required to complete the Janus autonomous worker system. Tasks are organized by component and should be executed sequentially. Each task includes acceptance criteria and dependencies.
+Implement `janus_worker_core.py` (new file) containing all new components, plus targeted extensions to `janus_autonomous_worker.py`. All platform interaction goes through the already-built `janus_computer_use.py` / `janus_platform_browser.py` (computer-use-first). `janus_wallet.py` is the single source of truth for all financial state — no parallel tracking. All 16 correctness properties from the design are covered by Hypothesis property-based tests.
+
+Component order: WorkerDatabase → DecisionEngine → WorkGenerator → QualityAssurance → LearningEngine → MarketAnalyzer → InvestmentEngine → MonitoringSystem → WorkCycle → Integration → Tests
 
 ---
 
-## Phase 1: Core Infrastructure (Foundation)
-
-### Task 1.1: Implement Real Upwork API Integration
-
-**Description**: Replace placeholder Upwork integration with real API calls
-
-**Acceptance Criteria**:
-- [ ] Authenticate with Upwork using OAuth2 or API key
-- [ ] Successfully query Upwork API for available jobs
-- [ ] Parse job data (id, title, description, budget, deadline, skills)
-- [ ] Handle API errors with exponential backoff retry logic
-- [ ] Implement rate limiting to avoid account suspension
-- [ ] Store jobs in database with correct status
-- [ ] Test with real Upwork API key (if available)
-
-**Implementation Details**:
-- Update `UpworkIntegration.get_available_jobs()` to make real API calls
-- Implement proper error handling and retry logic
-- Add rate limiting with cooldown periods
-- Validate API responses before storing
-
-**Dependencies**: None
-
-**Estimated Effort**: 4 hours
-
----
-
-### Task 1.2: Implement Real Fiverr API Integration
-
-**Description**: Replace placeholder Fiverr integration with real API calls
-
-**Acceptance Criteria**:
-- [ ] Authenticate with Fiverr using API key
-- [ ] Successfully query Fiverr API for available gigs
-- [ ] Parse gig data (id, title, description, price, requirements)
-- [ ] Handle API errors with exponential backoff retry logic
-- [ ] Implement rate limiting
-- [ ] Store gigs in database with correct status
-- [ ] Test with real Fiverr API key (if available)
-
-**Implementation Details**:
-- Update `FiverrIntegration.get_available_jobs()` to make real API calls
-- Implement proper error handling and retry logic
-- Add rate limiting with cooldown periods
-- Validate API responses before storing
-
-**Dependencies**: Task 1.1
-
-**Estimated Effort**: 4 hours
-
----
-
-### Task 1.3: Implement Real YouTube API Integration
-
-**Description**: Replace placeholder YouTube search with real YouTube Data API
-
-**Acceptance Criteria**:
-- [ ] Authenticate with YouTube Data API using API key
-- [ ] Successfully search YouTube for educational content
-- [ ] Filter results for tutorials, courses, how-to videos
-- [ ] Extract video metadata (title, duration, channel, description)
-- [ ] Fetch video transcripts (if available)
-- [ ] Handle API errors and rate limits
-- [ ] Store learning resources in database
-- [ ] Test with real YouTube API key
-
-**Implementation Details**:
-- Update `LearningEngine._search_youtube()` to use YouTube API
-- Implement video filtering logic
-- Add transcript fetching capability
-- Handle rate limiting and errors
-
-**Dependencies**: None
-
-**Estimated Effort**: 3 hours
-
----
-
-### Task 1.4: Implement Real Web Search Integration
-
-**Description**: Replace placeholder web search with real search API
-
-**Acceptance Criteria**:
-- [ ] Integrate with Google Custom Search, Bing, or DuckDuckGo API
-- [ ] Successfully search web for learning resources
-- [ ] Rank results by relevance, recency, and authority
-- [ ] Fetch and parse web content (HTML, PDF, markdown)
-- [ ] Extract text and key information
-- [ ] Handle paywalls and authentication-required content
-- [ ] Implement error handling and retries
-- [ ] Store resources in database
-
-**Implementation Details**:
-- Update `LearningEngine._search_web()` to use real search API
-- Implement content fetching and parsing
-- Add ranking algorithm
-- Handle various content formats
-
-**Dependencies**: None
-
-**Estimated Effort**: 3 hours
-
----
-
-## Phase 2: AI Work Generation (Core Capability)
-
-### Task 2.1: Integrate Avus AI Brain for Work Generation
-
-**Description**: Connect work generator to Avus AI model for real work generation
-
-**Acceptance Criteria**:
-- [ ] Load Avus model (local or remote)
-- [ ] Build context-aware prompts from job data
-- [ ] Generate work using Avus model
-- [ ] Track generation time and quality metrics
-- [ ] Handle model errors gracefully
-- [ ] Implement fallback to template-based generation
-- [ ] Test with various job types
-- [ ] Validate generated work quality
-
-**Implementation Details**:
-- Update `_generate_work()` to call Avus model
-- Implement prompt engineering for different job types
-- Add quality validation logic
-- Create fallback generation strategy
-
-**Dependencies**: None
-
-**Estimated Effort**: 5 hours
-
----
-
-### Task 2.2: Implement Work Quality Validation
-
-**Description**: Validate generated work meets quality standards before submission
-
-**Acceptance Criteria**:
-- [ ] Check minimum length requirements (configurable by job type)
-- [ ] Validate grammar and coherence
-- [ ] Check relevance to job requirements
-- [ ] Calculate quality score (0-1)
-- [ ] Regenerate if quality < 0.7
-- [ ] Track quality metrics in database
-- [ ] Implement max 3 regeneration attempts
-- [ ] Log quality validation results
-
-**Implementation Details**:
-- Create `QualityValidator` class
-- Implement scoring algorithm
-- Add regeneration logic with parameter adjustment
-- Store quality metrics for learning
-
-**Dependencies**: Task 2.1
-
-**Estimated Effort**: 3 hours
-
----
-
-### Task 2.3: Implement Adaptive Work Generation
-
-**Description**: Adapt work generation based on job type and feedback
-
-**Acceptance Criteria**:
-- [ ] Detect job type (writing, coding, design, research, etc.)
-- [ ] Select appropriate generation strategy per job type
-- [ ] Analyze client feedback and adjust parameters
-- [ ] Track success rate per job type
-- [ ] Reference similar past jobs for context
-- [ ] Implement alternative generation approaches
-- [ ] Store generation parameters and results
-- [ ] Improve success rate over time
-
-**Implementation Details**:
-- Create job type detection logic
-- Implement strategy pattern for different job types
-- Add feedback analysis capability
-- Store generation history for learning
-
-**Dependencies**: Task 2.2
-
-**Estimated Effort**: 4 hours
-
----
-
-## Phase 3: Learning System (Continuous Improvement)
-
-### Task 3.1: Implement Concept Extraction from Learning Resources
-
-**Description**: Extract key concepts from YouTube videos and web articles
-
-**Acceptance Criteria**:
-- [ ] Use AI to analyze video transcripts
-- [ ] Extract key learning points from web content
-- [ ] Map concepts to relevant skills
-- [ ] Validate extracted concepts
-- [ ] Store concepts in database
-- [ ] Track learning progress
-- [ ] Handle various content types
-- [ ] Implement fallback for unavailable content
-
-**Implementation Details**:
-- Create `ConceptExtractor` class
-- Implement AI-based analysis
-- Add skill mapping logic
-- Store learning history
-
-**Dependencies**: Tasks 1.3, 1.4
-
-**Estimated Effort**: 3 hours
-
----
-
-### Task 3.2: Implement Skill Improvement Tracking
-
-**Description**: Track skill improvements and level progression
-
-**Acceptance Criteria**:
-- [ ] Update skill experience points from learning
-- [ ] Implement level-up logic (BEGINNER → INTERMEDIATE → ADVANCED → EXPERT)
-- [ ] Track success rate per skill
-- [ ] Update last_used timestamp
-- [ ] Store skill history in database
-- [ ] Prevent skill degradation without reason
-- [ ] Generate skill improvement reports
-- [ ] Alert when skills reach Expert level
-
-**Implementation Details**:
-- Update `Skill.gain_experience()` method
-- Implement level progression logic
-- Add skill history tracking
-- Create skill reporting
-
-**Dependencies**: Task 3.1
-
-**Estimated Effort**: 2 hours
-
----
-
-### Task 3.3: Implement Market Analysis for Skill Prioritization
-
-**Description**: Analyze job market to prioritize skill learning
-
-**Acceptance Criteria**:
-- [ ] Track trending skills in job market
-- [ ] Calculate average job budget per skill
-- [ ] Identify high-paying job types
-- [ ] Recommend skills to learn based on market demand
-- [ ] Detect emerging opportunities
-- [ ] Adjust skill prioritization dynamically
-- [ ] Store market analysis in database
-- [ ] Generate market trend reports
-
-**Implementation Details**:
-- Create `MarketAnalyzer` class
-- Implement trend detection algorithm
-- Add skill demand calculation
-- Store market data for analysis
-
-**Dependencies**: Tasks 1.1, 1.2
-
-**Estimated Effort**: 3 hours
-
----
-
-## Phase 4: Payment Processing (Revenue)
-
-### Task 4.1: Implement Real Payment Processing
-
-**Description**: Process real payments from completed jobs
-
-**Acceptance Criteria**:
-- [ ] Query job platforms for payment status
-- [ ] Validate payment amounts
-- [ ] Record transactions in database
-- [ ] Update financial state (total_earned, current_balance)
-- [ ] Implement retry logic with exponential backoff
-- [ ] Generate audit records for compliance
-- [ ] Handle payment failures gracefully
-- [ ] Test with real platform APIs
-
-**Implementation Details**:
-- Update `_check_payments()` method
-- Implement payment validation
-- Add transaction recording
-- Create audit trail
-
-**Dependencies**: Tasks 1.1, 1.2
-
-**Estimated Effort**: 3 hours
-
----
-
-### Task 4.2: Implement Financial Tracking and Reporting
-
-**Description**: Track all financial transactions and generate reports
-
-**Acceptance Criteria**:
-- [ ] Record all income transactions
-- [ ] Record all expense transactions
-- [ ] Calculate total earned, spent, and balance
-- [ ] Calculate average job value
-- [ ] Generate daily/weekly/monthly reports
-- [ ] Calculate earnings per skill
-- [ ] Calculate ROI on investments
-- [ ] Generate tax-compliant transaction records
-
-**Implementation Details**:
-- Create `FinancialReporter` class
-- Implement transaction recording
-- Add report generation logic
-- Store financial history
-
-**Dependencies**: Task 4.1
-
-**Estimated Effort**: 3 hours
-
----
-
-## Phase 5: Investment & Resource Management
-
-### Task 5.1: Implement Investment Analysis Engine
-
-**Description**: Analyze and recommend investment opportunities
-
-**Acceptance Criteria**:
-- [ ] Calculate ROI for different investment types
-- [ ] Recommend GPU compute purchases (balance > $100)
-- [ ] Recommend training data purchases (balance > $75)
-- [ ] Recommend online courses (balance > $50)
-- [ ] Prioritize investments by expected ROI
-- [ ] Track investment spending and results
-- [ ] Measure actual ROI vs. expected
-- [ ] Adjust investment strategy based on results
-
-**Implementation Details**:
-- Create `InvestmentEngine` class
-- Implement ROI calculation
-- Add investment recommendation logic
-- Store investment history
-
-**Dependencies**: Task 4.2
-
-**Estimated Effort**: 3 hours
-
----
-
-### Task 5.2: Implement Autonomous Resource Allocation
-
-**Description**: Automatically allocate resources across concurrent jobs
-
-**Acceptance Criteria**:
-- [ ] Track up to 5 concurrent jobs
-- [ ] Allocate resources fairly across jobs
-- [ ] Prioritize jobs by deadline urgency
-- [ ] Handle blocked jobs (waiting for feedback)
-- [ ] Queue new jobs when capacity exceeded
-- [ ] Claim queued jobs as capacity becomes available
-- [ ] Track resource utilization
-- [ ] Generate resource allocation reports
-
-**Implementation Details**:
-- Create `ResourceAllocator` class
-- Implement job prioritization logic
-- Add queue management
-- Store allocation history
-
-**Dependencies**: None
-
-**Estimated Effort**: 3 hours
-
----
-
-## Phase 6: Error Recovery & Resilience
-
-### Task 6.1: Implement Comprehensive Error Recovery
-
-**Description**: Handle all types of errors gracefully
-
-**Acceptance Criteria**:
-- [ ] Implement exponential backoff for API failures
-- [ ] Handle timeouts with increased retry timeout
-- [ ] Switch to alternative platforms on API unavailability
-- [ ] Queue operations when network is down
-- [ ] Resume queued operations when online
-- [ ] Implement transaction rollback on database errors
-- [ ] Log all errors with context
-- [ ] Alert on critical errors
-
-**Implementation Details**:
-- Create `ErrorRecoverySystem` class
-- Implement retry logic with exponential backoff
-- Add fallback strategies
-- Create operation queue
-
-**Dependencies**: None
-
-**Estimated Effort**: 4 hours
-
----
-
-### Task 6.2: Implement Graceful Degradation
-
-**Description**: Continue operating when some systems fail
-
-**Acceptance Criteria**:
-- [ ] Use simpler work generation if AI unavailable
-- [ ] Use cached knowledge if learning resources unavailable
-- [ ] Use in-memory state if database unavailable
-- [ ] Use alternative platforms if primary unavailable
-- [ ] Queue payments if processing fails
-- [ ] Log all degraded mode operations
-- [ ] Alert when critical systems fail
-- [ ] Recover to full functionality when systems restore
-
-**Implementation Details**:
-- Create `FallbackSystem` class
-- Implement fallback strategies for each component
-- Add degraded mode logging
-- Create recovery procedures
-
-**Dependencies**: Task 6.1
-
-**Estimated Effort**: 3 hours
-
----
-
-## Phase 7: Monitoring & Observability
-
-### Task 7.1: Implement Comprehensive Monitoring
-
-**Description**: Track all system metrics and performance
-
-**Acceptance Criteria**:
-- [ ] Log all significant events with timestamp and context
-- [ ] Track jobs discovered, claimed, completed per cycle
-- [ ] Track work generation time and quality scores
-- [ ] Track payment success rate
-- [ ] Track skill improvements and level-ups
-- [ ] Track error rate and types
-- [ ] Track API response times
-- [ ] Generate performance reports
-
-**Implementation Details**:
-- Create `MonitoringSystem` class
-- Implement event logging
-- Add metrics collection
-- Create reporting functionality
-
-**Dependencies**: None
-
-**Estimated Effort**: 3 hours
-
----
-
-### Task 7.2: Implement Alerting System
-
-**Description**: Alert on important events and issues
-
-**Acceptance Criteria**:
-- [ ] Alert on critical errors
-- [ ] Alert on payment failures (after 3 retries)
-- [ ] Alert on API unavailability
-- [ ] Alert on low balance (recommend high-paying jobs)
-- [ ] Alert on skill degradation
-- [ ] Alert on stuck jobs (no progress)
-- [ ] Alert on database issues
-- [ ] Implement alert throttling to avoid spam
-
-**Implementation Details**:
-- Create `AlertingSystem` class
-- Implement alert rules
-- Add alert throttling
-- Create alert delivery mechanism
-
-**Dependencies**: Task 7.1
-
-**Estimated Effort**: 2 hours
-
----
-
-## Phase 8: Security & Compliance
-
-### Task 8.1: Implement Credential Management
-
-**Description**: Securely manage API keys and credentials
-
-**Acceptance Criteria**:
-- [ ] Encrypt API keys using AES-256
-- [ ] Load credentials only when needed
-- [ ] Never log or display credentials in plain text
-- [ ] Use environment variables for sensitive data
-- [ ] Implement credential rotation
-- [ ] Handle credential expiration
-- [ ] Alert on credential compromise
-- [ ] Implement access controls
-
-**Implementation Details**:
-- Create `CredentialManager` class
-- Implement encryption/decryption
-- Add credential loading logic
-- Create rotation procedures
-
-**Dependencies**: None
-
-**Estimated Effort**: 3 hours
-
----
-
-### Task 8.2: Implement Security Best Practices
-
-**Description**: Implement security measures throughout the system
-
-**Acceptance Criteria**:
-- [ ] Use HTTPS for all API calls
-- [ ] Validate SSL certificates
-- [ ] Implement rate limiting
-- [ ] Sanitize user inputs
-- [ ] Implement database access controls
-- [ ] Encrypt sensitive data in database
-- [ ] Maintain audit trail for compliance
-- [ ] Implement backup and recovery
-
-**Implementation Details**:
-- Add HTTPS enforcement
-- Implement certificate validation
-- Add input sanitization
-- Create audit logging
-
-**Dependencies**: Task 8.1
-
-**Estimated Effort**: 3 hours
-
----
-
-## Phase 9: Testing & Validation
-
-### Task 9.1: Implement Unit Tests
-
-**Description**: Create unit tests for all components
-
-**Acceptance Criteria**:
-- [ ] Test Job Finder with mock API responses
-- [ ] Test Decision Engine scoring logic
-- [ ] Test Work Generator quality validation
-- [ ] Test Learning Engine concept extraction
-- [ ] Test Payment Processor transaction recording
-- [ ] Test Error Recovery retry logic
-- [ ] Test Financial calculations
-- [ ] Achieve 80%+ code coverage
-
-**Implementation Details**:
-- Create test suite for each component
-- Use mock objects for external APIs
-- Test edge cases and error conditions
-- Measure code coverage
-
-**Dependencies**: All Phase tasks
-
-**Estimated Effort**: 6 hours
-
----
-
-### Task 9.2: Implement Integration Tests
-
-**Description**: Test component interactions and workflows
-
-**Acceptance Criteria**:
-- [ ] Test complete work cycle end-to-end
-- [ ] Test job discovery → claiming → completion → payment
-- [ ] Test learning workflow
-- [ ] Test investment workflow
-- [ ] Test error recovery workflows
-- [ ] Test concurrent job management
-- [ ] Test database persistence
-- [ ] Test with real API responses (if available)
-
-**Implementation Details**:
-- Create integration test suite
-- Test complete workflows
-- Use real or realistic API responses
-- Validate state transitions
-
-**Dependencies**: Task 9.1
-
-**Estimated Effort**: 5 hours
-
----
-
-## Phase 10: Documentation & Deployment
-
-### Task 10.1: Create Deployment Guide
-
-**Description**: Document deployment procedures and requirements
-
-**Acceptance Criteria**:
-- [ ] Document system requirements
-- [ ] Document installation steps
-- [ ] Document configuration options
-- [ ] Document API key setup
-- [ ] Document database setup
-- [ ] Document monitoring setup
-- [ ] Document troubleshooting guide
-- [ ] Document scaling procedures
-
-**Implementation Details**:
-- Create comprehensive deployment guide
-- Include step-by-step instructions
-- Document all configuration options
-- Create troubleshooting section
-
-**Dependencies**: All implementation tasks
-
-**Estimated Effort**: 3 hours
-
----
-
-### Task 10.2: Create Operations Guide
-
-**Description**: Document operational procedures and best practices
-
-**Acceptance Criteria**:
-- [ ] Document daily operations checklist
-- [ ] Document monitoring procedures
-- [ ] Document alert response procedures
-- [ ] Document backup and recovery procedures
-- [ ] Document credential rotation procedures
-- [ ] Document scaling procedures
-- [ ] Document troubleshooting procedures
-- [ ] Document performance tuning
-
-**Implementation Details**:
-- Create comprehensive operations guide
-- Include checklists and procedures
-- Document best practices
-- Create runbooks for common issues
-
-**Dependencies**: Task 10.1
-
-**Estimated Effort**: 2 hours
-
----
-
-## Summary
-
-**Total Tasks**: 20
-**Total Estimated Effort**: 70 hours
-**Phases**: 10
-
-**Execution Order**:
-1. Phase 1: Core Infrastructure (foundation for everything)
-2. Phase 2: AI Work Generation (core capability)
-3. Phase 3: Learning System (continuous improvement)
-4. Phase 4: Payment Processing (revenue)
-5. Phase 5: Investment & Resource Management (self-improvement)
-6. Phase 6: Error Recovery & Resilience (reliability)
-7. Phase 7: Monitoring & Observability (visibility)
-8. Phase 8: Security & Compliance (protection)
-9. Phase 9: Testing & Validation (quality)
-10. Phase 10: Documentation & Deployment (production readiness)
-
-**Success Criteria**:
-- All tasks completed with acceptance criteria met
-- 80%+ code coverage with unit tests
-- All integration tests passing
-- System operates autonomously for 24+ hours without human intervention
-- All financial transactions accurately tracked
-- All errors handled gracefully with recovery
-- System ready for production deployment
-
+## Tasks
+
+- [x] 1. Implement WorkerDatabase in `janus_worker_core.py`
+  - Create `janus_worker_core.py` with the `WorkerDatabase` class using the exact schema from the design (`jobs`, `skills`, `learning_resources`, `cycle_summaries` tables)
+  - Implement `insert_job()`, `update_job_status()`, `get_job()`, `list_jobs()` using SQLite transactions with rollback on error
+  - Implement `upsert_skill()`, `get_skill()`, `list_skills()` for skill persistence
+  - Implement `insert_learning_resource()` and `insert_cycle_summary()`
+  - All writes wrapped in `with conn:` transactions; retry once on `sqlite3.Error` before logging and continuing
+  - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7_
+
+  - [x] 1.1 Write property test for job persistence round-trip (Property 13)
+    - **Property 13: Job persistence round-trip preserves all fields**
+    - Use `@given(st.text(), st.text(), st.text(), st.floats(min_value=0))` to generate random `JobRecord` values; write then read back and assert `id`, `title`, `description`, `platform`, `budget`, `status` are identical
+    - **Validates: Requirements 9.3**
+
+  - [x] 1.2 Write property test for skill persistence round-trip (Property 14)
+    - **Property 14: Skill persistence round-trip preserves all fields**
+    - Use `@given(st.text(), st.sampled_from(SkillLevel), st.integers(min_value=0), st.floats(0.0, 1.0))` to generate random `Skill` values; write then read back and assert `name`, `level`, `experience_pts`, `success_rate` are identical
+    - **Validates: Requirements 9.4**
+
+- [x] 2. Implement DecisionEngine in `janus_worker_core.py`
+  - Implement `DecisionEngine` with `WEIGHTS = {"skill_match": 0.40, "budget": 0.30, "deadline": 0.20, "learning": 0.10}`
+  - Implement `_skill_match_score()`, `_budget_score()`, `_deadline_score()`, `_learning_score()` — each returns a float clamped to [0.0, 1.0]
+  - Implement `score_job()` as the weighted sum of the four sub-scores
+  - Implement `select_jobs()`: sort by score descending, filter out scores < 0.5, return top-N
+  - Pure functions — no I/O, no database access
+  - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6_
+
+  - [x] 2.1 Write property test for job score bounds (Property 7)
+    - **Property 7: Job score is always in [0.0, 1.0]**
+    - Use `@given(browser_job_strategy(), skill_dict_strategy())` to generate arbitrary inputs; assert `0.0 <= score_job(job, skills) <= 1.0`
+    - **Validates: Requirements 6.1**
+
+  - [x] 2.2 Write property test for weighted score formula (Property 8)
+    - **Property 8: Weighted job score equals the formula**
+    - Use `@given(st.floats(0,1), st.floats(0,1), st.floats(0,1), st.floats(0,1))` for the four sub-scores; mock the four `_*_score` methods to return those values; assert total equals `0.40*s_match + 0.30*s_budget + 0.20*s_deadline + 0.10*s_learning` within 1e-9
+    - **Validates: Requirements 6.2**
+
+  - [x] 2.3 Write property test for top-N job selection (Property 9)
+    - **Property 9: Selected jobs are always the top-N by score**
+    - Use `@given(st.lists(browser_job_strategy(), min_size=0, max_size=20), st.integers(1, 10))` to generate job lists and capacity N; assert returned jobs are exactly the top-N by score and no selected job has score < 0.5
+    - **Validates: Requirements 6.3, 6.4**
+
+- [x] 3. Implement WorkGenerator in `janus_worker_core.py`
+  - Implement `WorkGenerator.__init__(brain)` accepting `AvusBrain` or `JanusGPT`
+  - Implement `_build_prompt(job: BrowserJob) -> str` — must embed `job.title`, `job.description`, and each element of `job.required_skills` as substrings
+  - Implement `_format_output(raw: str, job_type: str) -> str` for code/document/design job types
+  - Implement `_validate_quality(work: str, job: BrowserJob) -> float` returning a float in [0.0, 1.0]
+  - Implement `generate(job) -> WorkResult` with up to `MAX_RETRIES=3` attempts; return `WorkResult` with `quality_score=0.0` if all retries fail
+  - `WorkResult` dataclass must have non-None `quality_score`, `generation_time_seconds`, `attempts`
+  - _Requirements: 1.1, 1.2, 1.3, 1.5, 1.6, 18.1, 18.5_
+
+  - [x] 3.1 Write property test for prompt completeness (Property 1)
+    - **Property 1: Work prompt contains all job context fields**
+    - Use `@given(non_empty_text(), non_empty_text(), st.lists(non_empty_text(), min_size=1))` for title, description, skills; assert each appears as a substring in `_build_prompt(job)`
+    - **Validates: Requirements 1.2**
+
+  - [x] 3.2 Write property test for WorkResult required fields (Property 4)
+    - **Property 4: Work metrics always contain required fields**
+    - Use `@given(browser_job_strategy())` with a mocked brain; assert returned `WorkResult` has non-None `quality_score`, `generation_time_seconds`, `attempts`, with `quality_score` in [0.0, 1.0] and `generation_time_seconds >= 0`
+    - **Validates: Requirements 1.5, 8.3**
+
+- [x] 4. Implement QualityAssurance in `janus_worker_core.py`
+  - Implement `QualityAssurance` with `MIN_QUALITY_THRESHOLD = 0.7` and `MAX_RETRIES = 3`
+  - Implement `_check_completeness()`, `_check_relevance()`, `_check_format()` — each returns a float clamped to [0.0, 1.0]
+  - Implement `validate(work: WorkResult, job: BrowserJob) -> QAResult` where `score` is the average of the three sub-scores, all clamped to [0.0, 1.0]
+  - `QAResult.passed` is `True` iff `score >= MIN_QUALITY_THRESHOLD`
+  - _Requirements: 14.1, 14.2, 14.3, 14.4_
+
+  - [x] 4.1 Write property test for QA score bounds (Property 2)
+    - **Property 2: Quality validator score is always in [0.0, 1.0]**
+    - Use `@given(st.text(), browser_job_strategy())` to generate arbitrary work strings and jobs; assert `QAResult.score`, `completeness`, `relevance`, `format_score` are all in [0.0, 1.0]
+    - **Validates: Requirements 1.3, 14.1**
+
+- [x] 5. Implement LearningEngine in `janus_worker_core.py`
+  - Implement `LearningEngine.__init__(engine: ComputerUseEngine, brain, db: WorkerDatabase)`
+  - Implement `_search_youtube(query: str) -> List[Dict]` using `BrowserComputerUse` to open YouTube and read listings via OCR; fall back to `_search_web()` if YouTube navigation fails
+  - Implement `_search_web(query: str) -> List[Dict]` using `BrowserComputerUse` to open Google/DuckDuckGo
+  - Implement `_extract_concepts(content: str, skill: str) -> List[str]` — calls `brain.ask()` with a structured prompt; returns non-empty list for non-empty input
+  - Implement `_map_concepts_to_skills(concepts: List[str]) -> Dict[str, float]` — maps each concept to a known skill name from the DB skills registry
+  - Implement `learn_skill(skill_name: str) -> LearningResult`; persist resource to DB via `WorkerDatabase`
+  - Exponential backoff (`[1, 2, 4, 8, 16]` seconds) on browser navigation retries
+  - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 3.1, 3.2, 3.3, 13.1, 13.2, 13.3_
+
+  - [x] 5.1 Write property test for concept extraction (Property 5)
+    - **Property 5: Concept extraction returns valid skill mappings**
+    - Use `@given(st.text(min_size=1), st.text(min_size=1))` for content and skill; assert `_extract_concepts()` returns non-empty list, and every key returned by `_map_concepts_to_skills()` exists in the known skills registry
+    - **Validates: Requirements 2.4, 2.5**
+
+- [x] 6. Implement MarketAnalyzer in `janus_worker_core.py`
+  - Implement `MarketAnalyzer.__init__(db: WorkerDatabase, brain)`
+  - Implement `trending_skills(history: List[JobRecord]) -> List[str]` — counts skill frequency across job records
+  - Implement `high_paying_types(history: List[JobRecord]) -> List[str]` — groups by job type, sorts by average budget
+  - Implement `skill_roi(history: List[JobRecord]) -> Dict[str, float]` — maps skill name to average payment for jobs requiring it
+  - Implement `analyze(job_history: List[JobRecord]) -> MarketAnalysis` — works on empty list (returns empty lists/dicts, not None)
+  - All methods are pure functions over `List[JobRecord]`; no I/O
+  - _Requirements: 19.1, 19.2, 19.3, 19.7, 19.8_
+
+  - [x] 6.1 Write property test for market analysis required keys (Property 16)
+    - **Property 16: Market analysis always returns required keys**
+    - Use `@given(st.lists(job_record_strategy()))` including the empty list; assert `MarketAnalysis` has non-None `trending_skills`, `high_paying_job_types`, `emerging_opportunities`, `skill_roi`, `recommendations`
+    - **Validates: Requirements 19.1**
+
+- [x] 7. Implement InvestmentEngine in `janus_worker_core.py`
+  - Implement `InvestmentEngine.__init__(wallet: JanusWallet, brain)` — use the existing `JanusWallet` instance for all balance queries and expense recording
+  - Implement `_should_invest(balance: Decimal) -> bool` — returns `True` when `balance > COMPUTE_THRESHOLD` (100.0 USD)
+  - Implement `_prioritize_investments(balance: Decimal, weak_skills: List[str]) -> List[InvestmentAction]` — compute threshold $100, course threshold $50
+  - Implement `evaluate_and_invest() -> List[InvestmentAction]` — calls `wallet.get_balance()`, calls `wallet.record_expense()` for each executed investment
+  - Never create parallel financial state; all money tracking goes through `JanusWallet`
+  - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6_
+
+- [x] 8. Implement MonitoringSystem in `janus_worker_core.py`
+  - Implement `MonitoringSystem.__init__(log_path: str = "janus_worker.log")` with a `FileHandler` writing structured JSON log lines
+  - Implement `log_event()`, `log_job_claimed()`, `log_work_generated()`, `log_job_completed()`, `log_payment()`, `log_skill_improved()`, `log_error()` — each writes a JSON object with `timestamp`, `event_type`, and relevant fields; credentials are never included in log output
+  - Implement `get_metrics() -> PerformanceMetrics` — aggregates from log or in-memory counters; all fields non-None
+  - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7, 8.8_
+
+  - [x] 8.1 Write property test for performance metrics fields (Property 15)
+    - **Property 15: Performance metrics contain all required fields**
+    - Use `@given(st.lists(job_record_strategy()), st.lists(transaction_strategy()))` for job and payment history; assert `PerformanceMetrics` has non-None `jobs_completed`, `total_earned`, `average_job_value`, `skill_levels`, `error_rate`
+    - **Validates: Requirements 8.8**
+
+- [x] 9. Implement WorkCycle in `janus_worker_core.py`
+  - Implement `WorkCycle.__init__(db, wallet, decision_engine, work_generator, learning_engine, quality_assurance, investment_engine, market_analyzer, monitor, max_concurrent_jobs=5)`
+  - Implement `_discover_jobs() -> List[BrowserJob]` — calls `PlatformBrowser` (Upwork first, Fiverr fallback); on both failing, returns empty list and schedules learning session
+  - Implement `_execute_job(job: BrowserJob) -> JobResult` — calls `WorkGenerator.generate()`, then `QualityAssurance.validate()`; only calls `PlatformBrowser.deliver()` / `UpworkBrowser.submit_work()` when `qa_result.passed == True`; records income via `wallet.record_income()` on payment
+  - Implement `run_one_cycle() -> CycleSummary` — sequences: discover → evaluate (DecisionEngine) → execute jobs (up to `max_concurrent_jobs` concurrently via `asyncio.gather`) → learn → invest → persist `CycleSummary`
+  - Implement `run_forever()` — calls `run_one_cycle()` in a loop; catches all exceptions per cycle, logs via `MonitoringSystem.log_error()`, and continues
+  - Job priority queue ordered by `deadline` ascending (earliest deadline first)
+  - _Requirements: 17.1, 17.2, 17.3, 17.4, 17.5, 17.6, 20.1, 20.2, 20.3_
+
+  - [x] 9.1 Write property test for concurrent job limit (Property 10)
+    - **Property 10: Active job count never exceeds configured maximum**
+    - Use `@given(st.integers(1, 10), st.lists(browser_job_strategy(), min_size=0, max_size=20))` for `max_concurrent_jobs` and job lists; simulate claim/complete events and assert active count never exceeds the configured maximum
+    - **Validates: Requirements 17.1**
+
+  - [x] 9.2 Write property test for deadline-ordered priority queue (Property 11)
+    - **Property 11: Job priority queue is ordered by deadline ascending**
+    - Use `@given(st.lists(browser_job_strategy(with_distinct_deadlines=True), min_size=2))` to generate jobs with distinct deadlines; assert the priority order places the earliest deadline first
+    - **Validates: Requirements 17.4**
+
+  - [x] 9.3 Write property test for low-quality work not submitted (Property 3)
+    - **Property 3: Low-quality work is never submitted**
+    - Use `@given(st.floats(0.0, 0.699))` for quality scores below threshold; mock `WorkGenerator.generate()` to return a `WorkResult` with that score; assert `PlatformBrowser.deliver()` and `UpworkBrowser.submit_work()` are never called
+    - **Validates: Requirements 1.4, 14.3**
+
+- [x] 10. Checkpoint — Ensure all tests pass
+  - Run `pytest tests/ -x --tb=short` and confirm all property-based and unit tests pass; ask the user if any questions arise before proceeding to integration
+
+- [x] 11. Wire components into `janus_autonomous_worker.py`
+  - [x] 11.1 Add imports and lazy-init block for all `janus_worker_core` components at the top of `janus_autonomous_worker.py`
+    - Import `WorkerDatabase`, `DecisionEngine`, `WorkGenerator`, `QualityAssurance`, `LearningEngine`, `MarketAnalyzer`, `InvestmentEngine`, `MonitoringSystem`, `WorkCycle` from `janus_worker_core`
+    - Wrap imports in `try/except ImportError` following the existing pattern in the file
+    - _Requirements: 9.1, 9.2_
+
+  - [x] 11.2 Replace the existing `_run_work_cycle()` stub in `janus_autonomous_worker.py` with a delegation to `WorkCycle.run_one_cycle()`
+    - Instantiate `WorkerDatabase`, `JanusWallet` (reuse existing `HAS_WALLET` instance), and all engines inside the existing `JanusAutonomousWorker.__init__()` when `HAS_WORKER_CORE` is True
+    - Delegate `run_forever()` to `WorkCycle.run_forever()`
+    - Keep existing fallback path when `HAS_WORKER_CORE` is False
+    - _Requirements: 1.1, 6.1, 17.1, 20.1_
+
+- [x] 12. Write integration tests in `tests/test_integration.py`
+  - [x] 12.1 Full cycle smoke test
+    - Mock `PlatformBrowser` to return one `BrowserJob`; mock `AvusBrain.ask()` to return valid work text; run `WorkCycle.run_one_cycle()`; assert DB has a job record with status `completed` and `JanusWallet` ledger has an income transaction
+    - _Requirements: 1.1, 4.2, 9.3, 15.1_
+
+  - [x] 12.2 Browser fallback test
+    - Mock `UpworkBrowser` to raise an exception; assert `FiverrBrowser` is called next; assert cycle completes without crashing
+    - _Requirements: 5.3, 20.1_
+
+  - [x] 12.3 Quality gate integration test
+    - Mock `AvusBrain.ask()` to return low-quality work (score < 0.7) for all 3 retries; assert `PlatformBrowser.deliver()` is never called and job is marked failed in DB
+    - _Requirements: 1.4, 14.3_
+
+- [x] 13. Write financial property test in `tests/test_financial.py`
+  - [x] 13.1 Write property test for financial aggregation correctness (Property 12)
+    - **Property 12: Financial aggregation is arithmetically correct**
+    - Use `@given(st.lists(transaction_strategy()))` to generate arbitrary transaction lists; assert `total_earned = sum(income amounts)`, `total_spent = sum(expense amounts)`, `current_balance = total_earned - total_spent` using `JanusWallet` / `WalletAnalytics.build_report()`
+    - **Validates: Requirements 15.3**
+
+- [x] 14. Write error recovery property test in `tests/test_error_recovery.py`
+  - [x] 14.1 Write property test for exponential backoff sequence (Property 6)
+    - **Property 6: Exponential backoff delays follow the correct sequence**
+    - Use `@given(st.integers(min_value=1, max_value=5))` for attempt number N; assert the computed delay equals `2**(N-1)` seconds (1, 2, 4, 8, 16)
+    - **Validates: Requirements 5.1**
+
+- [x] 15. Final checkpoint — Ensure all tests pass
+  - Run `pytest tests/ --tb=short` and confirm all 16 property tests and all unit/integration tests pass; ask the user if any questions arise
+
+## Notes
+
+- Sub-tasks marked with `*` are optional and can be skipped for a faster MVP
+- Each property test must use `@settings(max_examples=100)` and be tagged with `# Feature: janus-autonomous-worker-completion, Property N`
+- All browser interactions (`PlatformBrowser`, `BrowserComputerUse`, `ComputerUseEngine`) must be mocked with `unittest.mock.AsyncMock` in tests — no display or network required
+- `janus_wallet.py` is already built and working — never duplicate its financial state
+- `janus_computer_use.py` and `janus_platform_browser.py` are already built — use them, don't reimplement
+- All new code goes into `janus_worker_core.py` (new file) plus minimal extensions to `janus_autonomous_worker.py`

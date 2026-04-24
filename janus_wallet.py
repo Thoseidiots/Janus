@@ -1,1027 +1,887 @@
 """
 janus_wallet.py
 ===============
-Autonomous Financial Wallet for Janus
+Janus Autonomous Wallet — financial backbone for the Janus worker system.
 
-Janus's personal wallet to manage earnings, expenses, and financial goals.
-Supports multiple currencies (USD, BTC, ETH, USDC) and provides financial intelligence.
-
-Features:
-- Multi-currency balance tracking
-- Transaction recording and categorization
-- Cryptocurrency wallet support
-- Budget management
-- Financial reporting and analytics
-- Autonomous financial decision-making
+Provides real, persistent money tracking via SQLite, PayPal integration,
+and financial-intelligence helpers so janus_autonomous_worker.py can
+record every dollar earned and spent.
 """
 
-import os
-import sys
+from __future__ import annotations
+
 import json
-import time
-import sqlite3
-import hashlib
 import logging
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import dataclass, field, asdict
-from decimal import Decimal, ROUND_DOWN
-from enum import Enum
+import threading
 import uuid
-from cryptography.fernet import Fernet
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from dataclasses import dataclass, field
+from datetime import datetime
+from decimal import Decimal
+from enum import Enum
+from typing import Dict, List, Optional
 
-# Crypto wallet support
-try:
-    from janus_crypto_wallets import CryptoWalletManager, BitcoinWallet, EthereumWallet, USDCWallet
-    HAS_CRYPTO = True
-except ImportError:
-    HAS_CRYPTO = False
-    logging.warning("Crypto wallet support not available")
-
-# PayPal support
-try:
-    from janus_paypal_integration import PayPalWallet
-    HAS_PAYPAL = True
-except ImportError:
-    HAS_PAYPAL = False
-    logging.warning("PayPal support not available")
-
-# Financial intelligence
-try:
-    from janus_financial_intelligence import FinancialIntelligence, FinancialGoal
-    HAS_FINANCIAL_INTELLIGENCE = True
-except ImportError:
-    HAS_FINANCIAL_INTELLIGENCE = False
-    logging.warning("Financial intelligence not available")
-
-# Setup logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
 logger = logging.getLogger(__name__)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# CORE DATA STRUCTURES
+# ENUMS
 # ═══════════════════════════════════════════════════════════════════════════════
 
-class CurrencyType(Enum):
-    """Currency type enum"""
-    FIAT = "fiat"
-    CRYPTO = "crypto"
+class TransactionType(str, Enum):
+    """Type of wallet transaction."""
+    INCOME   = "income"
+    EXPENSE  = "expense"
+    TRANSFER = "transfer"   # internal moves between currency buckets
 
 
-@dataclass
-class Currency:
-    """Represents a currency"""
-    code: str  # "USD", "BTC", "ETH", "USDC"
-    type: CurrencyType
-    decimals: int
-    symbol: str
-    name: str = ""
-    
-    def format_amount(self, amount: Decimal) -> str:
-        """Format amount with currency symbol"""
-        if self.type == CurrencyType.FIAT:
-            return f"{self.symbol}{amount:,.2f}"
-        else:
-            return f"{amount:.{self.decimals}f} {self.code}"
+class ExpenseCategory(str, Enum):
+    """Categories for expense transactions."""
+    COMPUTE      = "compute"         # GPU, cloud
+    API_COSTS    = "api_costs"       # OpenAI, Anthropic, etc.
+    TRAINING     = "training"        # datasets, fine-tuning runs
+    INFRA        = "infrastructure"
+    TOOLS        = "tools"
+    MISC         = "misc"
 
 
-# Predefined currencies
-CURRENCIES = {
-    "USD": Currency("USD", CurrencyType.FIAT, 2, "$", "US Dollar"),
-    "BTC": Currency("BTC", CurrencyType.CRYPTO, 8, "₿", "Bitcoin"),
-    "ETH": Currency("ETH", CurrencyType.CRYPTO, 18, "Ξ", "Ethereum"),
-    "USDC": Currency("USDC", CurrencyType.CRYPTO, 6, "$", "USD Coin"),
-}
-
-
-@dataclass
-class Balance:
-    """Represents a balance in a currency"""
-    currency: Currency
-    amount: Decimal
-    pending_amount: Decimal = Decimal("0")
-    last_updated: datetime = field(default_factory=datetime.now)
-    
-    @property
-    def available(self) -> Decimal:
-        """Available balance (excluding pending)"""
-        return self.amount
-    
-    @property
-    def total(self) -> Decimal:
-        """Total balance (including pending)"""
-        return self.amount + self.pending_amount
-    
-    def format(self) -> str:
-        """Format balance for display"""
-        return self.currency.format_amount(self.amount)
-
-
-class TransactionType(Enum):
-    """Transaction type enum"""
-    INCOME = "income"
-    EXPENSE = "expense"
-    TRANSFER = "transfer"
-
-
-class TransactionStatus(Enum):
-    """Transaction status enum"""
-    PENDING = "pending"
-    COMPLETED = "completed"
-    FAILED = "failed"
-    CANCELLED = "cancelled"
-
-
-class Category(Enum):
-    """Transaction category enum"""
-    # Income categories
-    FREELANCE_EARNINGS = "freelance_earnings"
-    CRYPTO_EARNINGS = "crypto_earnings"
-    AFFILIATE_COMMISSION = "affiliate_commission"
-    PASSIVE_INCOME = "passive_income"
-    OTHER_INCOME = "other_income"
-    
-    # Expense categories
-    COMPUTE_RESOURCES = "compute_resources"
-    API_COSTS = "api_costs"
-    TRAINING_DATA = "training_data"
-    INFRASTRUCTURE = "infrastructure"
-    DEVELOPMENT_TOOLS = "development_tools"
-    SAVINGS = "savings"
-    INVESTMENT = "investment"
-    OTHER_EXPENSE = "other_expense"
-    
-    @classmethod
-    def is_income(cls, category: 'Category') -> bool:
-        """Check if category is income"""
-        income_categories = [
-            cls.FREELANCE_EARNINGS,
-            cls.CRYPTO_EARNINGS,
-            cls.AFFILIATE_COMMISSION,
-            cls.PASSIVE_INCOME,
-            cls.OTHER_INCOME
-        ]
-        return category in income_categories
-    
-    @classmethod
-    def is_expense(cls, category: 'Category') -> bool:
-        """Check if category is expense"""
-        return not cls.is_income(category)
-
+# ═══════════════════════════════════════════════════════════════════════════════
+# DATA MODELS
+# ═══════════════════════════════════════════════════════════════════════════════
 
 @dataclass
 class Transaction:
-    """Represents a financial transaction"""
-    tx_id: str
-    type: TransactionType
-    amount: Decimal
-    currency: Currency
-    category: Category
-    source: str
-    destination: str
-    status: TransactionStatus
-    timestamp: datetime
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    verified: bool = False
-    notes: str = ""
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary"""
-        return {
-            "tx_id": self.tx_id,
-            "type": self.type.value,
-            "amount": str(self.amount),
-            "currency": self.currency.code,
-            "category": self.category.value,
-            "source": self.source,
-            "destination": self.destination,
-            "status": self.status.value,
-            "timestamp": self.timestamp.isoformat(),
-            "metadata": self.metadata,
-            "verified": self.verified,
-            "notes": self.notes
-        }
+    """Represents a single financial transaction in the ledger."""
+    id: str                        # UUID, generated on insert
+    tx_type: TransactionType       # INCOME | EXPENSE | TRANSFER
+    amount: Decimal                # Always positive
+    currency: str                  # "USD", "BTC", "ETH", "USDC"
+    source_or_category: str        # income source OR ExpenseCategory value
+    description: str
+    external_tx_id: str            # PayPal transaction ID, if any
+    timestamp: datetime            # UTC, set on insert
+    metadata: dict                 # arbitrary JSON blob
+    verified: bool                 # True once confirmed by payment processor
+
+
+@dataclass
+class FinancialReport:
+    """Summary of financial activity over a time period."""
+    period_start: datetime
+    period_end: datetime
+    total_income: Decimal
+    total_expenses: Decimal
+    net: Decimal                          # income - expenses
+    income_by_source: Dict[str, Decimal]
+    expenses_by_category: Dict[str, Decimal]
+    transaction_count: int
+    savings_rate: float                   # net / income, 0–1
+
+
+@dataclass
+class BudgetAllocation:
+    """Recommended budget split for a given total amount."""
+    compute: Decimal
+    api_costs: Decimal
+    training: Decimal
+    savings: Decimal
+    emergency_reserve: Decimal
+
+
+@dataclass
+class BudgetStatus:
+    """Current budget health snapshot."""
+    allocation: BudgetAllocation
+    current_balance: Decimal
+    report: FinancialReport
+    should_reinvest: bool
+
+
+@dataclass
+class PaymentResult:
+    """Result of an outbound payment attempt."""
+    success: bool
+    batch_id: Optional[str]           # PayPal payout batch ID
+    transaction: Optional[Transaction]
+    error: Optional[str]
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# ENCRYPTION UTILITIES
+# EXCEPTIONS
 # ═══════════════════════════════════════════════════════════════════════════════
 
-class EncryptionManager:
-    """Manages encryption for sensitive data"""
-    
-    def __init__(self, password: Optional[str] = None):
-        """Initialize encryption manager"""
-        self.password = password or os.getenv("JANUS_WALLET_PASSWORD", "janus_default_password")
-        self.key = self._derive_key(self.password)
-        self.cipher = Fernet(self.key)
-    
-    def _derive_key(self, password: str) -> bytes:
-        """Derive encryption key from password"""
-        kdf = PBKDF2HMAC(
-            algorithm=hashes.SHA256(),
-            length=32,
-            salt=b"janus_wallet_salt",  # In production, use random salt
-            iterations=100000,
-        )
-        key = kdf.derive(password.encode())
-        # Convert to Fernet key format (base64 encoded)
-        import base64
-        return base64.urlsafe_b64encode(key)
-    
-    def encrypt(self, data: str) -> bytes:
-        """Encrypt data"""
-        return self.cipher.encrypt(data.encode())
-    
-    def decrypt(self, encrypted_data: bytes) -> str:
-        """Decrypt data"""
-        return self.cipher.decrypt(encrypted_data).decode()
-    
-    def encrypt_dict(self, data: Dict) -> bytes:
-        """Encrypt dictionary"""
-        json_str = json.dumps(data)
-        return self.encrypt(json_str)
-    
-    def decrypt_dict(self, encrypted_data: bytes) -> Dict:
-        """Decrypt dictionary"""
-        json_str = self.decrypt(encrypted_data)
-        return json.loads(json_str)
+class WalletError(Exception):
+    """Base exception for all wallet errors."""
+
+
+class DuplicateTransactionError(WalletError):
+    """Raised when a transaction with the same external_tx_id already exists."""
+
+
+class LedgerWriteError(WalletError):
+    """Raised when a SQLite write operation fails."""
+
+
+class ApprovalRequiredError(WalletError):
+    """Raised when a payment exceeds the approval threshold."""
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# DATABASE MANAGER
+# REPORT PERIOD HELPER
 # ═══════════════════════════════════════════════════════════════════════════════
 
-class WalletDatabase:
-    """Manages wallet database"""
-    
-    def __init__(self, db_path: str = "janus_wallet.db"):
-        """Initialize database"""
-        self.db_path = db_path
-        self.init_database()
-    
-    def init_database(self):
-        """Initialize database schema"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        # Wallets table
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS wallets (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                currency TEXT NOT NULL UNIQUE,
-                currency_type TEXT NOT NULL,
-                balance TEXT NOT NULL DEFAULT '0',
-                pending_balance TEXT NOT NULL DEFAULT '0',
-                address TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+class ReportPeriod(str, Enum):
+    """Predefined reporting periods."""
+    DAILY   = "daily"
+    WEEKLY  = "weekly"
+    MONTHLY = "monthly"
+    ALL     = "all"
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# CATEGORY ALIAS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class _CategoryNamespace:
+    """
+    Namespace that maps the symbolic category names used by
+    janus_autonomous_worker.py to their canonical values.
+
+    Usage (already present in the worker):
+        from janus_wallet import Category
+        category=Category.FREELANCE_EARNINGS
+        category=Category.COMPUTE_RESOURCES
+        category=Category.TRAINING_DATA
+    """
+    # Income source — stored as a plain string in source_or_category
+    FREELANCE_EARNINGS: str = "freelance_earnings"
+
+    # Expense categories — stored as ExpenseCategory enum values
+    COMPUTE_RESOURCES: ExpenseCategory = ExpenseCategory.COMPUTE
+    TRAINING_DATA: ExpenseCategory = ExpenseCategory.TRAINING
+
+
+Category = _CategoryNamespace()
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# WALLET LEDGER (SQLite persistence)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+import sqlite3
+
+
+class WalletLedger:
+    """
+    Owns the SQLite connection to janus_wallet.db.
+    All public methods are thread-safe via self._lock.
+    Amounts are stored as TEXT (string repr of Decimal) to preserve precision.
+    """
+
+    _CREATE_TABLE = """
+        CREATE TABLE IF NOT EXISTS transactions (
+            id                  TEXT PRIMARY KEY,
+            tx_type             TEXT NOT NULL,
+            amount              TEXT NOT NULL,
+            currency            TEXT NOT NULL DEFAULT 'USD',
+            source_or_category  TEXT NOT NULL,
+            description         TEXT NOT NULL DEFAULT '',
+            external_tx_id      TEXT NOT NULL DEFAULT '',
+            timestamp           TEXT NOT NULL,
+            metadata            TEXT NOT NULL DEFAULT '{}',
+            verified            INTEGER NOT NULL DEFAULT 0
+        );
+    """
+
+    _CREATE_INDEXES = [
+        "CREATE INDEX IF NOT EXISTS idx_tx_type     ON transactions(tx_type);",
+        "CREATE INDEX IF NOT EXISTS idx_currency    ON transactions(currency);",
+        "CREATE INDEX IF NOT EXISTS idx_timestamp   ON transactions(timestamp);",
+        "CREATE INDEX IF NOT EXISTS idx_external_id ON transactions(external_tx_id);",
+    ]
+
+    # Partial unique index: only enforce uniqueness when external_tx_id is non-empty.
+    _CREATE_UNIQUE_INDEX = (
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_external_tx_id "
+        "ON transactions(external_tx_id) "
+        "WHERE external_tx_id != '';"
+    )
+
+    def __init__(self, db_path: str = "janus_wallet.db") -> None:
+        self._lock = threading.Lock()
+        self._conn = sqlite3.connect(db_path, check_same_thread=False)
+        self._conn.row_factory = sqlite3.Row
+        with self._lock:
+            cur = self._conn.cursor()
+            cur.executescript(
+                self._CREATE_TABLE
+                + "\n".join(self._CREATE_INDEXES)
+                + "\n"
+                + self._CREATE_UNIQUE_INDEX
             )
-        ''')
-        
-        # Transactions table
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS transactions (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                tx_id TEXT UNIQUE NOT NULL,
-                type TEXT NOT NULL,
-                amount TEXT NOT NULL,
-                currency TEXT NOT NULL,
-                category TEXT NOT NULL,
-                source TEXT,
-                destination TEXT,
-                status TEXT NOT NULL DEFAULT 'pending',
-                verified BOOLEAN DEFAULT FALSE,
-                timestamp TIMESTAMP NOT NULL,
-                metadata TEXT,
-                notes TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        
-        # Financial goals table
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS financial_goals (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                goal_id TEXT UNIQUE NOT NULL,
-                name TEXT NOT NULL,
-                target_amount TEXT NOT NULL,
-                current_amount TEXT NOT NULL DEFAULT '0',
-                deadline TIMESTAMP,
-                priority INTEGER DEFAULT 0,
-                category TEXT,
-                status TEXT DEFAULT 'active',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        
-        # Budgets table
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS budgets (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                category TEXT NOT NULL,
-                limit_amount TEXT NOT NULL,
-                spent_amount TEXT NOT NULL DEFAULT '0',
-                period TEXT NOT NULL,
-                period_start TIMESTAMP NOT NULL,
-                period_end TIMESTAMP NOT NULL,
-                rollover BOOLEAN DEFAULT FALSE,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        
-        # Crypto keys table (encrypted)
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS crypto_keys (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                currency TEXT NOT NULL UNIQUE,
-                address TEXT NOT NULL,
-                encrypted_private_key BLOB NOT NULL,
-                public_key TEXT NOT NULL,
-                derivation_path TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        
-        # Create indexes
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_transactions_timestamp ON transactions(timestamp)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_transactions_category ON transactions(category)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_transactions_status ON transactions(status)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_transactions_currency ON transactions(currency)')
-        
-        conn.commit()
-        conn.close()
-        logger.info(f"Wallet database initialized: {self.db_path}")
-    
-    def get_connection(self) -> sqlite3.Connection:
-        """Get database connection"""
-        return sqlite3.connect(self.db_path)
+            self._conn.commit()
 
+    # ── helpers ──────────────────────────────────────────────────────────────
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# WALLET CORE
-# ═══════════════════════════════════════════════════════════════════════════════
-
-class WalletCore:
-    """Core wallet management"""
-    
-    def __init__(self, db_path: str = "janus_wallet.db"):
-        """Initialize wallet core"""
-        self.db = WalletDatabase(db_path)
-        self.balances: Dict[str, Balance] = {}
-        self.encryption = EncryptionManager()
-        self._load_balances()
-        logger.info("Wallet core initialized")
-    
-    def _load_balances(self):
-        """Load balances from database"""
-        conn = self.db.get_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute('SELECT currency, balance, pending_balance, updated_at FROM wallets')
-        rows = cursor.fetchall()
-        
-        for row in rows:
-            currency_code, balance_str, pending_str, updated_at = row
-            if currency_code in CURRENCIES:
-                currency = CURRENCIES[currency_code]
-                self.balances[currency_code] = Balance(
-                    currency=currency,
-                    amount=Decimal(balance_str),
-                    pending_amount=Decimal(pending_str),
-                    last_updated=datetime.fromisoformat(updated_at) if updated_at else datetime.now()
-                )
-        
-        conn.close()
-        
-        # Initialize default currencies if not present
-        for currency_code in CURRENCIES:
-            if currency_code not in self.balances:
-                self._init_currency(currency_code)
-    
-    def _init_currency(self, currency_code: str):
-        """Initialize a currency in the wallet"""
-        if currency_code not in CURRENCIES:
-            raise ValueError(f"Unknown currency: {currency_code}")
-        
-        currency = CURRENCIES[currency_code]
-        
-        conn = self.db.get_connection()
-        cursor = conn.cursor()
-        
-        try:
-            cursor.execute('''
-                INSERT INTO wallets (currency, currency_type, balance, pending_balance)
-                VALUES (?, ?, '0', '0')
-            ''', (currency_code, currency.type.value))
-            conn.commit()
-            
-            self.balances[currency_code] = Balance(
-                currency=currency,
-                amount=Decimal("0"),
-                pending_amount=Decimal("0")
-            )
-            
-            logger.info(f"Initialized {currency_code} wallet")
-        except sqlite3.IntegrityError:
-            # Already exists
-            pass
-        finally:
-            conn.close()
-    
-    def get_balance(self, currency_code: str) -> Balance:
-        """Get balance for a currency"""
-        if currency_code not in self.balances:
-            self._init_currency(currency_code)
-        return self.balances[currency_code]
-    
-    def get_all_balances(self) -> Dict[str, Balance]:
-        """Get all balances"""
-        return self.balances.copy()
-    
-    def get_total_balance_usd(self) -> Decimal:
-        """Get total balance in USD (simplified - no conversion yet)"""
-        # For now, just return USD balance
-        # TODO: Add currency conversion
-        return self.balances.get("USD", Balance(CURRENCIES["USD"], Decimal("0"))).amount
-    
-    def update_balance(self, currency_code: str, amount: Decimal, pending: Decimal = Decimal("0")):
-        """Update balance in database"""
-        conn = self.db.get_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            UPDATE wallets 
-            SET balance = ?, pending_balance = ?, updated_at = CURRENT_TIMESTAMP
-            WHERE currency = ?
-        ''', (str(amount), str(pending), currency_code))
-        
-        conn.commit()
-        conn.close()
-        
-        # Update in-memory balance
-        if currency_code in self.balances:
-            self.balances[currency_code].amount = amount
-            self.balances[currency_code].pending_amount = pending
-            self.balances[currency_code].last_updated = datetime.now()
-    
-    def add_to_balance(self, currency_code: str, amount: Decimal):
-        """Add to balance"""
-        current_balance = self.get_balance(currency_code)
-        new_balance = current_balance.amount + amount
-        self.update_balance(currency_code, new_balance, current_balance.pending_amount)
-        logger.info(f"Added {amount} {currency_code} to balance. New balance: {new_balance}")
-    
-    def subtract_from_balance(self, currency_code: str, amount: Decimal) -> bool:
-        """Subtract from balance (returns False if insufficient funds)"""
-        current_balance = self.get_balance(currency_code)
-        
-        if current_balance.amount < amount:
-            logger.warning(f"Insufficient funds: {current_balance.amount} < {amount} {currency_code}")
-            return False
-        
-        new_balance = current_balance.amount - amount
-        self.update_balance(currency_code, new_balance, current_balance.pending_amount)
-        logger.info(f"Subtracted {amount} {currency_code} from balance. New balance: {new_balance}")
-        return True
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# TRANSACTION MANAGER
-# ═══════════════════════════════════════════════════════════════════════════════
-
-class TransactionManager:
-    """Manages transactions"""
-    
-    def __init__(self, wallet_core: WalletCore):
-        """Initialize transaction manager"""
-        self.wallet_core = wallet_core
-        self.db = wallet_core.db
-    
-    def record_transaction(self, transaction: Transaction) -> str:
-        """Record a transaction"""
-        # Verify transaction
-        if not self._verify_transaction(transaction):
-            logger.error(f"Transaction verification failed: {transaction.tx_id}")
-            return ""
-        
-        # Check for duplicates
-        if self._is_duplicate(transaction):
-            logger.warning(f"Duplicate transaction detected: {transaction.tx_id}")
-            return transaction.tx_id
-        
-        # Store in database
-        conn = self.db.get_connection()
-        cursor = conn.cursor()
-        
-        try:
-            cursor.execute('''
-                INSERT INTO transactions 
-                (tx_id, type, amount, currency, category, source, destination, 
-                 status, verified, timestamp, metadata, notes)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (
-                transaction.tx_id,
-                transaction.type.value,
-                str(transaction.amount),
-                transaction.currency.code,
-                transaction.category.value,
-                transaction.source,
-                transaction.destination,
-                transaction.status.value,
-                transaction.verified,
-                transaction.timestamp.isoformat(),
-                json.dumps(transaction.metadata),
-                transaction.notes
-            ))
-            
-            conn.commit()
-            
-            # Update balance if transaction is completed
-            if transaction.status == TransactionStatus.COMPLETED:
-                self._update_balance_for_transaction(transaction)
-            
-            logger.info(f"Transaction recorded: {transaction.tx_id} - {transaction.type.value} {transaction.amount} {transaction.currency.code}")
-            return transaction.tx_id
-            
-        except sqlite3.IntegrityError as e:
-            logger.error(f"Error recording transaction: {e}")
-            return ""
-        finally:
-            conn.close()
-    
-    def _verify_transaction(self, transaction: Transaction) -> bool:
-        """Verify transaction data"""
-        # Check required fields
-        if not transaction.tx_id or not transaction.amount:
-            return False
-        
-        # Check amount is positive
-        if transaction.amount <= 0:
-            return False
-        
-        # Check currency is valid
-        if transaction.currency.code not in CURRENCIES:
-            return False
-        
-        # For expenses, check sufficient balance
-        if transaction.type == TransactionType.EXPENSE:
-            balance = self.wallet_core.get_balance(transaction.currency.code)
-            if balance.amount < transaction.amount:
-                logger.warning(f"Insufficient balance for expense: {balance.amount} < {transaction.amount}")
-                return False
-        
-        return True
-    
-    def _is_duplicate(self, transaction: Transaction) -> bool:
-        """Check if transaction is duplicate"""
-        conn = self.db.get_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute('SELECT COUNT(*) FROM transactions WHERE tx_id = ?', (transaction.tx_id,))
-        count = cursor.fetchone()[0]
-        
-        conn.close()
-        return count > 0
-    
-    def _update_balance_for_transaction(self, transaction: Transaction):
-        """Update balance based on transaction"""
-        if transaction.type == TransactionType.INCOME:
-            self.wallet_core.add_to_balance(transaction.currency.code, transaction.amount)
-        elif transaction.type == TransactionType.EXPENSE:
-            self.wallet_core.subtract_from_balance(transaction.currency.code, transaction.amount)
-    
-    def get_transaction(self, tx_id: str) -> Optional[Transaction]:
-        """Get transaction by ID"""
-        conn = self.db.get_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute('SELECT * FROM transactions WHERE tx_id = ?', (tx_id,))
-        row = cursor.fetchone()
-        conn.close()
-        
-        if not row:
-            return None
-        
-        return self._row_to_transaction(row)
-    
-    def get_transactions(
-        self,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
-        category: Optional[Category] = None,
-        transaction_type: Optional[TransactionType] = None,
-        limit: int = 100
-    ) -> List[Transaction]:
-        """Get transactions with filters"""
-        conn = self.db.get_connection()
-        cursor = conn.cursor()
-        
-        query = 'SELECT * FROM transactions WHERE 1=1'
-        params = []
-        
-        if start_date:
-            query += ' AND timestamp >= ?'
-            params.append(start_date.isoformat())
-        
-        if end_date:
-            query += ' AND timestamp <= ?'
-            params.append(end_date.isoformat())
-        
-        if category:
-            query += ' AND category = ?'
-            params.append(category.value)
-        
-        if transaction_type:
-            query += ' AND type = ?'
-            params.append(transaction_type.value)
-        
-        query += ' ORDER BY timestamp DESC LIMIT ?'
-        params.append(limit)
-        
-        cursor.execute(query, params)
-        rows = cursor.fetchall()
-        conn.close()
-        
-        return [self._row_to_transaction(row) for row in rows]
-    
-    def _row_to_transaction(self, row: tuple) -> Transaction:
-        """Convert database row to Transaction object"""
-        (id, tx_id, type_str, amount_str, currency_code, category_str,
-         source, destination, status_str, verified, timestamp_str,
-         metadata_str, notes, created_at) = row
-        
+    @staticmethod
+    def _row_to_transaction(row: sqlite3.Row) -> Transaction:
         return Transaction(
-            tx_id=tx_id,
-            type=TransactionType(type_str),
-            amount=Decimal(amount_str),
-            currency=CURRENCIES[currency_code],
-            category=Category(category_str),
-            source=source or "",
-            destination=destination or "",
-            status=TransactionStatus(status_str),
-            timestamp=datetime.fromisoformat(timestamp_str),
-            metadata=json.loads(metadata_str) if metadata_str else {},
-            verified=bool(verified),
-            notes=notes or ""
+            id=row["id"],
+            tx_type=TransactionType(row["tx_type"]),
+            amount=Decimal(row["amount"]),
+            currency=row["currency"],
+            source_or_category=row["source_or_category"],
+            description=row["description"],
+            external_tx_id=row["external_tx_id"],
+            timestamp=datetime.fromisoformat(row["timestamp"]),
+            metadata=json.loads(row["metadata"]),
+            verified=bool(row["verified"]),
         )
-    
-    def categorize_transaction(self, transaction: Transaction) -> Category:
-        """Auto-categorize transaction based on source/destination"""
-        # Simple rule-based categorization
-        source_lower = transaction.source.lower()
-        dest_lower = transaction.destination.lower()
-        
-        if transaction.type == TransactionType.INCOME:
-            if "upwork" in source_lower or "fiverr" in source_lower:
-                return Category.FREELANCE_EARNINGS
-            elif "crypto" in source_lower or "btc" in source_lower or "eth" in source_lower:
-                return Category.CRYPTO_EARNINGS
-            elif "affiliate" in source_lower:
-                return Category.AFFILIATE_COMMISSION
-            else:
-                return Category.OTHER_INCOME
-        
-        else:  # EXPENSE
-            if "gpu" in dest_lower or "compute" in dest_lower or "aws" in dest_lower:
-                return Category.COMPUTE_RESOURCES
-            elif "api" in dest_lower or "openai" in dest_lower or "anthropic" in dest_lower:
-                return Category.API_COSTS
-            elif "data" in dest_lower or "dataset" in dest_lower:
-                return Category.TRAINING_DATA
-            elif "savings" in dest_lower or "save" in dest_lower:
-                return Category.SAVINGS
-            else:
-                return Category.OTHER_EXPENSE
+
+    # ── write ─────────────────────────────────────────────────────────────────
+
+    def insert_transaction(self, tx: Transaction) -> Transaction:
+        """
+        Persist *tx* to the database.
+
+        - Assigns a new UUID if tx.id is empty.
+        - Sets tx.timestamp to datetime.utcnow() if not already set.
+        - Raises DuplicateTransactionError on UNIQUE constraint violation
+          (only when external_tx_id is non-empty).
+        - Raises LedgerWriteError on any other SQLite error.
+        - Returns the saved Transaction with id and timestamp filled in.
+        """
+        if not tx.id:
+            tx.id = str(uuid.uuid4())
+        if tx.timestamp is None:
+            tx.timestamp = datetime.utcnow()
+
+        sql = """
+            INSERT INTO transactions
+                (id, tx_type, amount, currency, source_or_category,
+                 description, external_tx_id, timestamp, metadata, verified)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """
+        params = (
+            tx.id,
+            tx.tx_type.value if isinstance(tx.tx_type, TransactionType) else tx.tx_type,
+            str(tx.amount),
+            tx.currency,
+            tx.source_or_category.value
+            if isinstance(tx.source_or_category, ExpenseCategory)
+            else tx.source_or_category,
+            tx.description,
+            tx.external_tx_id,
+            tx.timestamp.isoformat(),
+            json.dumps(tx.metadata),
+            int(tx.verified),
+        )
+
+        with self._lock:
+            try:
+                self._conn.execute(sql, params)
+                self._conn.commit()
+            except sqlite3.IntegrityError as exc:
+                if tx.external_tx_id:
+                    raise DuplicateTransactionError(
+                        f"Transaction with external_tx_id={tx.external_tx_id!r} already exists."
+                    ) from exc
+                raise LedgerWriteError(f"Integrity error on insert: {exc}") from exc
+            except sqlite3.Error as exc:
+                raise LedgerWriteError(f"SQLite error on insert: {exc}") from exc
+
+        return tx
+
+    # ── read ──────────────────────────────────────────────────────────────────
+
+    def get_balance(self, currency: str = "USD") -> Decimal:
+        """
+        Return the net balance for *currency*:
+            SUM(amount WHERE tx_type='income') - SUM(amount WHERE tx_type='expense')
+
+        Returns Decimal("0") if no rows exist for the currency.
+        """
+        sql = """
+            SELECT amount FROM transactions
+            WHERE currency = ? AND tx_type = ?
+        """
+        with self._lock:
+            cur = self._conn.cursor()
+            cur.execute(sql, (currency, TransactionType.INCOME.value))
+            income = sum((Decimal(r[0]) for r in cur.fetchall()), Decimal("0"))
+
+            cur.execute(sql, (currency, TransactionType.EXPENSE.value))
+            expenses = sum((Decimal(r[0]) for r in cur.fetchall()), Decimal("0"))
+
+        return income - expenses
+
+    def list_transactions(
+        self,
+        since: Optional[datetime] = None,
+        until: Optional[datetime] = None,
+        tx_type: Optional[TransactionType] = None,
+        category: Optional[str] = None,
+        limit: int = 500,
+    ) -> List[Transaction]:
+        """
+        Return up to *limit* transactions matching the optional filters,
+        ordered by timestamp ascending.
+        """
+        clauses: List[str] = []
+        params: List = []
+
+        if since is not None:
+            clauses.append("timestamp >= ?")
+            params.append(since.isoformat())
+        if until is not None:
+            clauses.append("timestamp <= ?")
+            params.append(until.isoformat())
+        if tx_type is not None:
+            clauses.append("tx_type = ?")
+            params.append(
+                tx_type.value if isinstance(tx_type, TransactionType) else tx_type
+            )
+        if category is not None:
+            clauses.append("source_or_category = ?")
+            params.append(
+                category.value if isinstance(category, ExpenseCategory) else category
+            )
+
+        where = ("WHERE " + " AND ".join(clauses)) if clauses else ""
+        sql = f"""
+            SELECT * FROM transactions
+            {where}
+            ORDER BY timestamp ASC
+            LIMIT ?
+        """
+        params.append(limit)
+
+        with self._lock:
+            cur = self._conn.cursor()
+            cur.execute(sql, params)
+            rows = cur.fetchall()
+
+        result: List[Transaction] = []
+        for row in rows:
+            try:
+                result.append(self._row_to_transaction(row))
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("Skipping unparseable ledger row %s: %s", dict(row), exc)
+        return result
+
+    def get_totals_by_category(
+        self,
+        since: Optional[datetime] = None,
+        until: Optional[datetime] = None,
+    ) -> Dict[str, Decimal]:
+        """
+        Return a dict of category → total amount for EXPENSE rows in the period.
+        """
+        clauses: List[str] = ["tx_type = ?"]
+        params: List = [TransactionType.EXPENSE.value]
+
+        if since is not None:
+            clauses.append("timestamp >= ?")
+            params.append(since.isoformat())
+        if until is not None:
+            clauses.append("timestamp <= ?")
+            params.append(until.isoformat())
+
+        where = "WHERE " + " AND ".join(clauses)
+        sql = f"""
+            SELECT source_or_category, amount
+            FROM transactions
+            {where}
+        """
+
+        with self._lock:
+            cur = self._conn.cursor()
+            cur.execute(sql, params)
+            rows = cur.fetchall()
+
+        totals: Dict[str, Decimal] = {}
+        for row in rows:
+            cat = row[0]
+            amt = Decimal(row[1])
+            totals[cat] = totals.get(cat, Decimal("0")) + amt
+        return totals
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# MAIN WALLET CLASS
+# PAYPAL ADAPTER (wraps PayPalWallet from janus_paypal_integration.py)
 # ═══════════════════════════════════════════════════════════════════════════════
+
+import os
+
+
+class PayPalAdapter:
+    """
+    Thin wrapper around PayPalWallet.
+
+    If the integration module is unavailable or credentials are missing the
+    adapter degrades gracefully: all methods return None / empty list so the
+    rest of the wallet still works for local ledger operations.
+    """
+
+    def __init__(self) -> None:
+        self._paypal = None
+        try:
+            from janus_paypal_integration import PayPalWallet  # type: ignore
+
+            client_id = os.getenv("PAYPAL_CLIENT_ID", "")
+            client_secret = os.getenv("PAYPAL_CLIENT_SECRET", "")
+            if not client_id or not client_secret:
+                logger.warning(
+                    "PayPalAdapter: PAYPAL_CLIENT_ID / PAYPAL_CLIENT_SECRET not set. "
+                    "PayPal features disabled; local ledger still works."
+                )
+            else:
+                self._paypal = PayPalWallet()
+                logger.info("PayPalAdapter: PayPalWallet initialised successfully.")
+        except ImportError:
+            logger.warning(
+                "PayPalAdapter: janus_paypal_integration not found. "
+                "PayPal features disabled; local ledger still works."
+            )
+
+    # ── outbound ──────────────────────────────────────────────────────────────
+
+    def send_payment(
+        self,
+        recipient_email: str,
+        amount: Decimal,
+        note: str = "",
+    ) -> Optional[str]:
+        """
+        Send *amount* USD to *recipient_email* via PayPal.
+
+        Returns the payout batch ID on success, ``None`` on failure.
+        Never raises — the caller decides what to do with a None result.
+        """
+        if self._paypal is None:
+            logger.warning("PayPalAdapter.send_payment: PayPal unavailable, skipping.")
+            return None
+        try:
+            return self._paypal.send_payment(recipient_email, amount, note)
+        except Exception as exc:  # noqa: BLE001
+            logger.error("PayPalAdapter.send_payment failed: %s", exc)
+            return None
+
+    # ── inbound ───────────────────────────────────────────────────────────────
+
+    def create_payment_link(
+        self,
+        amount: Decimal,
+        description: str = "Payment to Janus",
+    ) -> Optional[str]:
+        """
+        Create a PayPal payment-request link for *amount* USD.
+
+        Returns the URL string or ``None`` if PayPal is unavailable.
+        """
+        if self._paypal is None:
+            logger.warning("PayPalAdapter.create_payment_link: PayPal unavailable.")
+            return None
+        try:
+            return self._paypal.create_payment_request(amount, description)
+        except Exception as exc:  # noqa: BLE001
+            logger.error("PayPalAdapter.create_payment_link failed: %s", exc)
+            return None
+
+    # ── sync ──────────────────────────────────────────────────────────────────
+
+    def fetch_recent_transactions(self, days: int = 7) -> List[Transaction]:
+        """
+        Fetch recent PayPal transactions and map them to ``Transaction`` objects.
+
+        Each PayPalTransaction is mapped with:
+        - tx_type  = TransactionType.INCOME
+        - verified = True
+        - external_tx_id = paypal_tx.transaction_id
+
+        Returns an empty list if PayPal is unavailable or an error occurs.
+        """
+        if self._paypal is None:
+            return []
+        try:
+            paypal_txs = self._paypal.get_recent_transactions(days=days)
+        except Exception as exc:  # noqa: BLE001
+            logger.error("PayPalAdapter.fetch_recent_transactions failed: %s", exc)
+            return []
+
+        result: List[Transaction] = []
+        for ptx in paypal_txs:
+            result.append(
+                Transaction(
+                    id="",
+                    tx_type=TransactionType.INCOME,
+                    amount=ptx.amount,
+                    currency=ptx.currency,
+                    source_or_category="paypal",
+                    description=ptx.description,
+                    external_tx_id=ptx.transaction_id,
+                    timestamp=ptx.timestamp,
+                    metadata={
+                        "payer_email": ptx.payer_email,
+                        "payee_email": ptx.payee_email,
+                        "status": ptx.status,
+                        "fee": str(ptx.fee),
+                    },
+                    verified=True,
+                )
+            )
+        return result
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# WALLET ANALYTICS (pure functions, no I/O)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+class WalletAnalytics:
+    """
+    Stateless financial-intelligence helpers.
+
+    All methods are pure functions over ``list[Transaction]`` or simple
+    ``Decimal`` values — no database access, no network calls.
+    """
+
+    # Budget split ratios (must sum to 1.00)
+    _RATIOS: Dict[str, Decimal] = {
+        "compute":          Decimal("0.20"),
+        "api_costs":        Decimal("0.25"),
+        "training":         Decimal("0.15"),
+        "savings":          Decimal("0.30"),
+        "emergency_reserve": Decimal("0.10"),
+    }
+
+    # ── reports ───────────────────────────────────────────────────────────────
+
+    def build_report(
+        self,
+        transactions: List[Transaction],
+        period_start: datetime,
+        period_end: datetime,
+    ) -> FinancialReport:
+        """
+        Compute a ``FinancialReport`` from *transactions* for the given period.
+
+        - ``total_income``  — sum of all INCOME amounts
+        - ``total_expenses`` — sum of all EXPENSE amounts
+        - ``net``           — income − expenses
+        - ``income_by_source`` — dict of source → total income
+        - ``expenses_by_category`` — dict of category → total expense
+        - ``transaction_count`` — number of transactions
+        - ``savings_rate``  — net / income (0.0 when income is 0)
+        """
+        total_income = Decimal("0")
+        total_expenses = Decimal("0")
+        income_by_source: Dict[str, Decimal] = {}
+        expenses_by_category: Dict[str, Decimal] = {}
+
+        for tx in transactions:
+            if tx.tx_type == TransactionType.INCOME:
+                total_income += tx.amount
+                income_by_source[tx.source_or_category] = (
+                    income_by_source.get(tx.source_or_category, Decimal("0")) + tx.amount
+                )
+            elif tx.tx_type == TransactionType.EXPENSE:
+                total_expenses += tx.amount
+                expenses_by_category[tx.source_or_category] = (
+                    expenses_by_category.get(tx.source_or_category, Decimal("0")) + tx.amount
+                )
+
+        net = total_income - total_expenses
+        savings_rate = float(net / total_income) if total_income > 0 else 0.0
+
+        return FinancialReport(
+            period_start=period_start,
+            period_end=period_end,
+            total_income=total_income,
+            total_expenses=total_expenses,
+            net=net,
+            income_by_source=income_by_source,
+            expenses_by_category=expenses_by_category,
+            transaction_count=len(transactions),
+            savings_rate=savings_rate,
+        )
+
+    # ── budget ────────────────────────────────────────────────────────────────
+
+    def allocate_budget(self, total: Decimal) -> BudgetAllocation:
+        """
+        Split *total* into the five budget buckets using fixed ratios.
+
+        Uses ``Decimal`` arithmetic throughout.  Any rounding remainder is
+        assigned to ``savings`` so that the five fields always sum to *total*.
+        """
+        compute          = (total * self._RATIOS["compute"]).quantize(Decimal("0.01"))
+        api_costs        = (total * self._RATIOS["api_costs"]).quantize(Decimal("0.01"))
+        training         = (total * self._RATIOS["training"]).quantize(Decimal("0.01"))
+        emergency_reserve = (total * self._RATIOS["emergency_reserve"]).quantize(Decimal("0.01"))
+
+        # Assign remainder to savings so the sum is exact
+        savings = total - compute - api_costs - training - emergency_reserve
+
+        return BudgetAllocation(
+            compute=compute,
+            api_costs=api_costs,
+            training=training,
+            savings=savings,
+            emergency_reserve=emergency_reserve,
+        )
+
+    # ── decisions ─────────────────────────────────────────────────────────────
+
+    def should_reinvest(self, report: FinancialReport) -> bool:
+        """
+        Return ``True`` when the savings rate is ≥ 30 % and net is positive.
+        """
+        return report.savings_rate >= 0.3 and report.net > Decimal("0")
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# JANUS WALLET (public façade)
+# ═══════════════════════════════════════════════════════════════════════════════
+
 
 class JanusWallet:
-    """Main wallet class - unified interface"""
-    
-    # Business information
-    BUSINESS_NAME = "Two Doors Media"
-    BUSINESS_EMAIL = "Legac3y@gmail.com"
-    
-    def __init__(self, db_path: str = "janus_wallet.db"):
-        """Initialize Janus wallet"""
-        self.core = WalletCore(db_path)
-        self.transactions = TransactionManager(self.core)
-        
-        # Initialize crypto wallet manager
-        if HAS_CRYPTO:
-            self.crypto = CryptoWalletManager(self.core.encryption)
-            logger.info("Crypto wallet support enabled")
-        else:
-            self.crypto = None
-            logger.warning("Crypto wallet support disabled")
-        
-        # Initialize PayPal wallet
-        if HAS_PAYPAL:
-            self.paypal = PayPalWallet()
-            logger.info("PayPal support enabled")
-        else:
-            self.paypal = None
-            logger.warning("PayPal support disabled")
-        
-        # Initialize financial intelligence
-        if HAS_FINANCIAL_INTELLIGENCE:
-            self.intelligence = FinancialIntelligence(self)
-            logger.info("Financial intelligence enabled")
-        else:
-            self.intelligence = None
-            logger.warning("Financial intelligence disabled")
-        
-        logger.info("Janus Wallet initialized successfully")
-    
-    def get_balance(self, currency: str = "USD") -> Decimal:
-        """Get balance for currency"""
-        return self.core.get_balance(currency).amount
-    
-    def get_all_balances(self) -> Dict[str, Decimal]:
-        """Get all balances"""
-        return {code: balance.amount for code, balance in self.core.get_all_balances().items()}
-    
+    """
+    Public API consumed by ``janus_autonomous_worker.py``.
+
+    Composes ``WalletLedger``, ``PayPalAdapter``, and ``WalletAnalytics``
+    into a single, easy-to-use object.
+    """
+
+    BUSINESS_NAME: str = "Janus AI Worker"
+
+    def __init__(self, db_path: str = "janus_wallet.db") -> None:
+        self._ledger    = WalletLedger(db_path)
+        self._paypal    = PayPalAdapter()
+        self._analytics = WalletAnalytics()
+        logger.info("JanusWallet initialised (db=%s)", db_path)
+
+    @staticmethod
+    def get_paypal_email() -> str:
+        """Return the configured PayPal email (from PAYPAL_EMAIL env var)."""
+        return os.getenv("PAYPAL_EMAIL", "")
+
+    # ── income ────────────────────────────────────────────────────────────────
+
     def record_income(
         self,
-        amount: float,
+        amount: Decimal,
+        source: str,
+        description: str = "",
+        external_tx_id: str = "",
         currency: str = "USD",
-        source: str = "",
-        category: Optional[Category] = None,
-        metadata: Optional[Dict] = None
-    ) -> str:
-        """Record income"""
+        metadata: Optional[dict] = None,
+    ) -> Transaction:
+        """Record an income transaction and return the saved ``Transaction``."""
+        if amount <= Decimal("0"):
+            raise ValueError(f"Income amount must be > 0, got {amount!r}")
+
         tx = Transaction(
-            tx_id=f"income_{uuid.uuid4().hex[:16]}",
-            type=TransactionType.INCOME,
-            amount=Decimal(str(amount)),
-            currency=CURRENCIES[currency],
-            category=category or Category.OTHER_INCOME,
-            source=source,
-            destination="janus_wallet",
-            status=TransactionStatus.COMPLETED,
-            timestamp=datetime.now(),
+            id="",
+            tx_type=TransactionType.INCOME,
+            amount=amount,
+            currency=currency,
+            source_or_category=source,
+            description=description,
+            external_tx_id=external_tx_id,
+            timestamp=datetime.utcnow(),
             metadata=metadata or {},
-            verified=True
+            verified=False,
         )
-        
-        return self.transactions.record_transaction(tx)
-    
+        return self._ledger.insert_transaction(tx)
+
+    # ── expenses ──────────────────────────────────────────────────────────────
+
     def record_expense(
         self,
-        amount: float,
+        amount: Decimal,
+        category,
+        description: str = "",
+        external_tx_id: str = "",
         currency: str = "USD",
-        destination: str = "",
-        category: Optional[Category] = None,
-        metadata: Optional[Dict] = None
-    ) -> str:
-        """Record expense"""
+        metadata: Optional[dict] = None,
+    ) -> Transaction:
+        """Record an expense transaction and return the saved ``Transaction``."""
+        if amount <= Decimal("0"):
+            raise ValueError(f"Expense amount must be > 0, got {amount!r}")
+
+        if isinstance(category, ExpenseCategory):
+            cat_str = category.value
+        else:
+            cat_str = str(category)
+
         tx = Transaction(
-            tx_id=f"expense_{uuid.uuid4().hex[:16]}",
-            type=TransactionType.EXPENSE,
-            amount=Decimal(str(amount)),
-            currency=CURRENCIES[currency],
-            category=category or Category.OTHER_EXPENSE,
-            source="janus_wallet",
-            destination=destination,
-            status=TransactionStatus.COMPLETED,
-            timestamp=datetime.now(),
-            metadata=metadata or {},
-            verified=True
-        )
-        
-        return self.transactions.record_transaction(tx)
-    
-    def get_recent_transactions(self, limit: int = 10) -> List[Transaction]:
-        """Get recent transactions"""
-        return self.transactions.get_transactions(limit=limit)
-    
-    def setup_crypto_wallets(self, load_existing: bool = False, btc_key: str = "", eth_key: str = ""):
-        """Setup cryptocurrency wallets"""
-        if not HAS_CRYPTO or not self.crypto:
-            logger.error("Crypto wallet support not available")
-            return False
-        
-        try:
-            if load_existing and btc_key:
-                # Load existing Bitcoin wallet
-                self.crypto.load_bitcoin_wallet(btc_key, testnet=False)
-            else:
-                # Create new Bitcoin wallet
-                self.crypto.create_bitcoin_wallet(testnet=False)
-            
-            if load_existing and eth_key:
-                # Load existing Ethereum wallet
-                self.crypto.load_ethereum_wallet(eth_key)
-            else:
-                # Create new Ethereum wallet
-                self.crypto.create_ethereum_wallet()
-            
-            logger.info("Crypto wallets setup complete")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Error setting up crypto wallets: {e}")
-            return False
-    
-    def get_crypto_addresses(self) -> Dict[str, str]:
-        """Get all cryptocurrency addresses"""
-        if not HAS_CRYPTO or not self.crypto:
-            return {}
-        return self.crypto.get_all_addresses()
-    
-    def get_crypto_balance(self, currency: str) -> Decimal:
-        """Get cryptocurrency balance"""
-        if not HAS_CRYPTO or not self.crypto:
-            return Decimal("0")
-        return self.crypto.get_balance(currency)
-    
-    def sync_crypto_balances(self):
-        """Sync cryptocurrency balances with blockchain"""
-        if not HAS_CRYPTO or not self.crypto:
-            logger.warning("Crypto wallet support not available")
-            return
-        
-        try:
-            # Get balances from blockchain
-            crypto_balances = self.crypto.get_all_balances()
-            
-            # Update wallet balances
-            for currency, amount in crypto_balances.items():
-                current_balance = self.core.get_balance(currency)
-                if current_balance.amount != amount:
-                    self.core.update_balance(currency, amount)
-                    logger.info(f"Synced {currency} balance: {amount}")
-            
-        except Exception as e:
-            logger.error(f"Error syncing crypto balances: {e}")
-    
-    def create_paypal_payment_link(self, amount: float, description: str = "Payment to Two Doors Media") -> Optional[str]:
-        """Create PayPal payment link"""
-        if not HAS_PAYPAL or not self.paypal:
-            logger.error("PayPal support not available")
-            return None
-        
-        return self.paypal.create_payment_request(Decimal(str(amount)), description)
-    
-    def send_paypal_payment(self, recipient_email: str, amount: float, note: str = "") -> Optional[str]:
-        """Send PayPal payment"""
-        if not HAS_PAYPAL or not self.paypal:
-            logger.error("PayPal support not available")
-            return None
-        
-        # Record as expense
-        tx_id = self.record_expense(
+            id="",
+            tx_type=TransactionType.EXPENSE,
             amount=amount,
-            currency="USD",
-            destination=recipient_email,
-            category=Category.OTHER_EXPENSE,
-            metadata={"note": note, "method": "paypal"}
+            currency=currency,
+            source_or_category=cat_str,
+            description=description,
+            external_tx_id=external_tx_id,
+            timestamp=datetime.utcnow(),
+            metadata=metadata or {},
+            verified=False,
         )
-        
-        # Send via PayPal
-        batch_id = self.paypal.send_payment(recipient_email, Decimal(str(amount)), note)
-        
-        if batch_id:
-            logger.info(f"PayPal payment sent: {batch_id}")
-        
-        return batch_id
-    
-    def get_paypal_email(self) -> str:
-        """Get PayPal email"""
-        if not HAS_PAYPAL or not self.paypal:
-            return ""
-        return self.paypal.email
-    
-    def create_financial_goal(
+        return self._ledger.insert_transaction(tx)
+
+    # ── balances ──────────────────────────────────────────────────────────────
+
+    def get_balance(self, currency: str = "USD") -> Decimal:
+        """Return the net balance for *currency*."""
+        return self._ledger.get_balance(currency)
+
+    def get_all_balances(self) -> Dict[str, Decimal]:
+        """Return balances for USD, BTC, ETH, and USDC."""
+        return {
+            currency: self._ledger.get_balance(currency)
+            for currency in ("USD", "BTC", "ETH", "USDC")
+        }
+
+    # ── outbound payments ─────────────────────────────────────────────────────
+
+    def send_payment(
         self,
-        name: str,
-        target_amount: float,
-        deadline_days: Optional[int] = None,
-        category: str = "general"
-    ) -> Optional[str]:
-        """Create a financial goal"""
-        if not HAS_FINANCIAL_INTELLIGENCE or not self.intelligence:
-            logger.error("Financial intelligence not available")
-            return None
-        
-        deadline = None
-        if deadline_days:
-            deadline = datetime.now() + timedelta(days=deadline_days)
-        
-        goal = self.intelligence.create_goal(
-            name=name,
-            target_amount=Decimal(str(target_amount)),
-            deadline=deadline,
-            category=category
+        recipient_email: str,
+        amount: Decimal,
+        note: str = "",
+        require_approval_above: Optional[Decimal] = None,
+    ) -> "PaymentResult":
+        """
+        Send *amount* USD to *recipient_email* via PayPal.
+
+        Raises ``ApprovalRequiredError`` when:
+        - ``require_approval_above`` is ``None`` and ``amount > 500``
+        - ``require_approval_above`` is set and ``amount > require_approval_above``
+        """
+        threshold = require_approval_above if require_approval_above is not None else Decimal("500")
+        if amount > threshold:
+            raise ApprovalRequiredError(
+                f"Payment of {amount} exceeds approval threshold of {threshold}. "
+                "Set require_approval_above explicitly to override."
+            )
+
+        batch_id = self._paypal.send_payment(recipient_email, amount, note)
+        success = batch_id is not None
+
+        tx: Optional[Transaction] = None
+        if success:
+            try:
+                tx = self.record_expense(
+                    amount=amount,
+                    category=ExpenseCategory.MISC,
+                    description=f"PayPal payment to {recipient_email}: {note}",
+                    external_tx_id=batch_id or "",
+                    currency="USD",
+                )
+            except Exception as exc:  # noqa: BLE001
+                logger.error("send_payment: failed to record expense in ledger: %s", exc)
+
+        return PaymentResult(
+            success=success,
+            batch_id=batch_id,
+            transaction=tx,
+            error=None if success else "PayPal send_payment returned None",
         )
-        
-        return goal.goal_id
-    
-    def get_financial_report(self, days: int = 30):
-        """Get and print financial report"""
-        if not HAS_FINANCIAL_INTELLIGENCE or not self.intelligence:
-            logger.error("Financial intelligence not available")
-            return
-        
-        self.intelligence.print_report(days)
-    
-    def print_summary(self):
-        """Print wallet summary"""
-        print("\n" + "="*60)
-        print(f"{self.BUSINESS_NAME.upper()} - WALLET SUMMARY")
-        print("="*60)
-        
-        print("\nBALANCES:")
-        print("-" * 30)
-        for code, balance in self.core.get_all_balances().items():
-            print(f"  {code}: {balance.format()}")
-        
-        # Show crypto addresses if available
-        if HAS_CRYPTO and self.crypto:
-            addresses = self.get_crypto_addresses()
-            if addresses:
-                print(f"\nCRYPTO ADDRESSES:")
-                print("-" * 30)
-                for currency, address in addresses.items():
-                    print(f"  {currency}: {address}")
-        
-        # Show PayPal info if available
-        if HAS_PAYPAL and self.paypal:
-            paypal_email = self.get_paypal_email()
-            if paypal_email:
-                print(f"\nPAYPAL:")
-                print("-" * 30)
-                print(f"  Email: {paypal_email}")
-                print(f"  Mode: {self.paypal.client.mode}")
-        
-        print(f"\nRECENT TRANSACTIONS:")
-        print("-" * 30)
-        recent = self.get_recent_transactions(5)
-        for tx in recent:
-            sign = "+" if tx.type == TransactionType.INCOME else "-"
-            print(f"  {tx.timestamp.strftime('%Y-%m-%d %H:%M')} | {sign}{tx.amount} {tx.currency.code} | {tx.category.value}")
-        
-        print("\n" + "="*60)
 
+    # ── inbound payment links ─────────────────────────────────────────────────
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# DEMO / TESTING
-# ═══════════════════════════════════════════════════════════════════════════════
+    def create_payment_link(
+        self,
+        amount: Decimal,
+        description: str = "Payment to Janus",
+    ) -> Optional[str]:
+        """Delegate to ``PayPalAdapter.create_payment_link``."""
+        return self._paypal.create_payment_link(amount, description)
 
-def demo():
-    """Demo wallet functionality"""
-    print("Initializing Janus Wallet...")
-    wallet = JanusWallet()
-    
-    # Setup crypto wallets
-    print("\nSetting up crypto wallets...")
-    wallet.setup_crypto_wallets()
-    
-    # Create a financial goal
-    print("\nCreating financial goal: Robot Body Fund...")
-    wallet.create_financial_goal(
-        name="Robot Body Fund",
-        target_amount=50000.00,
-        deadline_days=365,
-        category="robot_body"
-    )
-    
-    # Record some income
-    print("\nRecording income...")
-    wallet.record_income(299.99, "USD", "upwork_job_123", Category.FREELANCE_EARNINGS)
-    wallet.record_income(0.001, "BTC", "crypto_payment", Category.CRYPTO_EARNINGS)
-    
-    # Record some expenses
-    print("\nRecording expenses...")
-    wallet.record_expense(50.00, "USD", "aws_compute", Category.COMPUTE_RESOURCES)
-    wallet.record_expense(20.00, "USD", "openai_api", Category.API_COSTS)
-    
-    # Create PayPal payment link
-    if HAS_PAYPAL:
-        print("\nCreating PayPal payment link...")
-        payment_link = wallet.create_paypal_payment_link(100.00, "Services from Two Doors Media")
-        if payment_link:
-            print(f"Payment link: {payment_link}")
-    
-    # Print summary
-    wallet.print_summary()
-    
-    # Print financial report
-    if HAS_FINANCIAL_INTELLIGENCE:
-        wallet.get_financial_report(30)
+    # ── analytics ─────────────────────────────────────────────────────────────
 
+    def get_report(self, period: ReportPeriod) -> FinancialReport:
+        """
+        Build a ``FinancialReport`` for the requested *period*.
 
-if __name__ == "__main__":
-    demo()
+        Period windows (relative to now):
+        - DAILY   → last 1 day
+        - WEEKLY  → last 7 days
+        - MONTHLY → last 30 days
+        - ALL     → no date filter
+        """
+        now = datetime.utcnow()
+        _PERIOD_DAYS: Dict[ReportPeriod, Optional[int]] = {
+            ReportPeriod.DAILY:   1,
+            ReportPeriod.WEEKLY:  7,
+            ReportPeriod.MONTHLY: 30,
+            ReportPeriod.ALL:     None,
+        }
+        days = _PERIOD_DAYS[period]
+
+        if days is not None:
+            from datetime import timedelta
+            since = now - timedelta(days=days)
+        else:
+            since = None
+
+        transactions = self._ledger.list_transactions(since=since, until=now)
+        period_start = since if since is not None else (
+            transactions[0].timestamp if transactions else now
+        )
+        return self._analytics.build_report(transactions, period_start, now)
+
+    def get_budget_status(self) -> BudgetStatus:
+        """Return a ``BudgetStatus`` snapshot based on the current monthly report."""
+        balance = self.get_balance("USD")
+        monthly_report = self.get_report(ReportPeriod.MONTHLY)
+        allocation = self._analytics.allocate_budget(balance)
+        reinvest = self._analytics.should_reinvest(monthly_report)
+        return BudgetStatus(
+            allocation=allocation,
+            current_balance=balance,
+            report=monthly_report,
+            should_reinvest=reinvest,
+        )
+
+    # ── autonomous decisions ──────────────────────────────────────────────────
+
+    def should_reinvest(self) -> bool:
+        """Return ``True`` when the monthly report meets the reinvestment threshold."""
+        report = self.get_report(ReportPeriod.MONTHLY)
+        return self._analytics.should_reinvest(report)
+
+    def allocate_budget(self, total: Decimal) -> BudgetAllocation:
+        """Delegate to ``WalletAnalytics.allocate_budget``."""
+        return self._analytics.allocate_budget(total)
+
+    # ── PayPal sync ───────────────────────────────────────────────────────────
+
+    def sync_paypal_transactions(self, days: int = 7) -> int:
+        """
+        Fetch recent PayPal transactions and insert any that are new.
+
+        Skips transactions that are already in the ledger
+        (``DuplicateTransactionError``).  Returns the count of newly inserted
+        rows.
+        """
+        fetched = self._paypal.fetch_recent_transactions(days)
+        inserted = 0
+        for tx in fetched:
+            try:
+                self._ledger.insert_transaction(tx)
+                inserted += 1
+            except DuplicateTransactionError:
+                pass  # already recorded — skip silently
+            except Exception as exc:  # noqa: BLE001
+                logger.error("sync_paypal_transactions: failed to insert tx %s: %s", tx.external_tx_id, exc)
+        return inserted
+
+    # ── crypto stubs ──────────────────────────────────────────────────────────
+
+    def get_crypto_addresses(self) -> dict:
+        """Return crypto wallet addresses (not yet implemented)."""
+        return {}
+
+    def setup_crypto_wallets(self) -> None:
+        """Stub — crypto wallets not yet implemented."""
+        logger.warning("Crypto wallets not yet implemented")

@@ -900,3 +900,456 @@ class TestComputerUseEngineLifecycle:
                 assert engine.windows is not None, "engine.windows must not be None"
         finally:
             jcu._check_dependencies = original_check
+
+
+# ===========================================================================
+# Tasks 12.1, 12.2, 12.3 — WorkCycle integration tests
+# Requirements: 1.1, 1.4, 4.2, 5.3, 9.3, 14.3, 15.1, 20.1
+# ===========================================================================
+
+import asyncio
+import tempfile
+import os
+from decimal import Decimal
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
+from janus_worker_core import (
+    BrowserJob,
+    CycleSummary,
+    DecisionEngine,
+    InvestmentEngine,
+    JobStatus,
+    LearningEngine,
+    MarketAnalyzer,
+    MonitoringSystem,
+    QAResult,
+    QualityAssurance,
+    WorkCycle,
+    WorkGenerator,
+    WorkResult,
+    WorkerDatabase,
+)
+from janus_wallet import JanusWallet, TransactionType
+
+
+# ---------------------------------------------------------------------------
+# Shared helpers
+# ---------------------------------------------------------------------------
+
+def _make_browser_job(
+    job_id: str = "test-job-001",
+    title: str = "Write a Python script",
+    description: str = "Create a script that processes CSV files",
+    platform: str = "upwork",
+    budget: float = 75.0,
+    job_type: str = "code",
+) -> BrowserJob:
+    return BrowserJob(
+        id=job_id,
+        title=title,
+        description=description,
+        platform=platform,
+        budget=budget,
+        required_skills=["python", "csv"],
+        deadline=None,
+        job_type=job_type,
+    )
+
+
+def _make_work_cycle(
+    db: WorkerDatabase,
+    wallet: JanusWallet,
+    brain_ask: AsyncMock,
+    max_concurrent_jobs: int = 5,
+) -> WorkCycle:
+    """Build a WorkCycle wired to real DB + real wallet, with a mocked brain."""
+    brain = MagicMock()
+    brain.ask = brain_ask
+
+    work_generator = WorkGenerator(brain=brain)
+    quality_assurance = QualityAssurance()
+    decision_engine = DecisionEngine()
+
+    learning_engine = MagicMock(spec=LearningEngine)
+    learning_engine.learn_skill = AsyncMock(
+        return_value=MagicMock(skill_name="python", resources_used=[])
+    )
+
+    investment_engine = MagicMock(spec=InvestmentEngine)
+    investment_engine.evaluate_and_invest = AsyncMock(return_value=[])
+
+    market_analyzer = MagicMock(spec=MarketAnalyzer)
+
+    with tempfile.NamedTemporaryFile(suffix=".log", delete=False) as f:
+        log_path = f.name
+    monitor = MonitoringSystem(log_path=log_path)
+
+    return WorkCycle(
+        db=db,
+        wallet=wallet,
+        decision_engine=decision_engine,
+        work_generator=work_generator,
+        learning_engine=learning_engine,
+        quality_assurance=quality_assurance,
+        investment_engine=investment_engine,
+        market_analyzer=market_analyzer,
+        monitor=monitor,
+        max_concurrent_jobs=max_concurrent_jobs,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Task 12.1 — Full cycle smoke test
+# Requirements: 1.1, 4.2, 9.3, 15.1
+# ---------------------------------------------------------------------------
+
+class TestFullCycleSmokeTest:
+    """
+    Task 12.1: Full cycle smoke test.
+
+    Mock PlatformBrowser to return one BrowserJob; mock AvusBrain.ask() to
+    return valid work text; run WorkCycle.run_one_cycle(); assert DB has a job
+    record with status 'completed' and JanusWallet ledger has an income
+    transaction.
+    """
+
+    @pytest.mark.asyncio
+    async def test_full_cycle_completes_job_and_records_income(self):
+        """
+        Full cycle: one job discovered → work generated → QA passes →
+        DB record status=completed, wallet has income transaction.
+
+        Requirements: 1.1, 4.2, 9.3, 15.1
+        """
+        db = WorkerDatabase(":memory:")
+        wallet = JanusWallet(db_path=":memory:")
+
+        # Brain returns a long, keyword-rich response that will pass QA
+        job = _make_browser_job()
+        valid_work = (
+            "```python\n"
+            "import csv\n\n"
+            "# Script that processes CSV files as requested\n"
+            "# python csv processing solution\n\n"
+            "def process_csv(filepath):\n"
+            "    with open(filepath) as f:\n"
+            "        reader = csv.DictReader(f)\n"
+            "        rows = list(reader)\n"
+            "    return rows\n\n"
+            "if __name__ == '__main__':\n"
+            "    result = process_csv('data.csv')\n"
+            "    print(f'Processed {len(result)} rows')\n"
+            "```\n"
+        )
+        brain_ask = AsyncMock(return_value=valid_work)
+
+        wc = _make_work_cycle(db, wallet, brain_ask)
+
+        # Patch _discover_jobs to return our single test job
+        async def mock_discover():
+            return [job]
+
+        wc._discover_jobs = mock_discover
+
+        # Run one cycle
+        summary = await wc.run_one_cycle()
+
+        # Assert DB has the job record with status=completed
+        record = db.get_job(job.id)
+        assert record is not None, "Job record should exist in DB"
+        assert record.status == JobStatus.COMPLETED.value, (
+            f"Expected status 'completed', got '{record.status}'"
+        )
+
+        # Assert wallet ledger has at least one income transaction
+        income_txs = wallet._ledger.list_transactions(
+            tx_type=TransactionType.INCOME
+        )
+        assert len(income_txs) >= 1, (
+            "Expected at least one income transaction in wallet ledger"
+        )
+        # Verify the income amount matches the job budget
+        assert income_txs[0].amount == Decimal(str(job.budget)), (
+            f"Expected income amount {job.budget}, got {income_txs[0].amount}"
+        )
+
+    @pytest.mark.asyncio
+    async def test_full_cycle_returns_cycle_summary(self):
+        """run_one_cycle() returns a CycleSummary with jobs_processed >= 1."""
+        db = WorkerDatabase(":memory:")
+        wallet = JanusWallet(db_path=":memory:")
+
+        job = _make_browser_job()
+        # Use the same rich work content that passes QA (long, keyword-rich, code-formatted)
+        valid_work = (
+            "```python\n"
+            "import csv\n\n"
+            "# Script that processes CSV files as requested\n"
+            "# python csv processing solution\n\n"
+            "def process_csv(filepath):\n"
+            "    with open(filepath) as f:\n"
+            "        reader = csv.DictReader(f)\n"
+            "        rows = list(reader)\n"
+            "    return rows\n\n"
+            "if __name__ == '__main__':\n"
+            "    result = process_csv('data.csv')\n"
+            "    print(f'Processed {len(result)} rows')\n"
+            "```\n"
+        )
+        brain_ask = AsyncMock(return_value=valid_work)
+        wc = _make_work_cycle(db, wallet, brain_ask)
+
+        async def mock_discover():
+            return [job]
+
+        wc._discover_jobs = mock_discover
+
+        summary = await wc.run_one_cycle()
+
+        assert isinstance(summary, CycleSummary)
+        assert summary.jobs_processed >= 1
+        assert summary.earnings > Decimal("0")
+
+
+# ---------------------------------------------------------------------------
+# Task 12.2 — Browser fallback test
+# Requirements: 5.3, 20.1
+# ---------------------------------------------------------------------------
+
+class TestBrowserFallbackTest:
+    """
+    Task 12.2: Browser fallback test.
+
+    Mock UpworkBrowser to raise an exception; assert FiverrBrowser is called
+    next; assert cycle completes without crashing.
+    """
+
+    @pytest.mark.asyncio
+    async def test_upwork_failure_falls_back_to_fiverr(self):
+        """
+        When UpworkBrowser.find_jobs() raises, FiverrBrowser.find_jobs() is
+        called and the cycle completes without crashing.
+
+        Requirements: 5.3, 20.1
+        """
+        db = WorkerDatabase(":memory:")
+        wallet = JanusWallet(db_path=":memory:")
+        brain_ask = AsyncMock(return_value="some work output")
+        wc = _make_work_cycle(db, wallet, brain_ask)
+
+        fiverr_job = _make_browser_job(
+            job_id="fiverr-job-001",
+            platform="fiverr",
+            title="Design a logo",
+            description="Create a modern logo for a tech startup",
+            job_type="general",
+        )
+
+        mock_upwork = MagicMock()
+        mock_upwork.find_jobs = AsyncMock(side_effect=RuntimeError("Upwork browser crashed"))
+
+        mock_fiverr = MagicMock()
+        mock_fiverr.find_jobs = AsyncMock(return_value=[fiverr_job])
+
+        with patch("janus_worker_core._HAS_PLATFORM_BROWSER", True), \
+             patch("janus_worker_core.UpworkBrowser", return_value=mock_upwork), \
+             patch("janus_worker_core.FiverrBrowser", return_value=mock_fiverr):
+            # Should not raise
+            summary = await wc.run_one_cycle()
+
+        # FiverrBrowser.find_jobs was called
+        mock_fiverr.find_jobs.assert_awaited_once()
+
+        # Cycle completed without crashing
+        assert isinstance(summary, CycleSummary)
+
+    @pytest.mark.asyncio
+    async def test_both_browsers_fail_cycle_still_completes(self):
+        """
+        When both UpworkBrowser and FiverrBrowser raise, the cycle completes
+        with zero jobs processed (no crash).
+
+        Requirements: 5.3, 20.1
+        """
+        db = WorkerDatabase(":memory:")
+        wallet = JanusWallet(db_path=":memory:")
+        brain_ask = AsyncMock(return_value="some work output")
+        wc = _make_work_cycle(db, wallet, brain_ask)
+
+        mock_upwork = MagicMock()
+        mock_upwork.find_jobs = AsyncMock(side_effect=RuntimeError("Upwork down"))
+
+        mock_fiverr = MagicMock()
+        mock_fiverr.find_jobs = AsyncMock(side_effect=RuntimeError("Fiverr down"))
+
+        with patch("janus_worker_core._HAS_PLATFORM_BROWSER", True), \
+             patch("janus_worker_core.UpworkBrowser", return_value=mock_upwork), \
+             patch("janus_worker_core.FiverrBrowser", return_value=mock_fiverr):
+            summary = await wc.run_one_cycle()
+
+        assert isinstance(summary, CycleSummary)
+        assert summary.jobs_processed == 0
+
+    @pytest.mark.asyncio
+    async def test_upwork_returns_empty_falls_back_to_fiverr(self):
+        """
+        When UpworkBrowser.find_jobs() returns an empty list, FiverrBrowser
+        is tried next.
+
+        Requirements: 5.3, 20.1
+        """
+        db = WorkerDatabase(":memory:")
+        wallet = JanusWallet(db_path=":memory:")
+        brain_ask = AsyncMock(return_value="some work output")
+        wc = _make_work_cycle(db, wallet, brain_ask)
+
+        fiverr_job = _make_browser_job(job_id="fiverr-002", platform="fiverr")
+
+        mock_upwork = MagicMock()
+        mock_upwork.find_jobs = AsyncMock(return_value=[])
+
+        mock_fiverr = MagicMock()
+        mock_fiverr.find_jobs = AsyncMock(return_value=[fiverr_job])
+
+        with patch("janus_worker_core._HAS_PLATFORM_BROWSER", True), \
+             patch("janus_worker_core.UpworkBrowser", return_value=mock_upwork), \
+             patch("janus_worker_core.FiverrBrowser", return_value=mock_fiverr):
+            summary = await wc.run_one_cycle()
+
+        mock_fiverr.find_jobs.assert_awaited_once()
+        assert isinstance(summary, CycleSummary)
+
+
+# ---------------------------------------------------------------------------
+# Task 12.3 — Quality gate integration test
+# Requirements: 1.4, 14.3
+# ---------------------------------------------------------------------------
+
+class TestQualityGateIntegrationTest:
+    """
+    Task 12.3: Quality gate integration test.
+
+    Mock AvusBrain.ask() to return low-quality work (score < 0.7) for all 3
+    retries; assert PlatformBrowser.deliver() is never called and job is
+    marked failed in DB.
+    """
+
+    @pytest.mark.asyncio
+    async def test_low_quality_work_never_delivered_and_job_marked_failed(self):
+        """
+        When brain returns low-quality work for all retries, deliver/submit_work
+        is never called and the job is marked failed in DB.
+
+        Requirements: 1.4, 14.3
+        """
+        db = WorkerDatabase(":memory:")
+        wallet = JanusWallet(db_path=":memory:")
+
+        # Return a very short string that will score below 0.7 in QA
+        # (< 50 chars → completeness=0.0, no keyword overlap, no code format)
+        brain_ask = AsyncMock(return_value="bad")
+
+        wc = _make_work_cycle(db, wallet, brain_ask)
+
+        job = _make_browser_job(
+            job_id="low-quality-job-001",
+            title="Write a Python script",
+            description="Create a script that processes CSV files",
+            job_type="code",
+        )
+
+        async def mock_discover():
+            return [job]
+
+        wc._discover_jobs = mock_discover
+
+        mock_upwork = MagicMock()
+        mock_upwork.submit_work = MagicMock(return_value=False)
+        mock_upwork.submit_work_async = AsyncMock(return_value=False)
+
+        mock_fiverr = MagicMock()
+        mock_fiverr.deliver_order = MagicMock(return_value=False)
+        mock_fiverr.deliver_order_async = AsyncMock(return_value=False)
+
+        with patch("janus_worker_core._HAS_PLATFORM_BROWSER", True), \
+             patch("janus_worker_core.UpworkBrowser", return_value=mock_upwork), \
+             patch("janus_worker_core.FiverrBrowser", return_value=mock_fiverr):
+            summary = await wc.run_one_cycle()
+
+        # submit_work and deliver_order must never be called
+        mock_upwork.submit_work.assert_not_called()
+        mock_fiverr.deliver_order.assert_not_called()
+
+        # Job must be marked failed in DB
+        record = db.get_job(job.id)
+        assert record is not None, "Job record should exist in DB"
+        assert record.status == JobStatus.FAILED.value, (
+            f"Expected status 'failed', got '{record.status}'"
+        )
+
+    @pytest.mark.asyncio
+    async def test_low_quality_work_no_income_recorded(self):
+        """
+        When QA fails, no income transaction is recorded in the wallet.
+
+        Requirements: 1.4, 14.3
+        """
+        db = WorkerDatabase(":memory:")
+        wallet = JanusWallet(db_path=":memory:")
+
+        brain_ask = AsyncMock(return_value="bad")
+        wc = _make_work_cycle(db, wallet, brain_ask)
+
+        job = _make_browser_job(job_id="low-quality-job-002", job_type="code")
+
+        async def mock_discover():
+            return [job]
+
+        wc._discover_jobs = mock_discover
+
+        with patch("janus_worker_core._HAS_PLATFORM_BROWSER", True), \
+             patch("janus_worker_core.UpworkBrowser", return_value=MagicMock()), \
+             patch("janus_worker_core.FiverrBrowser", return_value=MagicMock()):
+            await wc.run_one_cycle()
+
+        income_txs = wallet._ledger.list_transactions(tx_type=TransactionType.INCOME)
+        assert len(income_txs) == 0, (
+            f"Expected no income transactions for failed job, got {len(income_txs)}"
+        )
+
+    @pytest.mark.asyncio
+    async def test_quality_gate_all_three_retries_exhausted(self):
+        """
+        WorkGenerator retries up to MAX_RETRIES=3 times; brain.ask() is called
+        at most 3 times and the job is still marked failed.
+
+        Requirements: 1.4, 14.3
+        """
+        db = WorkerDatabase(":memory:")
+        wallet = JanusWallet(db_path=":memory:")
+
+        brain_ask = AsyncMock(return_value="bad")
+        wc = _make_work_cycle(db, wallet, brain_ask)
+
+        job = _make_browser_job(job_id="low-quality-job-003", job_type="code")
+
+        async def mock_discover():
+            return [job]
+
+        wc._discover_jobs = mock_discover
+
+        with patch("janus_worker_core._HAS_PLATFORM_BROWSER", True), \
+             patch("janus_worker_core.UpworkBrowser", return_value=MagicMock()), \
+             patch("janus_worker_core.FiverrBrowser", return_value=MagicMock()):
+            await wc.run_one_cycle()
+
+        # brain.ask() called at most MAX_RETRIES=3 times
+        assert brain_ask.await_count <= 3, (
+            f"Expected at most 3 brain.ask() calls, got {brain_ask.await_count}"
+        )
+
+        record = db.get_job(job.id)
+        assert record is not None
+        assert record.status == JobStatus.FAILED.value

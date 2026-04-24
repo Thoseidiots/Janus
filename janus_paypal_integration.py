@@ -28,6 +28,10 @@ from typing import Dict, List, Optional
 from decimal import Decimal
 from datetime import datetime, timedelta
 from dataclasses import dataclass
+from dotenv import load_dotenv
+
+# Load credentials from Top_Secret.env
+load_dotenv(os.path.join(os.path.dirname(__file__), "Top_Secret.env"))
 
 logger = logging.getLogger(__name__)
 

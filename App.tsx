@@ -1,4 +1,62 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { Sidebar } from './components/sidebar/Sidebar';
+import { JanusHub } from './components/features/JanusHub';
+import { Chatbot } from './components/features/Chatbot';
+import { VoiceAssistant } from './components/features/VoiceAssistant';
+import { AgiCoreConsole } from './components/features/AgiCoreConsole';
+import { UnbiasedAgiConsole } from './components/features/UnbiasedAgiConsole';
+import { SecureLauncher } from './components/features/SecureLauncher';
+import { UnifiedStudio } from './components/features/UnifiedStudio';
+import { HyperparameterGenerator } from './components/features/HyperparameterGenerator';
+import { AnalysisTools } from './components/features/AnalysisTools';
+import { ImageTools } from './components/features/ImageTools';
+import { VideoTools } from './components/features/VideoTools';
+import { TextToSpeechTool } from './components/features/TextToSpeechTool';
+import { Storyboarder } from './components/features/Storyboarder';
+import { GroundedSearch } from './components/features/GroundedSearch';
+
+// ── Feature registry ─────────────────────────────────────────────────────────
+export type FeatureID =
+  | 'monitor'
+  | 'janus-hub'
+  | 'chatbot'
+  | 'voice-assistant'
+  | 'agi-console'
+  | 'unbiased-agi'
+  | 'secure-launcher'
+  | 'unified-studio'
+  | 'hyperparameter'
+  | 'analysis-tools'
+  | 'image-tools'
+  | 'video-tools'
+  | 'text-to-speech'
+  | 'storyboarder'
+  | 'grounded-search';
+
+export interface Feature {
+  id: FeatureID;
+  label: string;
+  icon: string;
+  description: string;
+}
+
+export const FEATURES: Feature[] = [
+  { id: 'monitor',         label: 'Cognition Monitor',  icon: '🧠', description: 'Live autonomous worker dashboard' },
+  { id: 'janus-hub',       label: 'Janus Hub',          icon: '🚀', description: 'Main Janus control center' },
+  { id: 'chatbot',         label: 'Chat',               icon: '💬', description: 'AI chat assistant' },
+  { id: 'voice-assistant', label: 'Voice',              icon: '🎙️', description: 'Voice assistant' },
+  { id: 'agi-console',     label: 'AGI Console',        icon: '⚡', description: 'AGI core simulation' },
+  { id: 'unbiased-agi',    label: 'Unbiased AGI',       icon: '🔬', description: 'Unbiased AGI console' },
+  { id: 'secure-launcher', label: 'Secure Launch',      icon: '🛡️', description: 'Secure system launcher' },
+  { id: 'unified-studio',  label: 'Studio',             icon: '🎨', description: 'Unified AI studio' },
+  { id: 'hyperparameter',  label: 'Hyperparams',        icon: '⚙️', description: 'Hyperparameter generator' },
+  { id: 'analysis-tools',  label: 'Analysis',           icon: '📊', description: 'Image & video analysis' },
+  { id: 'image-tools',     label: 'Images',             icon: '🖼️', description: 'Image generation & editing' },
+  { id: 'video-tools',     label: 'Video',              icon: '🎬', description: 'Video generation' },
+  { id: 'text-to-speech',  label: 'TTS',                icon: '🔊', description: 'Text to speech' },
+  { id: 'storyboarder',    label: 'Storyboard',         icon: '🎞️', description: 'Video storyboarder' },
+  { id: 'grounded-search', label: 'Search',             icon: '🔍', description: 'Grounded web search' },
+];
 
 // ── Daemon API ────────────────────────────────────────────────────────────────
 const DAEMON_URL = "http://localhost:8006";
@@ -23,6 +81,34 @@ interface JCNetworkStats {
   total_compute_contributed:number;
 }
 
+interface WalletData {
+  balances: Record<string, string>;
+  monthly_income: string;
+  monthly_expenses: string;
+  monthly_net: string;
+  savings_rate: number;
+  transaction_count: number;
+}
+
+interface WorkerMetrics {
+  jobs_completed: number;
+  jobs_failed: number;
+  total_earned_usd: number;
+  average_quality: number;
+  skill_count: number;
+  skills: Array<{name: string; level: string; xp: number}>;
+}
+
+interface RecentJob {
+  id: string;
+  title: string;
+  platform: string;
+  budget: number;
+  status: string;
+  quality_score: number | null;
+  payment_amount: number | null;
+}
+
 async function fetchDaemonStatus(): Promise<DaemonStatus | null> {
   try {
     const r = await fetch(`${DAEMON_URL}/status`, { signal: AbortSignal.timeout(2000) });
@@ -37,6 +123,31 @@ async function fetchJCStats(): Promise<JCNetworkStats | null> {
     if (!r.ok) return null;
     return await r.json();
   } catch { return null; }
+}
+
+async function fetchWalletData(): Promise<WalletData | null> {
+  try {
+    const r = await fetch(`${DAEMON_URL}/wallet`, { signal: AbortSignal.timeout(2000) });
+    if (!r.ok) return null;
+    return await r.json();
+  } catch { return null; }
+}
+
+async function fetchWorkerMetrics(): Promise<WorkerMetrics | null> {
+  try {
+    const r = await fetch(`${DAEMON_URL}/metrics`, { signal: AbortSignal.timeout(2000) });
+    if (!r.ok) return null;
+    return await r.json();
+  } catch { return null; }
+}
+
+async function fetchRecentJobs(): Promise<RecentJob[]> {
+  try {
+    const r = await fetch(`${DAEMON_URL}/jobs`, { signal: AbortSignal.timeout(2000) });
+    if (!r.ok) return [];
+    const data = await r.json();
+    return data.jobs || [];
+  } catch { return []; }
 }
 
 // ── Seeded RNG ────────────────────────────────────────────────────────────────
@@ -259,12 +370,47 @@ const logRef=useRef<HTMLDivElement>(null);
 const [daemonStatus, setDaemonStatus] = useState<DaemonStatus | null>(null);
 const [jcStats, setJcStats]           = useState<JCNetworkStats | null>(null);
 const [daemonOnline, setDaemonOnline] = useState(false);
+const [walletData, setWalletData]     = useState<WalletData | null>(null);
+const [workerMetrics, setWorkerMetrics] = useState<WorkerMetrics | null>(null);
+const [recentJobs, setRecentJobs]     = useState<RecentJob[]>([]);
+
+const [activeFeature, setActiveFeature] = useState<FeatureID>('monitor');
+
+const renderFeature = () => {
+  switch (activeFeature) {
+    case 'monitor':          return null; // rendered inline below
+    case 'janus-hub':        return <JanusHub />;
+    case 'chatbot':          return <Chatbot />;
+    case 'voice-assistant':  return <VoiceAssistant />;
+    case 'agi-console':      return <AgiCoreConsole />;
+    case 'unbiased-agi':     return <UnbiasedAgiConsole />;
+    case 'secure-launcher':  return <SecureLauncher />;
+    case 'unified-studio':   return <UnifiedStudio />;
+    case 'hyperparameter':   return <HyperparameterGenerator />;
+    case 'analysis-tools':   return <AnalysisTools />;
+    case 'image-tools':      return <ImageTools />;
+    case 'video-tools':      return <VideoTools />;
+    case 'text-to-speech':   return <TextToSpeechTool />;
+    case 'storyboarder':     return <Storyboarder />;
+    case 'grounded-search':  return <GroundedSearch />;
+    default:                 return null;
+  }
+};
 
 const pollLiveData = useCallback(async () => {
-  const [ds, jc] = await Promise.all([fetchDaemonStatus(), fetchJCStats()]);
+  const [ds, jc, wallet, metrics, jobs] = await Promise.all([
+    fetchDaemonStatus(),
+    fetchJCStats(),
+    fetchWalletData(),
+    fetchWorkerMetrics(),
+    fetchRecentJobs(),
+  ]);
   setDaemonStatus(ds);
   setJcStats(jc);
   setDaemonOnline(ds !== null);
+  setWalletData(wallet);
+  setWorkerMetrics(metrics);
+  setRecentJobs(jobs);
 
   if (ds) {
     // Sync cycle count from daemon
@@ -378,32 +524,41 @@ const uptimeStr = daemonStatus
 
 const statsStrip = [
   {
-    lbl: "JC CIRCULATING",
-    val: jcStats ? jcStats.total_jc_in_circulation.toFixed(1) : "—",
-    sub: jcStats ? `${jcStats.total_accounts} accounts` : "daemon offline",
+    lbl: "USD BALANCE",
+    val: walletData ? `$${parseFloat(walletData.balances.USD || "0").toFixed(2)}` : "—",
+    sub: walletData ? `${walletData.transaction_count} transactions` : "daemon offline",
+    col: "#10b981",
+  },
+  {
+    lbl: "JOBS DONE",
+    val: workerMetrics ? String(workerMetrics.jobs_completed) : daemonStatus ? String(daemonStatus.cycle_count) : "—",
+    sub: workerMetrics ? `$${workerMetrics.total_earned_usd.toFixed(2)} earned` : "daemon offline",
     col: "#60a5fa",
   },
   {
-    lbl: "MOOD",
-    val: daemonStatus ? daemonStatus.current_mood.toUpperCase().slice(0,7) : "—",
-    sub: daemonStatus ? `energy ${(daemonStatus.current_energy*100).toFixed(0)}%` : "daemon offline",
+    lbl: "AVG QUALITY",
+    val: workerMetrics ? `${(workerMetrics.average_quality * 100).toFixed(0)}%` : "—",
+    sub: workerMetrics ? `${workerMetrics.skill_count} skills` : "daemon offline",
     col: "#a78bfa",
-  },
-  {
-    lbl: "RESTARTS",
-    val: daemonStatus ? String(daemonStatus.restart_count) : "—",
-    sub: daemonStatus ? (daemonStatus.last_error ? "last err: " + daemonStatus.last_error.slice(0,20) : "no errors") : "daemon offline",
-    col: "#fb923c",
   },
   {
     lbl: "UPTIME",
     val: uptimeStr,
     sub: `cycle #${cycle}`,
-    col: "#10b981",
+    col: "#fb923c",
   },
 ];
 
 return (
+<div style={{display:"flex", minHeight:"100vh", background:"#060d17"}}>
+  <Sidebar features={FEATURES} activeFeature={activeFeature} setActiveFeature={setActiveFeature} />
+  <div style={{flex:1, overflow:"auto"}}>
+  {activeFeature !== 'monitor' ? (
+    <div style={{padding:"24px", minHeight:"100vh", color:"#e2e8f0",
+      fontFamily:"'Space Mono','Courier New',monospace"}}>
+      {renderFeature()}
+    </div>
+  ) : (
 <div style={{minHeight:"100vh",background:"#060d17",color:"#e2e8f0",
 fontFamily:"'Space Mono','Courier New',monospace",paddingBottom:40}}>
 <style>{`@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@700;800&display=swap'); *{box-sizing:border-box;} ::-webkit-scrollbar{width:3px;} ::-webkit-scrollbar-track{background:#0a1222;} ::-webkit-scrollbar-thumb{background:#1e293b;border-radius:2px;} @keyframes ping{75%,100%{transform:scale(2.2);opacity:0;}}`}</style>
@@ -565,6 +720,28 @@ fontFamily:"'Space Mono','Courier New',monospace",paddingBottom:40}}>
 
     <div style={{height:12}}/>
 
+    {recentJobs.length > 0 && (
+      <>
+        <div style={{height:12}}/>
+        <Card title="Recent Jobs" badge={`${recentJobs.length} jobs`} accent="#10b981">
+          <div style={{maxHeight:180, overflowY:"auto"}}>
+            {recentJobs.map(job => (
+              <div key={job.id} style={{
+                display:"grid", gridTemplateColumns:"1fr 80px 70px 60px",
+                gap:8, padding:"4px 0", borderBottom:"1px solid #0a1222",
+                alignItems:"center"
+              }}>
+                <span style={{fontSize:11, color:"#cbd5e1", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{job.title}</span>
+                <span style={{fontSize:9, color:"#475569"}}>{job.platform}</span>
+                <span style={{fontSize:9, color: job.status === "completed" ? "#10b981" : job.status === "failed" ? "#ef4444" : "#f59e0b"}}>{job.status}</span>
+                <span style={{fontSize:9, color:"#60a5fa", textAlign:"right"}}>{job.payment_amount ? `$${job.payment_amount.toFixed(0)}` : `$${job.budget.toFixed(0)}`}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </>
+    )}
+
     {/* ── Event Log ── */}
     <Card title="Event Log" badge="live · auto-scroll" accent="#6366f1">
       <div ref={logRef} style={{maxHeight:190,overflowY:"auto",fontFamily:"monospace",fontSize:10}}>
@@ -598,6 +775,9 @@ fontFamily:"'Space Mono','Courier New',monospace",paddingBottom:40}}>
         </div>
       ))}
     </div>
+  </div>
+</div>
+  )}
   </div>
 </div>
 );

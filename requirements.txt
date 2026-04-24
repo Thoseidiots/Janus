@@ -1,0 +1,25 @@
+# Janus - Core Python dependencies
+# Install with: pip install -r requirements.txt
+
+# Web server (daemon API)
+fastapi>=0.100.0
+uvicorn>=0.23.0
+
+# Environment & security
+python-dotenv>=1.0.0
+cryptography>=41.0.0
+
+# HTTP
+requests>=2.31.0
+
+# Computer use / vision
+Pillow>=10.0.0
+pyautogui>=0.9.54
+pytesseract>=0.3.10
+pygetwindow>=0.0.9
+opencv-python>=4.8.0
+imagehash>=4.3.1
+
+# Testing
+hypothesis>=6.0.0
+pytest>=7.0.0

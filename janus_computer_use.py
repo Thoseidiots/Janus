@@ -44,6 +44,23 @@ from io import BytesIO
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 # ---------------------------------------------------------------------------
+# Tesseract path — set before pytesseract is imported
+# ---------------------------------------------------------------------------
+import os as _os
+_TESSERACT_PATHS = [
+    r"C:\Program Files\Tesseract-OCR\tesseract.exe",
+    r"C:\Program Files (x86)\Tesseract-OCR\tesseract.exe",
+]
+for _tp in _TESSERACT_PATHS:
+    if _os.path.exists(_tp):
+        try:
+            import pytesseract as _pt
+            _pt.pytesseract.tesseract_cmd = _tp
+        except ImportError:
+            pass
+        break
+
+# ---------------------------------------------------------------------------
 # Dependency check — must run before any third-party import
 # ---------------------------------------------------------------------------
 
@@ -2883,9 +2900,10 @@ class BrowserComputerUse:
         except Exception as exc:
             logger.warning("BrowserComputerUse.open: wait_for failed: %s", exc)
 
-        # Domain mismatch check
+        # Domain mismatch check — log warning but don't fail (OCR may miss address bar)
         mismatch = await self._check_domain()
         if mismatch is not None:
+            logger.warning("BrowserComputerUse.open: %s (continuing anyway)", mismatch.error_message)
             return mismatch
 
         return ActionResult(success=True, action_type=ActionType.HOTKEY)

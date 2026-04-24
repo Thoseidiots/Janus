@@ -7,6 +7,16 @@ venv/
 Env/
 .env
 *.env
+Top_Secret.env
+Credintials.env
+Credentials.env
+Credintials - Copy.env
+Top_Mission.env
+Hidden.env
+Partner.env
+Dev_AC.env
+fiverr.env
+upwork.env
 *.db
 # *.pt files are ignored by default but TTS weights are small enough to track
 # Large model weights (avus_*) stay ignored

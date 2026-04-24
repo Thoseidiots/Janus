@@ -114,6 +114,23 @@ except ImportError:
     HAS_PLATFORM_BROWSER = False
     logger.warning("Wallet not available. Payment tracking disabled.")
 
+# Import worker core — full autonomous work loop components
+try:
+    from janus_worker_core import (
+        WorkerDatabase,
+        DecisionEngine,
+        WorkGenerator as _CoreWorkGenerator,
+        QualityAssurance as _CoreQualityAssurance,
+        LearningEngine as _CoreLearningEngine,
+        MarketAnalyzer as _CoreMarketAnalyzer,
+        InvestmentEngine as _CoreInvestmentEngine,
+        MonitoringSystem as _CoreMonitoringSystem,
+        WorkCycle,
+    )
+    HAS_WORKER_CORE = True
+except ImportError:
+    HAS_WORKER_CORE = False
+
 # Setup logging
 logging.basicConfig(
     level=logging.INFO,
@@ -2192,6 +2209,15 @@ class JanusAutonomousWorker(WorkerCompletionMixin):
         self.checkpointer = _get_checkpointer() if HAS_CHECKPOINT else None
         self.notifier = _notifier
 
+        # Initialize voice — Janus speaks key events aloud
+        self.voice_tts = None
+        try:
+            from janus_tts import JanusTTS
+            self.voice_tts = JanusTTS()
+            logger.info("[voice] TTS ready — Janus will speak key events")
+        except Exception as e:
+            logger.debug(f"[voice] TTS unavailable: {e}")
+
         # Initialize human-like job decision engine
         if HAS_JOB_DECISION:
             self.job_decision = JobDecisionEngine(
@@ -2209,7 +2235,77 @@ class JanusAutonomousWorker(WorkerCompletionMixin):
             "deadline":      0.2,
             "learning":      0.1,
         }
+
+        # Wire WorkCycle when both janus_worker_core and wallet are available
+        self._work_cycle = None
+        if HAS_WORKER_CORE and HAS_WALLET and self.wallet is not None:
+            try:
+                _db      = WorkerDatabase("janus_worker_core.db")
+                _dec     = DecisionEngine()
+                # Get the brain — try inference pipeline first, then avus_model
+                _brain = None
+                if HAS_INFERENCE_PIPELINE:
+                    try:
+                        _brain = _get_inference_pipeline()
+                    except Exception:
+                        pass
+                if _brain is None:
+                    # Fall back to the inner WorkGenerator's avus_model
+                    _brain = getattr(self.work_generator, "avus_model", None)
+                _wgen    = _CoreWorkGenerator(_brain)
+                _qa      = _CoreQualityAssurance()
+                _cu_eng  = getattr(self, "computer_use_engine", None)
+                _learn   = _CoreLearningEngine(_cu_eng, _brain, _db)
+                _market  = _CoreMarketAnalyzer(_db, _brain)
+                _invest  = _CoreInvestmentEngine(self.wallet, _brain)
+                _monitor = _CoreMonitoringSystem()
+                self._work_cycle = WorkCycle(
+                    db=_db,
+                    wallet=self.wallet,
+                    decision_engine=_dec,
+                    work_generator=_wgen,
+                    learning_engine=_learn,
+                    quality_assurance=_qa,
+                    investment_engine=_invest,
+                    market_analyzer=_market,
+                    monitor=_monitor,
+                )
+                logger.info(f"{self.name} WorkCycle initialised via janus_worker_core")
+            except Exception as e:
+                import traceback
+                logger.warning(f"Could not initialise WorkCycle: {e}\n{traceback.format_exc()}")
+                self._work_cycle = None
     
+    def _speak(self, text: str):
+        """Speak text aloud if TTS is available. Non-blocking."""
+        if self.voice_tts is None:
+            return
+        try:
+            import threading, numpy as np, wave, tempfile, os, subprocess
+            def _play():
+                pcm = self.voice_tts.synthesize(text)
+                audio = np.frombuffer(pcm, dtype=np.int16).astype(np.float32) / 32767.0
+                with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
+                    tmp = f.name
+                with wave.open(tmp, "wb") as wf:
+                    wf.setnchannels(1); wf.setsampwidth(2); wf.setframerate(22050)
+                    wf.writeframes(pcm)
+                try:
+                    import pyaudio
+                    p = pyaudio.PyAudio()
+                    s = p.open(format=pyaudio.paInt16, channels=1, rate=22050, output=True)
+                    s.write(pcm); s.stop_stream(); s.close(); p.terminate()
+                except Exception:
+                    subprocess.Popen(["powershell", "-Command",
+                        f"(New-Object Media.SoundPlayer '{tmp}').PlaySync()"],
+                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                finally:
+                    try: os.unlink(tmp)
+                    except Exception: pass
+            threading.Thread(target=_play, daemon=True).start()
+        except Exception as e:
+            logger.debug(f"[voice] Speak failed: {e}")
+
     def _recover_corrupt_file(self, path: str) -> bool:
         """
         Attempt to recover a corrupt state file using CorruptFileReader.
@@ -2370,6 +2466,12 @@ class JanusAutonomousWorker(WorkerCompletionMixin):
         """Main work cycle - runs continuously"""
         logger.info(f"{self.name} starting work cycle")
         self.running = True
+
+        # Delegate to WorkCycle.run_forever() when the core is available
+        if HAS_WORKER_CORE and self._work_cycle is not None:
+            logger.info(f"{self.name} delegating to WorkCycle.run_forever()")
+            await self._work_cycle.run_forever()
+            return
 
         # Resume any jobs that were interrupted by a previous crash
         if self.checkpointer:
@@ -2722,6 +2824,7 @@ class JanusAutonomousWorker(WorkerCompletionMixin):
                                 self.human.mood.update("success", intensity=0.6)
                                 self.human.mood.save()
                                 logger.info(f"[Janus] Job done. Feeling {self.human.fatigue.status()}.")
+                            self._speak(f"Job complete. {job.title[:40]}. Quality score {quality_score:.0%}.")
                             # Mark complete in job manager; record outcome for adaptive generator
                             if HAS_COMPLETION:
                                 if hasattr(self, "job_manager"):
@@ -2940,6 +3043,7 @@ class JanusAutonomousWorker(WorkerCompletionMixin):
                                     logger.info(f"Payment recorded in wallet: {tx_id}")
                                 except Exception as e:
                                     logger.error(f"Error recording payment in wallet: {e}")
+                            self._speak(f"Payment received. {payment:.0f} dollars for {job.title[:30]}.")
                             
                             # Getting paid is a genuine mood boost
                             if self.human:
