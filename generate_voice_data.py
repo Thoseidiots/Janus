@@ -19,6 +19,9 @@ import numpy as np
 import pathlib
 import time
 
+# Set HuggingFace token to avoid rate limiting warnings
+os.environ["HF_TOKEN"] = "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"
+
 FFMPEG = None
 for candidate in [
     "ffmpeg",
