@@ -731,6 +731,13 @@ class JanusTTSv2:
         waveform = self.vocoder(mel)                         # (1, T_samples)
         wav_np = waveform[0].detach().cpu().numpy()
 
+        # Normalize to prevent silent output from undertrained vocoder
+        peak = np.max(np.abs(wav_np))
+        if peak > 1e-6:
+            wav_np = wav_np / peak * 0.92
+        else:
+            wav_np = np.zeros_like(wav_np)
+
         wav_np = np.clip(wav_np, -1.0, 1.0)
         pcm16 = (wav_np * 32767.0).astype(np.int16)
         return pcm16.tobytes()
