@@ -756,31 +756,25 @@ class JanusTTSv2:
     def synthesize(self, text: str, speed: float = 1.0) -> bytes:
         """
         Synthesize text to raw PCM int16 bytes at SAMPLE_RATE Hz.
-        Pipeline: text → phonemes → encode → duration → expand → decode → vocode
+        Uses fixed duration (6 frames/phoneme) until duration predictor is
+        properly trained on real speech data.
         """
-        # 1. Phonemize
         phonemes = self.phonemizer.text_to_phonemes(text)
         ids = self.phonemizer.phonemes_to_ids(phonemes)
-        ids_tensor = torch.tensor([ids], dtype=torch.long)  # (1, T)
+        ids_tensor = torch.tensor([ids], dtype=torch.long)
 
-        # 2. Text encode
-        encoded = self.text_encoder(ids_tensor)              # (1, T, 512)
+        encoded = self.text_encoder(ids_tensor)              # (1, T, 256)
 
-        # 3. Predict durations
-        durations = self.duration_predictor(encoded)         # (1, T)
+        # Fixed duration: 6 frames per phoneme ≈ 64ms at 24kHz/256hop
+        # This gives natural-sounding speech without needing a trained predictor
+        T = encoded.shape[1]
+        durations = torch.full((1, T), 6.0)
 
-        # 4. Length regulate
-        frame_feats = length_regulate(encoded, durations, speed=speed)  # (1, T_frames, 512)
-
-        # 5. Decode to mel
-        style = self.style_vector                            # (1, 512)
-        mel = self.decoder(frame_feats, style)               # (1, T_frames, 80)
-
-        # 6. Vocode to waveform
+        frame_feats = length_regulate(encoded, durations, speed=speed)
+        mel = self.decoder(frame_feats, self.style_vector)   # (1, T_frames, 80)
         waveform = self.vocoder(mel)                         # (1, T_samples)
         wav_np = waveform[0].detach().cpu().numpy()
 
-        # 7. Convert to int16 PCM bytes
         wav_np = np.clip(wav_np, -1.0, 1.0)
         pcm16 = (wav_np * 32767.0).astype(np.int16)
         return pcm16.tobytes()
