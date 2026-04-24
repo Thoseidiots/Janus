@@ -1,30 +1,26 @@
 """
 janus_voice.py
 ==============
-Wires Janus's voice I/O to her brain.
+Janus voice interface — fully wired brain + voice.
 
 Say "Hey Janus" → she wakes up → you talk → she thinks → she responds.
 
-Uses:
-  - voice_io_enhanced.py  (microphone, wake word, STT, TTS)
-  - janus_gpt.py / avus_brain.py  (thinking)
-  - janus_human_core.py  (mood, personality, fatigue)
+Pipeline:
+  Microphone → faster-whisper STT → JanusGPT brain → Kokoro TTS → Speakers
 
 Run:
     python janus_voice.py
 
-Requirements (install once):
-    pip install pyaudio numpy
-    # For real STT (optional, falls back to energy detection without it):
-    # Install whisper.cpp and place ggml-base.en.bin in models/
-    # For real TTS (optional, falls back to tone synthesis without it):
-    # Install piper-tts and place en_US-lessac-medium.onnx in models/
+Requirements:
+    pip install pyaudio numpy faster-whisper kokoro soundfile
 """
 
 import sys
 import time
+import queue
+import threading
 import logging
-from pathlib import Path
+import numpy as np
 
 logging.basicConfig(
     level=logging.INFO,
@@ -34,21 +30,155 @@ logger = logging.getLogger("janus.voice")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Brain — what Janus thinks with
+# STT — faster-whisper (local, no internet)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class JanusSTT:
+    """Speech-to-text using faster-whisper (tiny model, fast on CPU)."""
+
+    WAKE_WORDS = ["hey janus", "ok janus", "janus", "hi janus"]
+    SAMPLE_RATE = 16000
+    CHUNK = 1024
+    SILENCE_THRESHOLD = 500    # RMS below this = silence
+    SILENCE_DURATION  = 1.5    # seconds of silence to end utterance
+    MAX_RECORD_SEC    = 15     # max recording length
+
+    def __init__(self):
+        self._model = None
+        self._load_model()
+
+    def _load_model(self):
+        try:
+            from faster_whisper import WhisperModel
+            self._model = WhisperModel("base", device="cpu", compute_type="int8")
+            logger.info("[STT] faster-whisper base loaded")
+        except Exception as e:
+            logger.warning(f"[STT] faster-whisper unavailable: {e}")
+
+    def transcribe(self, audio_np: np.ndarray) -> str:
+        """Transcribe float32 audio array at 16kHz → text."""
+        if self._model is None or len(audio_np) < 1600:
+            return ""
+        try:
+            segments, _ = self._model.transcribe(
+                audio_np, language="en", beam_size=1, vad_filter=True
+            )
+            return " ".join(s.text.strip() for s in segments).strip()
+        except Exception as e:
+            logger.error(f"[STT] Transcription error: {e}")
+            return ""
+
+    def is_wake_word(self, text: str) -> bool:
+        t = text.lower().strip()
+        return any(w in t for w in self.WAKE_WORDS)
+
+    def record_until_silence(self, stream) -> np.ndarray:
+        """Record from pyaudio stream until silence detected."""
+        frames = []
+        silent_chunks = 0
+        max_chunks = int(self.MAX_RECORD_SEC * self.SAMPLE_RATE / self.CHUNK)
+        silence_chunks_needed = int(self.SILENCE_DURATION * self.SAMPLE_RATE / self.CHUNK)
+
+        for _ in range(max_chunks):
+            data = stream.read(self.CHUNK, exception_on_overflow=False)
+            frames.append(data)
+            rms = np.sqrt(np.mean(np.frombuffer(data, dtype=np.int16).astype(np.float32) ** 2))
+            if rms < self.SILENCE_THRESHOLD:
+                silent_chunks += 1
+                if silent_chunks >= silence_chunks_needed:
+                    break
+            else:
+                silent_chunks = 0
+
+        audio = np.frombuffer(b"".join(frames), dtype=np.int16).astype(np.float32) / 32768.0
+        return audio
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TTS — Kokoro (local, no internet)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class JanusTTS:
+    """Text-to-speech using Kokoro af_heart voice."""
+
+    SAMPLE_RATE = 24000
+
+    def __init__(self):
+        self._pipeline = None
+        self._load()
+
+    def _load(self):
+        try:
+            from kokoro import KPipeline
+            self._pipeline = KPipeline(lang_code="a")
+            logger.info("[TTS] Kokoro af_heart loaded")
+        except Exception as e:
+            logger.warning(f"[TTS] Kokoro unavailable: {e}")
+
+    def speak(self, text: str, speed: float = 1.0):
+        """Synthesize and play text immediately."""
+        if not text.strip():
+            return
+
+        # Fix pronunciation
+        text = self._fix_names(text)
+
+        audio = self._synthesize(text, speed)
+        if audio is not None:
+            self._play(audio)
+        else:
+            # Fallback: print only
+            print(f"[Janus] {text}")
+
+    def _fix_names(self, text: str) -> str:
+        import re
+        return re.sub(r'\bJanus\b', 'Yanus', text)
+
+    def _synthesize(self, text: str, speed: float = 1.0) -> np.ndarray:
+        if self._pipeline is None:
+            return None
+        try:
+            chunks = []
+            for _, _, audio in self._pipeline(text, voice="af_heart", speed=speed):
+                chunks.append(audio)
+            if not chunks:
+                return None
+            return np.concatenate(chunks)
+        except Exception as e:
+            logger.error(f"[TTS] Synthesis error: {e}")
+            return None
+
+    def _play(self, audio: np.ndarray):
+        try:
+            import pyaudio
+            p = pyaudio.PyAudio()
+            stream = p.open(
+                format=pyaudio.paFloat32,
+                channels=1,
+                rate=self.SAMPLE_RATE,
+                output=True,
+            )
+            stream.write(audio.astype(np.float32).tobytes())
+            stream.stop_stream()
+            stream.close()
+            p.terminate()
+        except Exception as e:
+            logger.error(f"[TTS] Playback error: {e}")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Brain
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _load_brain():
-    """Load the best available brain backend."""
-    # Try JanusGPT first (uses local Avus weights)
     try:
-        from janus_gpt import JanusGPT
-        brain = JanusGPT()
+        from janus_gpt import load_janus_brain
+        brain = load_janus_brain()
         logger.info("[brain] JanusGPT loaded")
         return brain
     except Exception as e:
         logger.warning(f"[brain] JanusGPT unavailable: {e}")
 
-    # Try AvusBrain directly
     try:
         from avus_brain import AvusBrain
         brain = AvusBrain()
@@ -57,13 +187,11 @@ def _load_brain():
     except Exception as e:
         logger.warning(f"[brain] AvusBrain unavailable: {e}")
 
-    # Fallback: simple rule-based responses so voice still works
-    logger.warning("[brain] No AI brain available — using rule-based fallback")
+    logger.warning("[brain] No AI brain — using rule-based fallback")
     return None
 
 
 def _load_human_core():
-    """Load HumanCore for personality and mood."""
     try:
         from janus_human_core import HumanCore
         core = HumanCore(auto_load_mood=True)
@@ -74,91 +202,73 @@ def _load_human_core():
         return None
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Response generation
-# ─────────────────────────────────────────────────────────────────────────────
-
-FALLBACK_RESPONSES = [
-    "I heard you. Let me think about that.",
+_FALLBACKS = [
+    "I heard you.",
     "Interesting. Tell me more.",
-    "I'm still learning, but I'm here.",
+    "I am still learning, but I am here.",
     "Got it. What else is on your mind?",
-    "I'm listening.",
+    "I am listening.",
 ]
+_fb_idx = 0
 
-_fallback_idx = 0
-
-def _fallback_response(text: str) -> str:
-    global _fallback_idx
-    resp = FALLBACK_RESPONSES[_fallback_idx % len(FALLBACK_RESPONSES)]
-    _fallback_idx += 1
-    return resp
+def _fallback(text: str) -> str:
+    global _fb_idx
+    r = _FALLBACKS[_fb_idx % len(_FALLBACKS)]
+    _fb_idx += 1
+    return r
 
 
-def build_response_handler(brain, human):
-    """
-    Returns a function: (user_text, context) -> janus_response_text
-    This is what gets passed to EnhancedVoiceIOSystem.response_handler
-    """
+def generate_response(brain, human, user_text: str, history: list) -> str:
+    """Generate Janus's response to user input."""
+    if human:
+        human.social.observe(user_text)
+        human.mood.drift_toward_neutral()
 
-    def handle(user_text: str, context: str = "") -> str:
-        # Let HumanCore shape the response style
-        if human:
-            human.social.observe(user_text)
-            human.mood.drift_toward_neutral()
+    # Build prompt with recent history
+    context_lines = []
+    for role, text in history[-6:]:  # last 3 turns
+        label = "User" if role == "user" else "Janus"
+        context_lines.append(f"{label}: {text}")
+    context_lines.append(f"User: {user_text}")
+    context_lines.append("Janus:")
+    prompt = "\n".join(context_lines)
 
-        # Build prompt
-        prompt = user_text
-        if context:
-            prompt = f"{context}\nUser: {user_text}\nJanus:"
+    response = None
+    if brain is not None:
+        try:
+            if hasattr(brain, "generate"):
+                response = brain.generate(prompt, max_new=120, temperature=0.7)
+                # Strip any continuation past the first newline
+                response = response.split("\n")[0].strip()
+            elif hasattr(brain, "chat"):
+                response = brain.chat(user_text)
+            elif hasattr(brain, "ask"):
+                response = brain.ask(prompt)
+            elif callable(brain):
+                response = brain(prompt)
+        except Exception as e:
+            logger.error(f"[brain] Error: {e}")
 
-        # Generate response
-        response = None
+    if not response or not response.strip():
+        response = _fallback(user_text)
 
-        if brain is not None:
-            try:
-                if hasattr(brain, "chat"):
-                    response = brain.chat(user_text)
-                elif hasattr(brain, "generate_response"):
-                    response = brain.generate_response(prompt)
-                elif hasattr(brain, "generate"):
-                    import asyncio
-                    response = asyncio.get_event_loop().run_until_complete(
-                        brain.generate(prompt, max_tokens=120)
-                    )
-                elif hasattr(brain, "ask"):
-                    response = brain.ask(prompt)
-                elif callable(brain):
-                    response = brain(prompt)
-            except Exception as e:
-                logger.error(f"[brain] Generation error: {e}")
+    # Apply HumanCore personality
+    if human:
+        try:
+            response = human.social.apply_tone(response)
+            if human.fatigue.state.energy < 0.3:
+                response = human._trim_response(response)
+            human.fatigue.work(minutes=len(response.split()) / 150)
+            human.mood.save()
+        except Exception:
+            pass
 
-        if not response or not response.strip():
-            response = _fallback_response(user_text)
-
-        # Apply HumanCore personality layer
-        if human:
-            try:
-                response = human.social.apply_tone(response)
-                # Trim if tired
-                if human.fatigue.state.energy < 0.3:
-                    response = human._trim_response(response)
-                # Simulate cognitive cost
-                human.fatigue.work(minutes=len(response.split()) / 150)
-                human.mood.save()
-            except Exception:
-                pass
-
-        logger.info(f"[janus] → {response[:80]}{'...' if len(response) > 80 else ''}")
-        # Attach current mood so TTS can use it for prosody
-        handle._last_mood = human.mood.mood if human else None
-        return response
-
-    return handle
+    logger.info(f"[janus] → {response[:80]}")
+    return response
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Main
+# Main conversation loop
 # ─────────────────────────────────────────────────────────────────────────────
 
 def main():
@@ -168,94 +278,114 @@ def main():
     print("╚══════════════════════════════════════════╝")
     print()
 
-    # Load brain and personality
+    # Load components
+    stt   = JanusSTT()
+    tts   = JanusTTS()
     brain = _load_brain()
     human = _load_human_core()
 
-    # Build response handler
-    response_handler = build_response_handler(brain, human)
-
-    # Load voice system
+    # Check microphone
     try:
-        from voice_io_enhanced import EnhancedVoiceIOSystem
-    except ImportError as e:
-        print(f"[error] voice_io_enhanced.py not importable: {e}")
-        print("Make sure pyaudio and numpy are installed:")
-        print("  pip install pyaudio numpy")
+        import pyaudio
+        p = pyaudio.PyAudio()
+        p.terminate()
+    except Exception as e:
+        print(f"[error] pyaudio not available: {e}")
+        print("Install with: pip install pyaudio")
         sys.exit(1)
 
-    # Patch PiperTTS to use Janus's own voice engine (Edge TTS + optional Voicemod)
-    try:
-        from janus_voicemod import JanusVoicemodTTS
-        _janus_vm_tts = JanusVoicemodTTS(auto_connect=True)
-        print("[voice] Using Edge TTS + Voicemod pipeline")
-
-        from voice_io_enhanced import PiperTTS as _PiperTTS
-
-        def _janus_synth(self, text, voice_style="default", emotion="neutral"):
-            speed = {"calm": 0.85, "serious": 0.9, "excited": 1.15}.get(voice_style, 1.0)
-            mood = getattr(_janus_vm_tts.tts, "_last_mood", None)
-            return _janus_vm_tts.tts.synthesize(text, speed=speed, mood=mood)
-
-        _PiperTTS.synthesize = _janus_synth
-    except Exception as e:
-        print(f"[voice] Voicemod TTS unavailable ({e}), using Edge TTS directly")
-        try:
-            from janus_tts import JanusTTS as _JanusTTS
-            _janus_tts_engine = _JanusTTS()
-            from voice_io_enhanced import PiperTTS as _PiperTTS
-
-            def _janus_synth_fallback(self, text, voice_style="default", emotion="neutral"):
-                speed = {"calm": 0.85, "serious": 0.9, "excited": 1.15}.get(voice_style, 1.0)
-                return _janus_tts_engine.synthesize(text, speed=speed)
-
-            _PiperTTS.synthesize = _janus_synth_fallback
-        except Exception as e2:
-            print(f"[voice] TTS fallback also failed: {e2}")
-
-    voice = EnhancedVoiceIOSystem(
-        whisper_model="models/ggml-base.en.bin",
-        piper_model="models/en_US-lessac-medium.onnx",
-    )
-
-    # Wire response handler
-    voice.response_handler = response_handler
-
-    # Wake word callback — mood boost when she wakes up
-    def on_wake():
-        if human:
-            human.mood.update("positive", intensity=0.2)
-        logger.info("[wake] Janus is awake")
-
-    voice.on_wake_word = on_wake
-
-    # Greeting
-    mood_label = human.mood.mood.label if human else "neutral"
+    # Greeting based on mood
+    mood = human.mood.mood.label if human else "neutral"
     greetings = {
-        "excited":  "Hey! I'm here. What's up?",
+        "excited":  "Hey! I am here. What is up?",
         "content":  "Hello. Good to hear from you.",
-        "positive": "Hi there. I'm listening.",
-        "neutral":  "Hello. Say 'Hey Janus' whenever you need me.",
-        "low":      "I'm here. A bit tired, but I'm listening.",
-        "stressed": "I'm here. Take your time.",
+        "positive": "Hi there. I am listening.",
+        "neutral":  "Hello. Say hey Janus whenever you need me.",
+        "low":      "I am here. A bit tired, but I am listening.",
     }
-    greeting = greetings.get(mood_label, "Hello. I'm Janus. Say 'Hey Janus' to talk.")
+    greeting = greetings.get(mood, "Hello. I am Janus. Say hey Janus to talk.")
 
-    # Start voice system
-    voice.start()
-    voice.speak(greeting, voice_style="friendly", block=True)
+    print(f"[Janus] {greeting}")
+    tts.speak(greeting)
 
     print()
     print("  Say 'Hey Janus' to wake her up.")
     print("  Press Ctrl+C to stop.")
     print()
 
+    # Conversation state
+    awake = False
+    last_activity = time.time()
+    SLEEP_AFTER = 30.0  # seconds of silence before going back to sleep
+    history = []
+
+    import pyaudio
+    p = pyaudio.PyAudio()
+    stream = p.open(
+        format=pyaudio.paInt16,
+        channels=1,
+        rate=stt.SAMPLE_RATE,
+        input=True,
+        frames_per_buffer=stt.CHUNK,
+    )
+
     try:
         while True:
-            time.sleep(0.5)
+            # Always listening — record a chunk
+            audio = stt.record_until_silence(stream)
+
+            if len(audio) < 3200:  # too short, skip
+                continue
+
+            text = stt.transcribe(audio)
+            if not text:
+                continue
+
+            logger.info(f"[heard] '{text}'")
+
+            if not awake:
+                # Waiting for wake word
+                if stt.is_wake_word(text):
+                    awake = True
+                    last_activity = time.time()
+                    ack = "Yes? I am listening."
+                    print(f"[Janus] {ack}")
+                    tts.speak(ack, speed=1.05)
+                continue
+
+            # Awake — process as conversation
+            last_activity = time.time()
+
+            # Check for sleep command
+            if any(w in text.lower() for w in ["go to sleep", "goodbye", "stop listening"]):
+                awake = False
+                bye = "Okay. I will be here when you need me."
+                print(f"[Janus] {bye}")
+                tts.speak(bye)
+                continue
+
+            # Generate and speak response
+            print(f"[User] {text}")
+            response = generate_response(brain, human, text, history)
+            history.append(("user", text))
+            history.append(("janus", response))
+            if len(history) > 20:
+                history = history[-20:]
+
+            print(f"[Janus] {response}")
+            tts.speak(response)
+
+            # Auto-sleep after inactivity
+            if time.time() - last_activity > SLEEP_AFTER:
+                awake = False
+                logger.info("[voice] Returning to wake word mode")
+
     except KeyboardInterrupt:
         print("\n[shutdown] Stopping...")
-        voice.stop()
+    finally:
+        stream.stop_stream()
+        stream.close()
+        p.terminate()
         if human:
             human.mood.save()
         print("[shutdown] Done.")
