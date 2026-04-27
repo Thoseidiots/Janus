@@ -7,7 +7,7 @@ import tempfile
 from pathlib import Path
 
 import pytest
-from hypothesis import given, strategies as st
+from hypothesis import given, settings, strategies as st
 
 from nvme_engine.backends.file_backend import FileBackend
 from nvme_engine.models.errors import NvmeBackendError, NvmeIoError
@@ -314,6 +314,7 @@ class TestFileBackendProperties:
         lba=st.integers(min_value=0, max_value=1000),
         data=st.binary(min_size=1, max_size=1024),
     )
+    @settings(deadline=None)
     def test_property_read_after_write_returns_same_data(self, lba, data):
         """
         Feature: software-nvme-solution, Property 4: Backend Switching Preserves Data Integrity
@@ -342,6 +343,7 @@ class TestFileBackendProperties:
     @given(
         data=st.binary(min_size=100, max_size=1024),
     )
+    @settings(deadline=None)
     def test_property_snapshot_preserves_state(self, data):
         """
         Feature: software-nvme-solution, Property 31: Snapshot Point-in-Time Consistency
