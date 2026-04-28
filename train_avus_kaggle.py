@@ -1145,7 +1145,7 @@ def _train_collaborative(device):
                                  "ffn_hidden": cfg_avus.ffn_hidden,
                                  "max_seq_len": cfg_avus.max_seq_len,
                                  "vocab_size": cfg_avus.vocab_size,
-                                 "window_size": cfg_avus.window_size},
+                                 "window_size": getattr(cfg_avus, 'window_size', 0)},
                       "loss": avg_avus}
         torch.save(_avus_ckpt, str(AVUS_WEIGHTS_OUT))
         if avg_avus < avus_best:
