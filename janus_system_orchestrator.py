@@ -418,31 +418,67 @@ class JanusOrchestrator:
 
     def _act(self, plan: str, observation: str):
         """
-        ACT: Avus generates output based on plan.
+        ACT: Use JanusBrain (remote Kaggle GPU or local Avus) to generate output.
         Returns (output, act_type) where act_type is 'action', 'asset', or 'text'.
         """
-        if not self._has_avus:
-            return self._fallback_act(plan)
-
         plan_lower = plan.lower()
 
-        # Screen action
-        if any(k in plan_lower for k in ["screen_action", "click", "type",
-                                          "scroll", "press"]):
-            action = self.avus.generate_action(observation)
-            if action:
-                return action, "action"
+        # Use JanusBrain (routes to Kaggle GPU if available)
+        try:
+            from janus_brain_adapter import JanusBrain
+            brain = JanusBrain()
 
-        # Game asset generation
-        if any(k in plan_lower for k in ["generate_asset", "game", "asset",
-                                          "3d", "terrain", "character"]):
-            prompt = self.current_goal or plan.replace("generate_asset:", "").strip()
-            params = self.avus.generate_3d_params(prompt)
-            return params or {}, "asset"
+            # Screen/desktop action
+            if any(k in plan_lower for k in ["screen_action", "click", "type",
+                                              "scroll", "press", "open", "launch"]):
+                # Use Avus's native action token format
+                prompt = (
+                    f"{observation[:300]} "
+                    f"Goal: {self.current_goal or plan}. "
+                    f"[ACT_START]"
+                )
+                response = brain.ask(prompt)
+                import json, re
+                # Try to extract JSON from ACT_START format
+                try:
+                    # Strip ACT_END if present
+                    if "[ACT_END]" in response:
+                        response = response[:response.index("[ACT_END]")]
+                    action = json.loads(response.strip())
+                    return action, "action"
+                except Exception:
+                    pass
 
-        # General text
-        output = self.avus.generate(plan, max_new_tokens=128)
-        return output, "text"
+            # General task
+            prompt = (
+                f"Goal: {self.current_goal or plan}. "
+                f"Current screen: {observation[:200]}. "
+                f"Next action: [ACT_START]"
+            )
+            output = brain.ask(prompt)
+            return output, "text"
+
+        except Exception as e:
+            log.warning(f"JanusBrain act failed: {e}")
+
+        # Fallback to local Avus if brain fails
+        if self._has_avus:
+            if any(k in plan_lower for k in ["screen_action", "click", "type",
+                                              "scroll", "press"]):
+                action = self.avus.generate_action(observation)
+                if action:
+                    return action, "action"
+
+            if any(k in plan_lower for k in ["generate_asset", "game", "asset",
+                                              "3d", "terrain", "character"]):
+                prompt = self.current_goal or plan.replace("generate_asset:", "").strip()
+                params = self.avus.generate_3d_params(prompt)
+                return params or {}, "asset"
+
+            output = self.avus.generate(plan, max_new_tokens=128)
+            return output, "text"
+
+        return self._fallback_act(plan)
 
     def _fallback_act(self, plan: str):
         """Act without Avus — use structured defaults."""
@@ -525,7 +561,7 @@ class JanusOrchestrator:
             if result.success:
                 self.ceo.record_transaction(
                     "revenue", 0,
-                    f"Cycle {result.cycle_count} completed: {result.phase}")
+                    f"Cycle {result.cycle_num} completed: {result.phase}")
 
             # Update task completion goal
             for goal in self.ceo.get_active_goals():

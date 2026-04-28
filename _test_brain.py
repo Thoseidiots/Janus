@@ -4,4 +4,4 @@ b = JanusBrain()
 print("Backend:", type(b._backend).__name__)
 
 resp = b.ask("GOAL: open notepad\n\nCURRENT SCREEN: desktop\n\nFormat as JSON array.")
-print("Response:", resp[:200])
+print("Response:", resp[:300])

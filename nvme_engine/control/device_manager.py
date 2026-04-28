@@ -16,6 +16,7 @@ from typing import Dict, List, Optional
 from nvme_engine.backends.base import StorageBackendOps
 from nvme_engine.backends.memory_backend import MemoryBackend
 from nvme_engine.commands.namespace_manager import NamespaceManager
+from nvme_engine.control.os_registration import OsDeviceRegistry, BlockDeviceInfo
 from nvme_engine.models.config import NvmeDeviceConfig
 from nvme_engine.models.errors import NvmeDeviceNotFoundError, NvmeResourceError
 
@@ -66,11 +67,18 @@ class DeviceManager:
 
     MAX_DEVICES: int = 256
 
-    def __init__(self) -> None:
-        """Initialize an empty DeviceManager."""
+    def __init__(self, force_simulated_os: bool = True) -> None:
+        """Initialize an empty DeviceManager.
+
+        Args:
+            force_simulated_os: If True (default), use simulated OS registration.
+                                Set to False on Linux with kernel module loaded
+                                to enable real block device registration.
+        """
         self._devices: Dict[int, VirtualDevice] = {}
         self._next_id: int = 1
         self._lock = threading.Lock()
+        self._os_registry = OsDeviceRegistry(force_simulated=force_simulated_os)
 
     # ------------------------------------------------------------------
     # Device lifecycle
@@ -202,9 +210,10 @@ class DeviceManager:
 
     def hot_plug(self, device_id: int) -> None:
         """
-        Hot-plug a device, making it available within 2 seconds.
+        Hot-plug a device, making it available to the OS within 2 seconds.
 
-        Transitions the device to HOT_PLUGGED state and then to ACTIVE.
+        Registers the device with the OS block layer (real or simulated),
+        then transitions the device to ACTIVE state.
 
         Args:
             device_id: ID of the device to hot-plug.
@@ -218,10 +227,17 @@ class DeviceManager:
         with self._lock:
             device.state = DeviceState.HOT_PLUGGED
 
-        # Simulate hot-plug enumeration (must complete within 2 seconds)
-        # In a real implementation this would notify the OS block layer
+        # Register with OS block layer
+        self._os_registry.register(
+            device_id=device_id,
+            name=device.name,
+            capacity_bytes=device.config.capacity_bytes,
+            namespace_count=device.config.namespace_count,
+        )
+
         elapsed = time.monotonic() - start
         if elapsed > 2.0:
+            self._os_registry.unregister(device_id)
             raise NvmeResourceError(
                 f"Hot-plug for device {device_id} exceeded 2-second deadline",
                 device_id=device_id,
@@ -230,12 +246,16 @@ class DeviceManager:
         with self._lock:
             device.state = DeviceState.ACTIVE
 
+    @property
+    def os_registry(self) -> OsDeviceRegistry:
+        """Access the OS device registry (for inspection/testing)."""
+        return self._os_registry
+
     def hot_unplug(self, device_id: int) -> None:
         """
         Hot-unplug a device, gracefully completing or failing pending I/O.
 
-        The device is transitioned to DELETING to signal that no new I/O
-        should be accepted, then resources are released.
+        Unregisters the device from the OS block layer, then releases resources.
 
         Args:
             device_id: ID of the device to hot-unplug.
@@ -243,7 +263,7 @@ class DeviceManager:
         Raises:
             NvmeDeviceNotFoundError: If device_id does not exist or is deleted.
         """
-        # Reuse delete_device for graceful teardown
+        self._os_registry.unregister(device_id)
         self.delete_device(device_id)
 
     def get_device(self, device_id: int) -> VirtualDevice:

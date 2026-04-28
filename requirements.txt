@@ -1,25 +1,26 @@
-# Janus - Core Python dependencies
-# Install with: pip install -r requirements.txt
+# Core dependencies for Janus Dependency Analyzer
+dataclasses; python_version<'3.7'
+typing-extensions>=4.0.0
+pathlib2; python_version<'3.4'
 
-# Web server (daemon API)
-fastapi>=0.100.0
-uvicorn>=0.23.0
+# System interaction
+psutil>=5.8.0
 
-# Environment & security
-python-dotenv>=1.0.0
-cryptography>=41.0.0
+# Network and API
+requests>=2.25.0
 
-# HTTP
-requests>=2.31.0
+# Configuration and data formats
+pyyaml>=6.0
 
-# Computer use / vision
-Pillow>=10.0.0
-pyautogui>=0.9.54
-pytesseract>=0.3.10
-pygetwindow>=0.0.9
-opencv-python>=4.8.0
-imagehash>=4.3.1
+# CLI interface
+click>=8.0.0
+rich>=12.0.0
 
-# Testing
-hypothesis>=6.0.0
-pytest>=7.0.0
+# Report generation
+jinja2>=3.0.0
+
+# Security and encryption
+cryptography>=3.4.0
+
+# Utilities
+packaging>=21.0

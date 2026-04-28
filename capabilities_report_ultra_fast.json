@@ -1,21 +1,6 @@
 {
   "results": [
     {
-      "name": "GitHub Desktop",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\GitHubDesktop\\GitHubDesktop.exe",
-      "installation_path": "C:\\Users\\legac\\AppData\\Local\\GitHubDesktop",
-      "version": "3.5.2",
-      "capabilities": [
-        {
-          "name": "Javascript/Typescript Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 30 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 27 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        }
-      ]
-    },
-    {
       "name": "RustRover",
       "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\RustRover\\bin\\rustrover64.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\RustRover\\bin",
@@ -25,6 +10,21 @@
           "name": "Python Source Analysis",
           "category": "development_tools",
           "description": "Contains 30 python source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        }
+      ]
+    },
+    {
+      "name": "GitHub Desktop",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\GitHubDesktop\\GitHubDesktop.exe",
+      "installation_path": "C:\\Users\\legac\\AppData\\Local\\GitHubDesktop",
+      "version": "3.5.2",
+      "capabilities": [
+        {
+          "name": "Javascript/Typescript Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 30 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 27 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
           "confidence_score": 0.855,
           "detection_method": "oxpecker_analysis"
         }
@@ -59,23 +59,23 @@
       "version": "25.01",
       "capabilities": [
         {
-          "name": "Multimedia File Handler",
-          "category": "multimedia",
-          "description": "7-Zip 25.01 (x64) is the registered shell handler for 3GPP2 Audio/Video, 3GPP Audio/Video, ADTS Audio (+22 more) files (.3g2, .3gp, .3gp2, .3gpp, .aac, .adt, .adts, .aif, .aifc, .aiff (+40 more))",
+          "name": "Development Tools File Handler",
+          "category": "development_tools",
+          "description": "7-Zip 25.01 (x64) is the registered shell handler for Shell Script, MPEG-2 TS Video files (.sh, .ts)",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
         {
           "name": "File Processing File Handler",
           "category": "file_processing",
-          "description": "7-Zip 25.01 (x64) is the registered shell handler for CD Audio Track, MK3D Video, AVCHD Video (+11 more) files (.cda, .htm, .html, .mht, .mhtml, .mk3d, .mts, .p7c, .partial, .vmcz (+7 more))",
+          "description": "7-Zip 25.01 (x64) is the registered shell handler for HTML Document, MHTML Document, Partial Download (+11 more) files (.cda, .htm, .html, .mht, .mhtml, .mk3d, .mts, .p7c, .partial, .vmcz (+7 more))",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
         {
-          "name": "Development Tools File Handler",
-          "category": "development_tools",
-          "description": "7-Zip 25.01 (x64) is the registered shell handler for MPEG-2 TS Video, Shell Script files (.sh, .ts)",
+          "name": "Multimedia File Handler",
+          "category": "multimedia",
+          "description": "7-Zip 25.01 (x64) is the registered shell handler for SVG Document, 3GPP2 Audio/Video, 3GPP Audio/Video (+22 more) files (.3g2, .3gp, .3gp2, .3gpp, .aac, .adt, .adts, .aif, .aifc, .aiff (+40 more))",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
@@ -83,57 +83,6 @@
           "name": "System Integration File Handler",
           "category": "system_integration",
           "description": "7-Zip 25.01 (x64) is the registered shell handler for Pinned Site Shortcut files (.website)",
-          "confidence_score": 0.81,
-          "detection_method": "file_association"
-        }
-      ]
-    },
-    {
-      "name": "Antigravity (User)",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Antigravity\\Antigravity.exe",
-      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Antigravity",
-      "version": "1.23.2",
-      "capabilities": [
-        {
-          "name": "Javascript/Typescript Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 30 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 24 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        }
-      ]
-    },
-    {
-      "name": "Notepad++ (64-bit x64)",
-      "executable_path": "C:\\Program Files\\Notepad++\\notepad++.exe",
-      "installation_path": "C:\\Program Files\\Notepad++",
-      "version": "8.9.1",
-      "capabilities": [
-        {
-          "name": "Multimedia File Handler",
-          "category": "multimedia",
-          "description": "Notepad++ (64-bit x64) is the registered shell handler for 3GPP2 Audio/Video, 3GPP Audio/Video, ADTS Audio (+22 more) files (.3g2, .3gp, .3gp2, .3gpp, .aac, .adt, .adts, .aif, .aifc, .aiff (+40 more))",
-          "confidence_score": 0.81,
-          "detection_method": "file_association"
-        },
-        {
-          "name": "File Processing File Handler",
-          "category": "file_processing",
-          "description": "Notepad++ (64-bit x64) is the registered shell handler for CD Audio Track, MK3D Video, AVCHD Video (+17 more) files (.cda, .compositefont, .htm, .html, .jse, .mht, .mhtml, .mk3d, .mts, .p7c (+13 more))",
-          "confidence_score": 0.81,
-          "detection_method": "file_association"
-        },
-        {
-          "name": "Development Tools File Handler",
-          "category": "development_tools",
-          "description": "Notepad++ (64-bit x64) is the registered shell handler for MPEG-2 TS Video, Shell Script, JavaScript File files (.js, .sh, .ts)",
-          "confidence_score": 0.81,
-          "detection_method": "file_association"
-        },
-        {
-          "name": "System Integration File Handler",
-          "category": "system_integration",
-          "description": "Notepad++ (64-bit x64) is the registered shell handler for Pinned Site Shortcut files (.website)",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         }
@@ -155,29 +104,95 @@
       ]
     },
     {
-      "name": "7z",
-      "executable_path": "C:\\Program Files (x86)\\BlueStacks X\\7z.exe",
-      "installation_path": "C:\\Program Files (x86)\\BlueStacks X",
-      "version": "",
+      "name": "Notepad++ (64-bit x64)",
+      "executable_path": "C:\\Program Files\\Notepad++\\notepad++.exe",
+      "installation_path": "C:\\Program Files\\Notepad++",
+      "version": "8.9.1",
       "capabilities": [
         {
-          "name": "Multimedia File Handler",
-          "category": "multimedia",
-          "description": "7z is the registered shell handler for 3GPP2 Audio/Video, 3GPP Audio/Video, ADTS Audio (+22 more) files (.3g2, .3gp, .3gp2, .3gpp, .aac, .adt, .adts, .aif, .aifc, .aiff (+40 more))",
+          "name": "Development Tools File Handler",
+          "category": "development_tools",
+          "description": "Notepad++ (64-bit x64) is the registered shell handler for Shell Script, MPEG-2 TS Video, JavaScript File files (.js, .sh, .ts)",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
         {
           "name": "File Processing File Handler",
           "category": "file_processing",
-          "description": "7z is the registered shell handler for CD Audio Track, MK3D Video, AVCHD Video (+9 more) files (.cda, .htm, .html, .mht, .mhtml, .mk3d, .mts, .p7c, .partial, .wab (+5 more))",
+          "description": "Notepad++ (64-bit x64) is the registered shell handler for HTML Document, MHTML Document, Partial Download (+17 more) files (.cda, .compositefont, .htm, .html, .jse, .mht, .mhtml, .mk3d, .mts, .p7c (+13 more))",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
         {
-          "name": "Development Tools File Handler",
+          "name": "Multimedia File Handler",
+          "category": "multimedia",
+          "description": "Notepad++ (64-bit x64) is the registered shell handler for SVG Document, 3GPP2 Audio/Video, 3GPP Audio/Video (+22 more) files (.3g2, .3gp, .3gp2, .3gpp, .aac, .adt, .adts, .aif, .aifc, .aiff (+40 more))",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        },
+        {
+          "name": "System Integration File Handler",
+          "category": "system_integration",
+          "description": "Notepad++ (64-bit x64) is the registered shell handler for Pinned Site Shortcut files (.website)",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        }
+      ]
+    },
+    {
+      "name": "Visual Studio Community 2022",
+      "executable_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\devenv.exe",
+      "installation_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE",
+      "version": "17.14.19",
+      "capabilities": [
+        {
+          "name": "Javascript/Typescript Source Analysis",
           "category": "development_tools",
-          "description": "7z is the registered shell handler for MPEG-2 TS Video files (.ts)",
+          "description": "Contains 6 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 1 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        },
+        {
+          "name": "C/C++ Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 24 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        }
+      ]
+    },
+    {
+      "name": "Antigravity (User)",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Antigravity\\Antigravity.exe",
+      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Antigravity",
+      "version": "1.23.2",
+      "capabilities": [
+        {
+          "name": "Javascript/Typescript Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 30 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 24 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        }
+      ]
+    },
+    {
+      "name": "7z",
+      "executable_path": "C:\\Program Files (x86)\\BlueStacks X\\7z.exe",
+      "installation_path": "C:\\Program Files (x86)\\BlueStacks X",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "File Processing File Handler",
+          "category": "file_processing",
+          "description": "7z is the registered shell handler for Digital ID File, Address Book File, HTML Document (+9 more) files (.cda, .htm, .html, .mht, .mhtml, .mk3d, .mts, .p7c, .partial, .wab (+5 more))",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        },
+        {
+          "name": "Multimedia File Handler",
+          "category": "multimedia",
+          "description": "7z is the registered shell handler for SVG Document, 3GPP2 Audio/Video, 3GPP Audio/Video (+22 more) files (.3g2, .3gp, .3gp2, .3gpp, .aac, .adt, .adts, .aif, .aifc, .aiff (+40 more))",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
@@ -187,19 +202,11 @@
           "description": "7z is the registered shell handler for Pinned Site Shortcut files (.website)",
           "confidence_score": 0.81,
           "detection_method": "file_association"
-        }
-      ]
-    },
-    {
-      "name": "MSBuildTaskHost",
-      "executable_path": "C:\\Program Files (x86)\\Microsoft SDKs\\Windows\\v10.0A\\bin\\NETFX 4.8 Tools\\MSBuildTaskHost.exe",
-      "installation_path": "C:\\Program Files (x86)\\Microsoft SDKs\\Windows\\v10.0A\\bin\\NETFX 4.8 Tools",
-      "version": "",
-      "capabilities": [
+        },
         {
-          "name": "File Processing File Handler",
-          "category": "file_processing",
-          "description": "MSBuildTaskHost is the registered shell handler for Microsoft TraceView Project File, WCF Trace File files (.stvproj, .svclog)",
+          "name": "Development Tools File Handler",
+          "category": "development_tools",
+          "description": "7z is the registered shell handler for MPEG-2 TS Video files (.ts)",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         }
@@ -228,17 +235,68 @@
       ]
     },
     {
-      "name": "pgomgr",
-      "executable_path": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\Tools\\MSVC\\14.29.30133\\bin\\Hostx64\\x64\\pgomgr.exe",
-      "installation_path": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\Tools\\MSVC\\14.29.30133\\bin\\Hostx64\\x64",
+      "name": "MSBuildTaskHost",
+      "executable_path": "C:\\Program Files (x86)\\Microsoft SDKs\\Windows\\v10.0A\\bin\\NETFX 4.8 Tools\\MSBuildTaskHost.exe",
+      "installation_path": "C:\\Program Files (x86)\\Microsoft SDKs\\Windows\\v10.0A\\bin\\NETFX 4.8 Tools",
       "version": "",
       "capabilities": [
         {
-          "name": "Runtime API Service",
-          "category": "network_operations",
-          "description": "Application appears to provide API services at runtime",
-          "confidence_score": 0.45,
-          "detection_method": "api_endpoint_analysis"
+          "name": "File Processing File Handler",
+          "category": "file_processing",
+          "description": "MSBuildTaskHost is the registered shell handler for Microsoft TraceView Project File, WCF Trace File files (.stvproj, .svclog)",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        }
+      ]
+    },
+    {
+      "name": "PostgreSQL 18 ",
+      "executable_path": "C:\\Program Files\\PostgreSQL\\18\\uninstall-postgresql.exe",
+      "installation_path": "C:\\Program Files\\PostgreSQL\\18",
+      "version": "18.3-3",
+      "capabilities": [
+        {
+          "name": "C/C++ Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 30 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 1 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        }
+      ]
+    },
+    {
+      "name": "Git",
+      "executable_path": "C:\\Program Files\\Git\\git-bash.exe",
+      "installation_path": "C:\\Program Files\\Git",
+      "version": "2.51.0",
+      "capabilities": [
+        {
+          "name": "Development Tools File Handler",
+          "category": "development_tools",
+          "description": "Git is the registered shell handler for Shell Script, MPEG-2 TS Video files (.sh, .ts)",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        },
+        {
+          "name": "File Processing File Handler",
+          "category": "file_processing",
+          "description": "Git is the registered shell handler for HTML Document, MHTML Document, Partial Download (+11 more) files (.cda, .htm, .html, .mht, .mhtml, .mk3d, .mts, .p7c, .partial, .vmcz (+7 more))",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        },
+        {
+          "name": "Multimedia File Handler",
+          "category": "multimedia",
+          "description": "Git is the registered shell handler for SVG Document, 3GPP2 Audio/Video, 3GPP Audio/Video (+22 more) files (.3g2, .3gp, .3gp2, .3gpp, .aac, .adt, .adts, .aif, .aifc, .aiff (+40 more))",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        },
+        {
+          "name": "System Integration File Handler",
+          "category": "system_integration",
+          "description": "Git is the registered shell handler for Pinned Site Shortcut files (.website)",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
         }
       ]
     },
@@ -273,36 +331,44 @@
       ]
     },
     {
-      "name": "Git",
-      "executable_path": "C:\\Program Files\\Git\\git-bash.exe",
-      "installation_path": "C:\\Program Files\\Git",
-      "version": "2.51.0",
+      "name": "pgomgr",
+      "executable_path": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\Tools\\MSVC\\14.29.30133\\bin\\Hostx64\\x64\\pgomgr.exe",
+      "installation_path": "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\VC\\Tools\\MSVC\\14.29.30133\\bin\\Hostx64\\x64",
+      "version": "",
       "capabilities": [
         {
-          "name": "Multimedia File Handler",
-          "category": "multimedia",
-          "description": "Git is the registered shell handler for 3GPP2 Audio/Video, 3GPP Audio/Video, ADTS Audio (+22 more) files (.3g2, .3gp, .3gp2, .3gpp, .aac, .adt, .adts, .aif, .aifc, .aiff (+40 more))",
-          "confidence_score": 0.81,
-          "detection_method": "file_association"
+          "name": "Runtime API Service",
+          "category": "network_operations",
+          "description": "Application appears to provide API services at runtime",
+          "confidence_score": 0.45,
+          "detection_method": "api_endpoint_analysis"
+        }
+      ]
+    },
+    {
+      "name": "JetBrains ReSharper in Visual Studio Community 2022",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\JetBrains\\Installations\\ReSharperPlatformVs17_7ac215e7\\CleanUpProfiler.arm64.exe",
+      "installation_path": "C:\\Users\\legac\\AppData\\Local\\JetBrains\\Installations\\ReSharperPlatformVs17_7ac215e7",
+      "version": "2025.3.0.3",
+      "capabilities": [
+        {
+          "name": "C/C++ Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 11 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        },
+        {
+          "name": "Javascript/Typescript Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 19 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 3 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
         },
         {
           "name": "File Processing File Handler",
           "category": "file_processing",
-          "description": "Git is the registered shell handler for CD Audio Track, MK3D Video, AVCHD Video (+11 more) files (.cda, .htm, .html, .mht, .mhtml, .mk3d, .mts, .p7c, .partial, .vmcz (+7 more))",
-          "confidence_score": 0.81,
-          "detection_method": "file_association"
-        },
-        {
-          "name": "Development Tools File Handler",
-          "category": "development_tools",
-          "description": "Git is the registered shell handler for MPEG-2 TS Video, Shell Script files (.sh, .ts)",
-          "confidence_score": 0.81,
-          "detection_method": "file_association"
-        },
-        {
-          "name": "System Integration File Handler",
-          "category": "system_integration",
-          "description": "Git is the registered shell handler for Pinned Site Shortcut files (.website)",
+          "description": "JetBrains ReSharper in Visual Studio Community 2022 is the registered shell handler for dotPeek Assembly list, dotMemory \"Self-Profiling\" Snapshot, dotMemory Workspace (+2 more) files (.dcvr, .dmrs, .dmw, .dpl, .dtp, .dtt)",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         }
@@ -330,23 +396,16 @@
       "version": "",
       "capabilities": [
         {
-          "name": "Multimedia File Handler",
-          "category": "multimedia",
-          "description": "7za is the registered shell handler for 3GPP2 Audio/Video, 3GPP Audio/Video, ADTS Audio (+22 more) files (.3g2, .3gp, .3gp2, .3gpp, .aac, .adt, .adts, .aif, .aifc, .aiff (+40 more))",
-          "confidence_score": 0.81,
-          "detection_method": "file_association"
-        },
-        {
           "name": "File Processing File Handler",
           "category": "file_processing",
-          "description": "7za is the registered shell handler for CD Audio Track, MK3D Video, AVCHD Video (+9 more) files (.cda, .htm, .html, .mht, .mhtml, .mk3d, .mts, .p7c, .partial, .wab (+5 more))",
+          "description": "7za is the registered shell handler for Digital ID File, Address Book File, HTML Document (+9 more) files (.cda, .htm, .html, .mht, .mhtml, .mk3d, .mts, .p7c, .partial, .wab (+5 more))",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
         {
-          "name": "Development Tools File Handler",
-          "category": "development_tools",
-          "description": "7za is the registered shell handler for MPEG-2 TS Video files (.ts)",
+          "name": "Multimedia File Handler",
+          "category": "multimedia",
+          "description": "7za is the registered shell handler for SVG Document, 3GPP2 Audio/Video, 3GPP Audio/Video (+22 more) files (.3g2, .3gp, .3gp2, .3gpp, .aac, .adt, .adts, .aif, .aifc, .aiff (+40 more))",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
@@ -356,55 +415,11 @@
           "description": "7za is the registered shell handler for Pinned Site Shortcut files (.website)",
           "confidence_score": 0.81,
           "detection_method": "file_association"
-        }
-      ]
-    },
-    {
-      "name": "Visual Studio Community 2022",
-      "executable_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\devenv.exe",
-      "installation_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE",
-      "version": "17.14.19",
-      "capabilities": [
-        {
-          "name": "Javascript/Typescript Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 6 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 1 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
         },
         {
-          "name": "C/C++ Source Analysis",
+          "name": "Development Tools File Handler",
           "category": "development_tools",
-          "description": "Contains 24 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        }
-      ]
-    },
-    {
-      "name": "JetBrains ReSharper in Visual Studio Community 2022",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\JetBrains\\Installations\\ReSharperPlatformVs17_7ac215e7\\CleanUpProfiler.arm64.exe",
-      "installation_path": "C:\\Users\\legac\\AppData\\Local\\JetBrains\\Installations\\ReSharperPlatformVs17_7ac215e7",
-      "version": "2025.3.0.3",
-      "capabilities": [
-        {
-          "name": "C/C++ Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 11 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        },
-        {
-          "name": "Javascript/Typescript Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 19 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 3 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        },
-        {
-          "name": "File Processing File Handler",
-          "category": "file_processing",
-          "description": "JetBrains ReSharper in Visual Studio Community 2022 is the registered shell handler for dotMemory \"Self-Profiling\" Snapshot, dotMemory Workspace, dotCover Snapshot (+2 more) files (.dcvr, .dmrs, .dmw, .dpl, .dtp, .dtt)",
+          "description": "7za is the registered shell handler for MPEG-2 TS Video files (.ts)",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         }
@@ -439,23 +454,23 @@
       "version": "",
       "capabilities": [
         {
-          "name": "Multimedia File Handler",
-          "category": "multimedia",
-          "description": "7zFM is the registered shell handler for 3GPP2 Audio/Video, 3GPP Audio/Video, ADTS Audio (+22 more) files (.3g2, .3gp, .3gp2, .3gpp, .aac, .adt, .adts, .aif, .aifc, .aiff (+40 more))",
+          "name": "Development Tools File Handler",
+          "category": "development_tools",
+          "description": "7zFM is the registered shell handler for Shell Script, MPEG-2 TS Video files (.sh, .ts)",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
         {
           "name": "File Processing File Handler",
           "category": "file_processing",
-          "description": "7zFM is the registered shell handler for CD Audio Track, MK3D Video, AVCHD Video (+11 more) files (.cda, .htm, .html, .mht, .mhtml, .mk3d, .mts, .p7c, .partial, .vmcz (+7 more))",
+          "description": "7zFM is the registered shell handler for HTML Document, MHTML Document, Partial Download (+11 more) files (.cda, .htm, .html, .mht, .mhtml, .mk3d, .mts, .p7c, .partial, .vmcz (+7 more))",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
         {
-          "name": "Development Tools File Handler",
-          "category": "development_tools",
-          "description": "7zFM is the registered shell handler for MPEG-2 TS Video, Shell Script files (.sh, .ts)",
+          "name": "Multimedia File Handler",
+          "category": "multimedia",
+          "description": "7zFM is the registered shell handler for SVG Document, 3GPP2 Audio/Video, 3GPP Audio/Video (+22 more) files (.3g2, .3gp, .3gp2, .3gpp, .aac, .adt, .adts, .aif, .aifc, .aiff (+40 more))",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
@@ -475,23 +490,23 @@
       "version": "",
       "capabilities": [
         {
-          "name": "Multimedia File Handler",
-          "category": "multimedia",
-          "description": "7zG is the registered shell handler for 3GPP2 Audio/Video, 3GPP Audio/Video, ADTS Audio (+22 more) files (.3g2, .3gp, .3gp2, .3gpp, .aac, .adt, .adts, .aif, .aifc, .aiff (+40 more))",
+          "name": "Development Tools File Handler",
+          "category": "development_tools",
+          "description": "7zG is the registered shell handler for Shell Script, MPEG-2 TS Video files (.sh, .ts)",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
         {
           "name": "File Processing File Handler",
           "category": "file_processing",
-          "description": "7zG is the registered shell handler for CD Audio Track, MK3D Video, AVCHD Video (+11 more) files (.cda, .htm, .html, .mht, .mhtml, .mk3d, .mts, .p7c, .partial, .vmcz (+7 more))",
+          "description": "7zG is the registered shell handler for HTML Document, MHTML Document, Partial Download (+11 more) files (.cda, .htm, .html, .mht, .mhtml, .mk3d, .mts, .p7c, .partial, .vmcz (+7 more))",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
         {
-          "name": "Development Tools File Handler",
-          "category": "development_tools",
-          "description": "7zG is the registered shell handler for MPEG-2 TS Video, Shell Script files (.sh, .ts)",
+          "name": "Multimedia File Handler",
+          "category": "multimedia",
+          "description": "7zG is the registered shell handler for SVG Document, 3GPP2 Audio/Video, 3GPP Audio/Video (+22 more) files (.3g2, .3gp, .3gp2, .3gpp, .aac, .adt, .adts, .aif, .aifc, .aiff (+40 more))",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
@@ -511,23 +526,23 @@
       "version": "",
       "capabilities": [
         {
-          "name": "Multimedia File Handler",
-          "category": "multimedia",
-          "description": "7zr is the registered shell handler for 3GPP2 Audio/Video, 3GPP Audio/Video, ADTS Audio (+22 more) files (.3g2, .3gp, .3gp2, .3gpp, .aac, .adt, .adts, .aif, .aifc, .aiff (+40 more))",
+          "name": "Development Tools File Handler",
+          "category": "development_tools",
+          "description": "7zr is the registered shell handler for Shell Script, MPEG-2 TS Video files (.sh, .ts)",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
         {
           "name": "File Processing File Handler",
           "category": "file_processing",
-          "description": "7zr is the registered shell handler for CD Audio Track, MK3D Video, AVCHD Video (+11 more) files (.cda, .htm, .html, .mht, .mhtml, .mk3d, .mts, .p7c, .partial, .vmcz (+7 more))",
+          "description": "7zr is the registered shell handler for HTML Document, MHTML Document, Partial Download (+11 more) files (.cda, .htm, .html, .mht, .mhtml, .mk3d, .mts, .p7c, .partial, .vmcz (+7 more))",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
         {
-          "name": "Development Tools File Handler",
-          "category": "development_tools",
-          "description": "7zr is the registered shell handler for MPEG-2 TS Video, Shell Script files (.sh, .ts)",
+          "name": "Multimedia File Handler",
+          "category": "multimedia",
+          "description": "7zr is the registered shell handler for SVG Document, 3GPP2 Audio/Video, 3GPP Audio/Video (+22 more) files (.3g2, .3gp, .3gp2, .3gpp, .aac, .adt, .adts, .aif, .aifc, .aiff (+40 more))",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
@@ -547,23 +562,23 @@
       "version": "",
       "capabilities": [
         {
-          "name": "Multimedia File Handler",
-          "category": "multimedia",
-          "description": "ffmpeg is the registered shell handler for 3GPP2 Audio/Video, 3GPP Audio/Video, ADTS Audio (+22 more) files (.3g2, .3gp, .3gp2, .3gpp, .aac, .adt, .adts, .aif, .aifc, .aiff (+40 more))",
+          "name": "Development Tools File Handler",
+          "category": "development_tools",
+          "description": "ffmpeg is the registered shell handler for Shell Script, MPEG-2 TS Video files (.sh, .ts)",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
         {
           "name": "File Processing File Handler",
           "category": "file_processing",
-          "description": "ffmpeg is the registered shell handler for CD Audio Track, MK3D Video, AVCHD Video (+11 more) files (.cda, .htm, .html, .mht, .mhtml, .mk3d, .mts, .p7c, .partial, .vmcz (+7 more))",
+          "description": "ffmpeg is the registered shell handler for HTML Document, MHTML Document, Partial Download (+11 more) files (.cda, .htm, .html, .mht, .mhtml, .mk3d, .mts, .p7c, .partial, .vmcz (+7 more))",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
         {
-          "name": "Development Tools File Handler",
-          "category": "development_tools",
-          "description": "ffmpeg is the registered shell handler for MPEG-2 TS Video, Shell Script files (.sh, .ts)",
+          "name": "Multimedia File Handler",
+          "category": "multimedia",
+          "description": "ffmpeg is the registered shell handler for SVG Document, 3GPP2 Audio/Video, 3GPP Audio/Video (+22 more) files (.3g2, .3gp, .3gp2, .3gpp, .aac, .adt, .adts, .aif, .aifc, .aiff (+40 more))",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
@@ -583,23 +598,23 @@
       "version": "",
       "capabilities": [
         {
-          "name": "Multimedia File Handler",
-          "category": "multimedia",
-          "description": "HD-Aapt is the registered shell handler for 3GPP2 Audio/Video, 3GPP Audio/Video, ADTS Audio (+22 more) files (.3g2, .3gp, .3gp2, .3gpp, .aac, .adt, .adts, .aif, .aifc, .aiff (+40 more))",
+          "name": "Development Tools File Handler",
+          "category": "development_tools",
+          "description": "HD-Aapt is the registered shell handler for Shell Script, MPEG-2 TS Video files (.sh, .ts)",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
         {
           "name": "File Processing File Handler",
           "category": "file_processing",
-          "description": "HD-Aapt is the registered shell handler for CD Audio Track, MK3D Video, AVCHD Video (+11 more) files (.cda, .htm, .html, .mht, .mhtml, .mk3d, .mts, .p7c, .partial, .vmcz (+7 more))",
+          "description": "HD-Aapt is the registered shell handler for HTML Document, MHTML Document, Partial Download (+11 more) files (.cda, .htm, .html, .mht, .mhtml, .mk3d, .mts, .p7c, .partial, .vmcz (+7 more))",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
         {
-          "name": "Development Tools File Handler",
-          "category": "development_tools",
-          "description": "HD-Aapt is the registered shell handler for MPEG-2 TS Video, Shell Script files (.sh, .ts)",
+          "name": "Multimedia File Handler",
+          "category": "multimedia",
+          "description": "HD-Aapt is the registered shell handler for SVG Document, 3GPP2 Audio/Video, 3GPP Audio/Video (+22 more) files (.3g2, .3gp, .3gp2, .3gpp, .aac, .adt, .adts, .aif, .aifc, .aiff (+40 more))",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
@@ -658,42 +673,6 @@
       ]
     },
     {
-      "name": "git-cmd",
-      "executable_path": "C:\\Program Files\\Git\\git-cmd.exe",
-      "installation_path": "C:\\Program Files\\Git",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Multimedia File Handler",
-          "category": "multimedia",
-          "description": "git-cmd is the registered shell handler for 3GPP2 Audio/Video, 3GPP Audio/Video, ADTS Audio (+22 more) files (.3g2, .3gp, .3gp2, .3gpp, .aac, .adt, .adts, .aif, .aifc, .aiff (+40 more))",
-          "confidence_score": 0.81,
-          "detection_method": "file_association"
-        },
-        {
-          "name": "File Processing File Handler",
-          "category": "file_processing",
-          "description": "git-cmd is the registered shell handler for CD Audio Track, MK3D Video, AVCHD Video (+11 more) files (.cda, .htm, .html, .mht, .mhtml, .mk3d, .mts, .p7c, .partial, .vmcz (+7 more))",
-          "confidence_score": 0.81,
-          "detection_method": "file_association"
-        },
-        {
-          "name": "Development Tools File Handler",
-          "category": "development_tools",
-          "description": "git-cmd is the registered shell handler for MPEG-2 TS Video, Shell Script files (.sh, .ts)",
-          "confidence_score": 0.81,
-          "detection_method": "file_association"
-        },
-        {
-          "name": "System Integration File Handler",
-          "category": "system_integration",
-          "description": "git-cmd is the registered shell handler for Pinned Site Shortcut files (.website)",
-          "confidence_score": 0.81,
-          "detection_method": "file_association"
-        }
-      ]
-    },
-    {
       "name": "MakeCert",
       "executable_path": "C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.26100.0\\arm64\\MakeCert.exe",
       "installation_path": "C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.26100.0\\arm64",
@@ -705,6 +684,42 @@
           "description": "Contains 1 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
           "confidence_score": 0.855,
           "detection_method": "oxpecker_analysis"
+        }
+      ]
+    },
+    {
+      "name": "git-cmd",
+      "executable_path": "C:\\Program Files\\Git\\git-cmd.exe",
+      "installation_path": "C:\\Program Files\\Git",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Development Tools File Handler",
+          "category": "development_tools",
+          "description": "git-cmd is the registered shell handler for Shell Script, MPEG-2 TS Video files (.sh, .ts)",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        },
+        {
+          "name": "File Processing File Handler",
+          "category": "file_processing",
+          "description": "git-cmd is the registered shell handler for HTML Document, MHTML Document, Partial Download (+11 more) files (.cda, .htm, .html, .mht, .mhtml, .mk3d, .mts, .p7c, .partial, .vmcz (+7 more))",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        },
+        {
+          "name": "Multimedia File Handler",
+          "category": "multimedia",
+          "description": "git-cmd is the registered shell handler for SVG Document, 3GPP2 Audio/Video, 3GPP Audio/Video (+22 more) files (.3g2, .3gp, .3gp2, .3gpp, .aac, .adt, .adts, .aif, .aifc, .aiff (+40 more))",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        },
+        {
+          "name": "System Integration File Handler",
+          "category": "system_integration",
+          "description": "git-cmd is the registered shell handler for Pinned Site Shortcut files (.website)",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
         }
       ]
     },
@@ -754,21 +769,6 @@
       ]
     },
     {
-      "name": "git-http-fetch",
-      "executable_path": "C:\\Program Files\\Git\\mingw64\\libexec\\git-core\\git-http-fetch.exe",
-      "installation_path": "C:\\Program Files\\Git\\mingw64\\libexec\\git-core",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Runtime API Service",
-          "category": "network_operations",
-          "description": "Application appears to provide API services at runtime",
-          "confidence_score": 0.45,
-          "detection_method": "api_endpoint_analysis"
-        }
-      ]
-    },
-    {
       "name": "git-http-push",
       "executable_path": "C:\\Program Files\\Git\\mingw64\\libexec\\git-core\\git-http-push.exe",
       "installation_path": "C:\\Program Files\\Git\\mingw64\\libexec\\git-core",
@@ -784,8 +784,8 @@
       ]
     },
     {
-      "name": "git-remote-https",
-      "executable_path": "C:\\Program Files\\Git\\mingw64\\libexec\\git-core\\git-remote-https.exe",
+      "name": "git-http-fetch",
+      "executable_path": "C:\\Program Files\\Git\\mingw64\\libexec\\git-core\\git-http-fetch.exe",
       "installation_path": "C:\\Program Files\\Git\\mingw64\\libexec\\git-core",
       "version": "",
       "capabilities": [
@@ -801,6 +801,21 @@
     {
       "name": "git-remote-http",
       "executable_path": "C:\\Program Files\\Git\\mingw64\\libexec\\git-core\\git-remote-http.exe",
+      "installation_path": "C:\\Program Files\\Git\\mingw64\\libexec\\git-core",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Runtime API Service",
+          "category": "network_operations",
+          "description": "Application appears to provide API services at runtime",
+          "confidence_score": 0.45,
+          "detection_method": "api_endpoint_analysis"
+        }
+      ]
+    },
+    {
+      "name": "git-remote-https",
+      "executable_path": "C:\\Program Files\\Git\\mingw64\\libexec\\git-core\\git-remote-https.exe",
       "installation_path": "C:\\Program Files\\Git\\mingw64\\libexec\\git-core",
       "version": "",
       "capabilities": [
@@ -835,23 +850,23 @@
       "version": "",
       "capabilities": [
         {
-          "name": "Multimedia File Handler",
-          "category": "multimedia",
-          "description": "git-bash is the registered shell handler for 3GPP2 Audio/Video, 3GPP Audio/Video, ADTS Audio (+22 more) files (.3g2, .3gp, .3gp2, .3gpp, .aac, .adt, .adts, .aif, .aifc, .aiff (+40 more))",
+          "name": "Development Tools File Handler",
+          "category": "development_tools",
+          "description": "git-bash is the registered shell handler for Shell Script, MPEG-2 TS Video files (.sh, .ts)",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
         {
           "name": "File Processing File Handler",
           "category": "file_processing",
-          "description": "git-bash is the registered shell handler for CD Audio Track, MK3D Video, AVCHD Video (+11 more) files (.cda, .htm, .html, .mht, .mhtml, .mk3d, .mts, .p7c, .partial, .vmcz (+7 more))",
+          "description": "git-bash is the registered shell handler for HTML Document, MHTML Document, Partial Download (+11 more) files (.cda, .htm, .html, .mht, .mhtml, .mk3d, .mts, .p7c, .partial, .vmcz (+7 more))",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
         {
-          "name": "Development Tools File Handler",
-          "category": "development_tools",
-          "description": "git-bash is the registered shell handler for MPEG-2 TS Video, Shell Script files (.sh, .ts)",
+          "name": "Multimedia File Handler",
+          "category": "multimedia",
+          "description": "git-bash is the registered shell handler for SVG Document, 3GPP2 Audio/Video, 3GPP Audio/Video (+22 more) files (.3g2, .3gp, .3gp2, .3gpp, .aac, .adt, .adts, .aif, .aifc, .aiff (+40 more))",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
@@ -910,6 +925,28 @@
       ]
     },
     {
+      "name": "ErrorsGen",
+      "executable_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24\\ErrorsGen.exe",
+      "installation_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Javascript/Typescript Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 29 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 7 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        },
+        {
+          "name": "C/C++ Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 1 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        }
+      ]
+    },
+    {
       "name": "JetBrains.ClrStack.Worker",
       "executable_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24\\JetBrains.ClrStack.Worker.exe",
       "installation_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24",
@@ -954,52 +991,8 @@
       ]
     },
     {
-      "name": "ErrorsGen",
-      "executable_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24\\ErrorsGen.exe",
-      "installation_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Javascript/Typescript Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 29 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 7 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        },
-        {
-          "name": "C/C++ Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 1 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        }
-      ]
-    },
-    {
       "name": "CsLex",
       "executable_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24\\CsLex.exe",
-      "installation_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Javascript/Typescript Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 29 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 7 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        },
-        {
-          "name": "C/C++ Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 1 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        }
-      ]
-    },
-    {
-      "name": "JetBrains.Debugger.Worker64ac",
-      "executable_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24\\JetBrains.Debugger.Worker64ac.exe",
       "installation_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24",
       "version": "",
       "capabilities": [
@@ -1086,50 +1079,6 @@
       ]
     },
     {
-      "name": "JetBrains.Debugger.Worker32c",
-      "executable_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24\\JetBrains.Debugger.Worker32c.exe",
-      "installation_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Javascript/Typescript Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 29 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 7 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        },
-        {
-          "name": "C/C++ Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 1 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        }
-      ]
-    },
-    {
-      "name": "JetBrains.Debugger.Worker64c",
-      "executable_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24\\JetBrains.Debugger.Worker64c.exe",
-      "installation_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Javascript/Typescript Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 29 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 7 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        },
-        {
-          "name": "C/C++ Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 1 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        }
-      ]
-    },
-    {
       "name": "JetBrains.Debugger.Worker",
       "executable_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24\\JetBrains.Debugger.Worker.exe",
       "installation_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24",
@@ -1152,8 +1101,30 @@
       ]
     },
     {
-      "name": "JetBrains.EntityFramework.Runner620",
-      "executable_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24\\JetBrains.EntityFramework.Runner620.exe",
+      "name": "JetBrains.Debugger.Worker32c",
+      "executable_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24\\JetBrains.Debugger.Worker32c.exe",
+      "installation_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Javascript/Typescript Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 29 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 7 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        },
+        {
+          "name": "C/C++ Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 1 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        }
+      ]
+    },
+    {
+      "name": "JetBrains.Debugger.Worker64ac",
+      "executable_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24\\JetBrains.Debugger.Worker64ac.exe",
       "installation_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24",
       "version": "",
       "capabilities": [
@@ -1203,8 +1174,30 @@
       ]
     },
     {
-      "name": "JetBrains.ProcessEnumerator.Worker32",
-      "executable_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24\\JetBrains.ProcessEnumerator.Worker32.exe",
+      "name": "JetBrains.EntityFramework.Runner620",
+      "executable_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24\\JetBrains.EntityFramework.Runner620.exe",
+      "installation_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Javascript/Typescript Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 29 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 7 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        },
+        {
+          "name": "C/C++ Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 1 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        }
+      ]
+    },
+    {
+      "name": "JetBrains.Debugger.Worker64c",
+      "executable_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24\\JetBrains.Debugger.Worker64c.exe",
       "installation_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24",
       "version": "",
       "capabilities": [
@@ -1269,8 +1262,8 @@
       ]
     },
     {
-      "name": "JetBrains.ReSharper.Features.Xaml.Previewer.External",
-      "executable_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24\\JetBrains.ReSharper.Features.Xaml.Previewer.External.exe",
+      "name": "JetBrains.ProcessEnumerator.Worker32",
+      "executable_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24\\JetBrains.ProcessEnumerator.Worker32.exe",
       "installation_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24",
       "version": "",
       "capabilities": [
@@ -1291,8 +1284,8 @@
       ]
     },
     {
-      "name": "JetBrains.Rider.Backend.EnvironmentAnalyzer",
-      "executable_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24\\JetBrains.Rider.Backend.EnvironmentAnalyzer.exe",
+      "name": "JetBrains.ReSharper.Features.Xaml.Previewer.External",
+      "executable_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24\\JetBrains.ReSharper.Features.Xaml.Previewer.External.exe",
       "installation_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24",
       "version": "",
       "capabilities": [
@@ -1337,6 +1330,28 @@
     {
       "name": "JetBrains.Rider.AfterInstall",
       "executable_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24\\JetBrains.Rider.AfterInstall.exe",
+      "installation_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Javascript/Typescript Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 29 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 7 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        },
+        {
+          "name": "C/C++ Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 1 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        }
+      ]
+    },
+    {
+      "name": "JetBrains.Rider.Backend.EnvironmentAnalyzer",
+      "executable_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24\\JetBrains.Rider.Backend.EnvironmentAnalyzer.exe",
       "installation_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24",
       "version": "",
       "capabilities": [
@@ -1475,8 +1490,8 @@
       ]
     },
     {
-      "name": "Rider.Backend64",
-      "executable_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24\\Rider.Backend64.exe",
+      "name": "TokenGenerator",
+      "executable_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24\\TokenGenerator.exe",
       "installation_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24",
       "version": "",
       "capabilities": [
@@ -1497,8 +1512,8 @@
       ]
     },
     {
-      "name": "TokenGenerator",
-      "executable_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24\\TokenGenerator.exe",
+      "name": "Rider.Backend64",
+      "executable_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24\\Rider.Backend64.exe",
       "installation_path": "C:\\Program Files\\JetBrains\\Rider\\r2r\\2025.3.0R\\A2C8D91541CD8908DEE32B7F8605B24",
       "version": "",
       "capabilities": [
@@ -1571,75 +1586,9 @@
         {
           "name": "File Processing File Handler",
           "category": "file_processing",
-          "description": "livecapture is the registered shell handler for Microsoft Access Database, Microsoft Access Signed Package, Microsoft Access ACCDE Database (+79 more) files (.accdb, .accdc, .accde, .accdr, .accdt, .accdu, .accdw, .ade, .adn, .adp (+79 more))",
+          "description": "livecapture is the registered shell handler for Microsoft OneNote Section, Microsoft OneNote Single File Package, Microsoft OneNote 2003 Table Of Contents (+79 more) files (.accdb, .accdc, .accde, .accdr, .accdt, .accdu, .accdw, .ade, .adn, .adp (+79 more))",
           "confidence_score": 0.81,
           "detection_method": "file_association"
-        }
-      ]
-    },
-    {
-      "name": "Microsoft.VisualStudio.Extensibility.Finalizer",
-      "executable_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\Microsoft.VisualStudio.Extensibility.Finalizer.exe",
-      "installation_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Javascript/Typescript Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 6 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 1 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        },
-        {
-          "name": "C/C++ Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 24 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        }
-      ]
-    },
-    {
-      "name": "devenv",
-      "executable_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\devenv.exe",
-      "installation_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Javascript/Typescript Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 6 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 1 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        },
-        {
-          "name": "C/C++ Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 24 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        }
-      ]
-    },
-    {
-      "name": "DDConfigCA",
-      "executable_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\DDConfigCA.exe",
-      "installation_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Javascript/Typescript Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 6 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 1 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        },
-        {
-          "name": "C/C++ Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 24 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
         }
       ]
     },
@@ -1687,8 +1636,52 @@
       ]
     },
     {
-      "name": "MSTest",
-      "executable_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\MSTest.exe",
+      "name": "devenv",
+      "executable_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\devenv.exe",
+      "installation_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Javascript/Typescript Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 6 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 1 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        },
+        {
+          "name": "C/C++ Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 24 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        }
+      ]
+    },
+    {
+      "name": "Microsoft.VisualStudio.Extensibility.Finalizer",
+      "executable_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\Microsoft.VisualStudio.Extensibility.Finalizer.exe",
+      "installation_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Javascript/Typescript Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 6 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 1 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        },
+        {
+          "name": "C/C++ Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 24 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        }
+      ]
+    },
+    {
+      "name": "DDConfigCA",
+      "executable_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\DDConfigCA.exe",
       "installation_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE",
       "version": "",
       "capabilities": [
@@ -1753,6 +1746,28 @@
       ]
     },
     {
+      "name": "MSTest",
+      "executable_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\MSTest.exe",
+      "installation_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Javascript/Typescript Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 6 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 1 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        },
+        {
+          "name": "C/C++ Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 24 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        }
+      ]
+    },
+    {
       "name": "Publicize",
       "executable_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\Publicize.exe",
       "installation_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE",
@@ -1797,28 +1812,6 @@
       ]
     },
     {
-      "name": "T4VSHostProcess",
-      "executable_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\T4VSHostProcess.exe",
-      "installation_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Javascript/Typescript Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 6 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 1 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        },
-        {
-          "name": "C/C++ Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 24 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        }
-      ]
-    },
-    {
       "name": "symsrvhost",
       "executable_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\symsrvhost.exe",
       "installation_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE",
@@ -1841,8 +1834,8 @@
       ]
     },
     {
-      "name": "TextTransform",
-      "executable_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\TextTransform.exe",
+      "name": "T4VSHostProcess",
+      "executable_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\T4VSHostProcess.exe",
       "installation_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE",
       "version": "",
       "capabilities": [
@@ -1863,8 +1856,8 @@
       ]
     },
     {
-      "name": "UserControlTestContainer",
-      "executable_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\UserControlTestContainer.exe",
+      "name": "TextTransform",
+      "executable_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\TextTransform.exe",
       "installation_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE",
       "version": "",
       "capabilities": [
@@ -1929,6 +1922,28 @@
       ]
     },
     {
+      "name": "UserControlTestContainer",
+      "executable_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\UserControlTestContainer.exe",
+      "installation_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Javascript/Typescript Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 6 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 1 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        },
+        {
+          "name": "C/C++ Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 24 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        }
+      ]
+    },
+    {
       "name": "VsGa",
       "executable_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\VsGa.exe",
       "installation_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE",
@@ -1973,8 +1988,8 @@
       ]
     },
     {
-      "name": "vshost-clr2",
-      "executable_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\vshost-clr2.exe",
+      "name": "vshost",
+      "executable_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\vshost.exe",
       "installation_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE",
       "version": "",
       "capabilities": [
@@ -1995,8 +2010,8 @@
       ]
     },
     {
-      "name": "vshost",
-      "executable_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\vshost.exe",
+      "name": "vshost-clr2",
+      "executable_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\vshost-clr2.exe",
       "installation_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE",
       "version": "",
       "capabilities": [
@@ -2061,8 +2076,8 @@
       ]
     },
     {
-      "name": "VSInitializer",
-      "executable_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\VSInitializer.exe",
+      "name": "VSLaunchBrowser",
+      "executable_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\VSLaunchBrowser.exe",
       "installation_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE",
       "version": "",
       "capabilities": [
@@ -2083,8 +2098,8 @@
       ]
     },
     {
-      "name": "VSLaunchBrowser",
-      "executable_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\VSLaunchBrowser.exe",
+      "name": "VSInitializer",
+      "executable_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\VSInitializer.exe",
       "installation_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE",
       "version": "",
       "capabilities": [
@@ -2157,28 +2172,6 @@
       ]
     },
     {
-      "name": "VsRegEdit",
-      "executable_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\VsRegEdit.exe",
-      "installation_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Javascript/Typescript Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 6 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 1 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        },
-        {
-          "name": "C/C++ Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 24 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        }
-      ]
-    },
-    {
       "name": "VsGraphicsDesktopEngine",
       "executable_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\Extensions\\Microsoft\\Graphics\\Debugger\\VsGraphicsDesktopEngine.exe",
       "installation_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\Extensions\\Microsoft\\Graphics\\Debugger",
@@ -2203,6 +2196,28 @@
           "name": "Javascript/Typescript Source Analysis",
           "category": "development_tools",
           "description": "Contains 9 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 7 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        }
+      ]
+    },
+    {
+      "name": "VsRegEdit",
+      "executable_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\VsRegEdit.exe",
+      "installation_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Javascript/Typescript Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 6 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 1 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        },
+        {
+          "name": "C/C++ Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 24 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
           "confidence_score": 0.855,
           "detection_method": "oxpecker_analysis"
         }
@@ -2252,8 +2267,8 @@
       ]
     },
     {
-      "name": "Microsoft.PythonTools.RunElevated",
-      "executable_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\Extensions\\Microsoft\\Python\\Core\\Microsoft.PythonTools.RunElevated.exe",
+      "name": "Microsoft.PythonTools.Attacher",
+      "executable_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\Extensions\\Microsoft\\Python\\Core\\Microsoft.PythonTools.Attacher.exe",
       "installation_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\Extensions\\Microsoft\\Python\\Core",
       "version": "",
       "capabilities": [
@@ -2274,8 +2289,8 @@
       ]
     },
     {
-      "name": "Microsoft.PythonTools.Attacher",
-      "executable_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\Extensions\\Microsoft\\Python\\Core\\Microsoft.PythonTools.Attacher.exe",
+      "name": "Microsoft.PythonTools.RunElevated",
+      "executable_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\Extensions\\Microsoft\\Python\\Core\\Microsoft.PythonTools.RunElevated.exe",
       "installation_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\Common7\\IDE\\Extensions\\Microsoft\\Python\\Core",
       "version": "",
       "capabilities": [
@@ -2333,42 +2348,6 @@
       ]
     },
     {
-      "name": "notepad++",
-      "executable_path": "C:\\Program Files\\Notepad++\\notepad++.exe",
-      "installation_path": "C:\\Program Files\\Notepad++",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Multimedia File Handler",
-          "category": "multimedia",
-          "description": "notepad++ is the registered shell handler for 3GPP2 Audio/Video, 3GPP Audio/Video, ADTS Audio (+22 more) files (.3g2, .3gp, .3gp2, .3gpp, .aac, .adt, .adts, .aif, .aifc, .aiff (+40 more))",
-          "confidence_score": 0.81,
-          "detection_method": "file_association"
-        },
-        {
-          "name": "File Processing File Handler",
-          "category": "file_processing",
-          "description": "notepad++ is the registered shell handler for CD Audio Track, MK3D Video, AVCHD Video (+17 more) files (.cda, .compositefont, .htm, .html, .jse, .mht, .mhtml, .mk3d, .mts, .p7c (+13 more))",
-          "confidence_score": 0.81,
-          "detection_method": "file_association"
-        },
-        {
-          "name": "Development Tools File Handler",
-          "category": "development_tools",
-          "description": "notepad++ is the registered shell handler for MPEG-2 TS Video, Shell Script, JavaScript File files (.js, .sh, .ts)",
-          "confidence_score": 0.81,
-          "detection_method": "file_association"
-        },
-        {
-          "name": "System Integration File Handler",
-          "category": "system_integration",
-          "description": "notepad++ is the registered shell handler for Pinned Site Shortcut files (.website)",
-          "confidence_score": 0.81,
-          "detection_method": "file_association"
-        }
-      ]
-    },
-    {
       "name": "vcpkg",
       "executable_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\vcpkg\\vcpkg.exe",
       "installation_path": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\vcpkg",
@@ -2391,89 +2370,38 @@
       ]
     },
     {
-      "name": "SenseAPToast",
-      "executable_path": "C:\\Program Files\\Windows Defender Advanced Threat Protection\\SenseAPToast.exe",
-      "installation_path": "C:\\Program Files\\Windows Defender Advanced Threat Protection",
+      "name": "notepad++",
+      "executable_path": "C:\\Program Files\\Notepad++\\notepad++.exe",
+      "installation_path": "C:\\Program Files\\Notepad++",
       "version": "",
       "capabilities": [
         {
-          "name": "Multimedia File Handler",
-          "category": "multimedia",
-          "description": "SenseAPToast is the registered shell handler for 3GPP2 Audio/Video, 3GPP Audio/Video, ADTS Audio (+22 more) files (.3g2, .3gp, .3gp2, .3gpp, .aac, .adt, .adts, .aif, .aifc, .aiff (+40 more))",
+          "name": "Development Tools File Handler",
+          "category": "development_tools",
+          "description": "notepad++ is the registered shell handler for Shell Script, MPEG-2 TS Video, JavaScript File files (.js, .sh, .ts)",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
         {
           "name": "File Processing File Handler",
           "category": "file_processing",
-          "description": "SenseAPToast is the registered shell handler for CD Audio Track, MK3D Video, AVCHD Video (+11 more) files (.cda, .htm, .html, .mht, .mhtml, .mk3d, .mts, .p7c, .partial, .vmcz (+7 more))",
+          "description": "notepad++ is the registered shell handler for HTML Document, MHTML Document, Partial Download (+17 more) files (.cda, .compositefont, .htm, .html, .jse, .mht, .mhtml, .mk3d, .mts, .p7c (+13 more))",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
-        {
-          "name": "Development Tools File Handler",
-          "category": "development_tools",
-          "description": "SenseAPToast is the registered shell handler for MPEG-2 TS Video, Shell Script files (.sh, .ts)",
-          "confidence_score": 0.81,
-          "detection_method": "file_association"
-        },
-        {
-          "name": "System Integration File Handler",
-          "category": "system_integration",
-          "description": "SenseAPToast is the registered shell handler for Pinned Site Shortcut files (.website)",
-          "confidence_score": 0.81,
-          "detection_method": "file_association"
-        }
-      ]
-    },
-    {
-      "name": "SenseDlpProcessor",
-      "executable_path": "C:\\Program Files\\Windows Defender Advanced Threat Protection\\SenseDlpProcessor.exe",
-      "installation_path": "C:\\Program Files\\Windows Defender Advanced Threat Protection",
-      "version": "",
-      "capabilities": [
         {
           "name": "Multimedia File Handler",
           "category": "multimedia",
-          "description": "SenseDlpProcessor is the registered shell handler for 3GPP2 Audio/Video, 3GPP Audio/Video, ADTS Audio (+22 more) files (.3g2, .3gp, .3gp2, .3gpp, .aac, .adt, .adts, .aif, .aifc, .aiff (+40 more))",
-          "confidence_score": 0.81,
-          "detection_method": "file_association"
-        },
-        {
-          "name": "File Processing File Handler",
-          "category": "file_processing",
-          "description": "SenseDlpProcessor is the registered shell handler for CD Audio Track, MK3D Video, AVCHD Video (+11 more) files (.cda, .htm, .html, .mht, .mhtml, .mk3d, .mts, .p7c, .partial, .vmcz (+7 more))",
-          "confidence_score": 0.81,
-          "detection_method": "file_association"
-        },
-        {
-          "name": "Development Tools File Handler",
-          "category": "development_tools",
-          "description": "SenseDlpProcessor is the registered shell handler for MPEG-2 TS Video, Shell Script files (.sh, .ts)",
+          "description": "notepad++ is the registered shell handler for SVG Document, 3GPP2 Audio/Video, 3GPP Audio/Video (+22 more) files (.3g2, .3gp, .3gp2, .3gpp, .aac, .adt, .adts, .aif, .aifc, .aiff (+40 more))",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
         {
           "name": "System Integration File Handler",
           "category": "system_integration",
-          "description": "SenseDlpProcessor is the registered shell handler for Pinned Site Shortcut files (.website)",
+          "description": "notepad++ is the registered shell handler for Pinned Site Shortcut files (.website)",
           "confidence_score": 0.81,
           "detection_method": "file_association"
-        }
-      ]
-    },
-    {
-      "name": "tsgo",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Antigravity\\resources\\app\\node_modules\\@typescript\\native-preview-win32-x64\\lib\\tsgo.exe",
-      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Antigravity\\resources\\app\\node_modules\\@typescript\\native-preview-win32-x64\\lib",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Runtime API Service",
-          "category": "network_operations",
-          "description": "Application appears to provide API services at runtime",
-          "confidence_score": 0.45,
-          "detection_method": "api_endpoint_analysis"
         }
       ]
     },
@@ -2500,6 +2428,339 @@
       ]
     },
     {
+      "name": "kinit",
+      "executable_path": "C:\\Program Files\\PostgreSQL\\18\\pgAdmin 4\\python\\kinit.exe",
+      "installation_path": "C:\\Program Files\\PostgreSQL\\18\\pgAdmin 4\\python",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Python Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 30 python source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        }
+      ]
+    },
+    {
+      "name": "cli-arm64",
+      "executable_path": "C:\\Program Files\\PostgreSQL\\18\\pgAdmin 4\\python\\Lib\\site-packages\\setuptools\\cli-arm64.exe",
+      "installation_path": "C:\\Program Files\\PostgreSQL\\18\\pgAdmin 4\\python\\Lib\\site-packages\\setuptools",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Python Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 30 python source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        }
+      ]
+    },
+    {
+      "name": "redis-benchmark",
+      "executable_path": "C:\\Program Files\\Redis\\redis-benchmark.exe",
+      "installation_path": "C:\\Program Files\\Redis",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Development Tools File Handler",
+          "category": "development_tools",
+          "description": "redis-benchmark is the registered shell handler for Shell Script, MPEG-2 TS Video files (.sh, .ts)",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        },
+        {
+          "name": "File Processing File Handler",
+          "category": "file_processing",
+          "description": "redis-benchmark is the registered shell handler for HTML Document, MHTML Document, Partial Download (+11 more) files (.cda, .htm, .html, .mht, .mhtml, .mk3d, .mts, .p7c, .partial, .vmcz (+7 more))",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        },
+        {
+          "name": "Multimedia File Handler",
+          "category": "multimedia",
+          "description": "redis-benchmark is the registered shell handler for SVG Document, 3GPP2 Audio/Video, 3GPP Audio/Video (+22 more) files (.3g2, .3gp, .3gp2, .3gpp, .aac, .adt, .adts, .aif, .aifc, .aiff (+40 more))",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        },
+        {
+          "name": "System Integration File Handler",
+          "category": "system_integration",
+          "description": "redis-benchmark is the registered shell handler for Pinned Site Shortcut files (.website)",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        }
+      ]
+    },
+    {
+      "name": "redis-check-aof",
+      "executable_path": "C:\\Program Files\\Redis\\redis-check-aof.exe",
+      "installation_path": "C:\\Program Files\\Redis",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Development Tools File Handler",
+          "category": "development_tools",
+          "description": "redis-check-aof is the registered shell handler for Shell Script, MPEG-2 TS Video files (.sh, .ts)",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        },
+        {
+          "name": "File Processing File Handler",
+          "category": "file_processing",
+          "description": "redis-check-aof is the registered shell handler for HTML Document, MHTML Document, Partial Download (+11 more) files (.cda, .htm, .html, .mht, .mhtml, .mk3d, .mts, .p7c, .partial, .vmcz (+7 more))",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        },
+        {
+          "name": "Multimedia File Handler",
+          "category": "multimedia",
+          "description": "redis-check-aof is the registered shell handler for SVG Document, 3GPP2 Audio/Video, 3GPP Audio/Video (+22 more) files (.3g2, .3gp, .3gp2, .3gpp, .aac, .adt, .adts, .aif, .aifc, .aiff (+40 more))",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        },
+        {
+          "name": "System Integration File Handler",
+          "category": "system_integration",
+          "description": "redis-check-aof is the registered shell handler for Pinned Site Shortcut files (.website)",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        }
+      ]
+    },
+    {
+      "name": "redis-check-dump",
+      "executable_path": "C:\\Program Files\\Redis\\redis-check-dump.exe",
+      "installation_path": "C:\\Program Files\\Redis",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Development Tools File Handler",
+          "category": "development_tools",
+          "description": "redis-check-dump is the registered shell handler for Shell Script, MPEG-2 TS Video files (.sh, .ts)",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        },
+        {
+          "name": "File Processing File Handler",
+          "category": "file_processing",
+          "description": "redis-check-dump is the registered shell handler for HTML Document, MHTML Document, Partial Download (+11 more) files (.cda, .htm, .html, .mht, .mhtml, .mk3d, .mts, .p7c, .partial, .vmcz (+7 more))",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        },
+        {
+          "name": "Multimedia File Handler",
+          "category": "multimedia",
+          "description": "redis-check-dump is the registered shell handler for SVG Document, 3GPP2 Audio/Video, 3GPP Audio/Video (+22 more) files (.3g2, .3gp, .3gp2, .3gpp, .aac, .adt, .adts, .aif, .aifc, .aiff (+40 more))",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        },
+        {
+          "name": "System Integration File Handler",
+          "category": "system_integration",
+          "description": "redis-check-dump is the registered shell handler for Pinned Site Shortcut files (.website)",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        }
+      ]
+    },
+    {
+      "name": "redis-cli",
+      "executable_path": "C:\\Program Files\\Redis\\redis-cli.exe",
+      "installation_path": "C:\\Program Files\\Redis",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Development Tools File Handler",
+          "category": "development_tools",
+          "description": "redis-cli is the registered shell handler for Shell Script, MPEG-2 TS Video files (.sh, .ts)",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        },
+        {
+          "name": "File Processing File Handler",
+          "category": "file_processing",
+          "description": "redis-cli is the registered shell handler for HTML Document, MHTML Document, Partial Download (+11 more) files (.cda, .htm, .html, .mht, .mhtml, .mk3d, .mts, .p7c, .partial, .vmcz (+7 more))",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        },
+        {
+          "name": "Multimedia File Handler",
+          "category": "multimedia",
+          "description": "redis-cli is the registered shell handler for SVG Document, 3GPP2 Audio/Video, 3GPP Audio/Video (+22 more) files (.3g2, .3gp, .3gp2, .3gpp, .aac, .adt, .adts, .aif, .aifc, .aiff (+40 more))",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        },
+        {
+          "name": "System Integration File Handler",
+          "category": "system_integration",
+          "description": "redis-cli is the registered shell handler for Pinned Site Shortcut files (.website)",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        }
+      ]
+    },
+    {
+      "name": "redis-server",
+      "executable_path": "C:\\Program Files\\Redis\\redis-server.exe",
+      "installation_path": "C:\\Program Files\\Redis",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Development Tools File Handler",
+          "category": "development_tools",
+          "description": "redis-server is the registered shell handler for Shell Script, MPEG-2 TS Video files (.sh, .ts)",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        },
+        {
+          "name": "File Processing File Handler",
+          "category": "file_processing",
+          "description": "redis-server is the registered shell handler for HTML Document, MHTML Document, Partial Download (+11 more) files (.cda, .htm, .html, .mht, .mhtml, .mk3d, .mts, .p7c, .partial, .vmcz (+7 more))",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        },
+        {
+          "name": "Multimedia File Handler",
+          "category": "multimedia",
+          "description": "redis-server is the registered shell handler for SVG Document, 3GPP2 Audio/Video, 3GPP Audio/Video (+22 more) files (.3g2, .3gp, .3gp2, .3gpp, .aac, .adt, .adts, .aif, .aifc, .aiff (+40 more))",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        },
+        {
+          "name": "System Integration File Handler",
+          "category": "system_integration",
+          "description": "redis-server is the registered shell handler for Pinned Site Shortcut files (.website)",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        },
+        {
+          "name": "API Configuration (redis.windows-service.conf)",
+          "category": "network_operations",
+          "description": "API configuration found in redis.windows-service.conf",
+          "confidence_score": 0.54,
+          "detection_method": "api_endpoint_analysis"
+        },
+        {
+          "name": "API Configuration (redis.windows.conf)",
+          "category": "network_operations",
+          "description": "API configuration found in redis.windows.conf",
+          "confidence_score": 0.54,
+          "detection_method": "api_endpoint_analysis"
+        },
+        {
+          "name": "Runtime API Service",
+          "category": "network_operations",
+          "description": "Application appears to provide API services at runtime",
+          "confidence_score": 0.45,
+          "detection_method": "api_endpoint_analysis"
+        }
+      ]
+    },
+    {
+      "name": "SenseAPToast",
+      "executable_path": "C:\\Program Files\\Windows Defender Advanced Threat Protection\\SenseAPToast.exe",
+      "installation_path": "C:\\Program Files\\Windows Defender Advanced Threat Protection",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Development Tools File Handler",
+          "category": "development_tools",
+          "description": "SenseAPToast is the registered shell handler for Shell Script, MPEG-2 TS Video files (.sh, .ts)",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        },
+        {
+          "name": "File Processing File Handler",
+          "category": "file_processing",
+          "description": "SenseAPToast is the registered shell handler for HTML Document, MHTML Document, Partial Download (+11 more) files (.cda, .htm, .html, .mht, .mhtml, .mk3d, .mts, .p7c, .partial, .vmcz (+7 more))",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        },
+        {
+          "name": "Multimedia File Handler",
+          "category": "multimedia",
+          "description": "SenseAPToast is the registered shell handler for SVG Document, 3GPP2 Audio/Video, 3GPP Audio/Video (+22 more) files (.3g2, .3gp, .3gp2, .3gpp, .aac, .adt, .adts, .aif, .aifc, .aiff (+40 more))",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        },
+        {
+          "name": "System Integration File Handler",
+          "category": "system_integration",
+          "description": "SenseAPToast is the registered shell handler for Pinned Site Shortcut files (.website)",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        }
+      ]
+    },
+    {
+      "name": "tsgo",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Antigravity\\resources\\app\\node_modules\\@typescript\\native-preview-win32-x64\\lib\\tsgo.exe",
+      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Antigravity\\resources\\app\\node_modules\\@typescript\\native-preview-win32-x64\\lib",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Runtime API Service",
+          "category": "network_operations",
+          "description": "Application appears to provide API services at runtime",
+          "confidence_score": 0.45,
+          "detection_method": "api_endpoint_analysis"
+        }
+      ]
+    },
+    {
+      "name": "SenseDlpProcessor",
+      "executable_path": "C:\\Program Files\\Windows Defender Advanced Threat Protection\\SenseDlpProcessor.exe",
+      "installation_path": "C:\\Program Files\\Windows Defender Advanced Threat Protection",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Development Tools File Handler",
+          "category": "development_tools",
+          "description": "SenseDlpProcessor is the registered shell handler for Shell Script, MPEG-2 TS Video files (.sh, .ts)",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        },
+        {
+          "name": "File Processing File Handler",
+          "category": "file_processing",
+          "description": "SenseDlpProcessor is the registered shell handler for HTML Document, MHTML Document, Partial Download (+11 more) files (.cda, .htm, .html, .mht, .mhtml, .mk3d, .mts, .p7c, .partial, .vmcz (+7 more))",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        },
+        {
+          "name": "Multimedia File Handler",
+          "category": "multimedia",
+          "description": "SenseDlpProcessor is the registered shell handler for SVG Document, 3GPP2 Audio/Video, 3GPP Audio/Video (+22 more) files (.3g2, .3gp, .3gp2, .3gpp, .aac, .adt, .adts, .aif, .aifc, .aiff (+40 more))",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        },
+        {
+          "name": "System Integration File Handler",
+          "category": "system_integration",
+          "description": "SenseDlpProcessor is the registered shell handler for Pinned Site Shortcut files (.website)",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        }
+      ]
+    },
+    {
+      "name": "gui-arm64",
+      "executable_path": "C:\\Program Files\\PostgreSQL\\18\\pgAdmin 4\\python\\Lib\\site-packages\\setuptools\\gui-arm64.exe",
+      "installation_path": "C:\\Program Files\\PostgreSQL\\18\\pgAdmin 4\\python\\Lib\\site-packages\\setuptools",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Python Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 30 python source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        }
+      ]
+    },
+    {
       "name": "restarter",
       "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\PyCharm Community\\bin\\restarter.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\PyCharm Community\\bin",
@@ -2522,21 +2783,6 @@
       ]
     },
     {
-      "name": "roots",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Kiro\\resources\\app\\extensions\\kiro.kiro-agent\\node_modules\\win-ca\\lib\\roots.exe",
-      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Kiro\\resources\\app\\extensions\\kiro.kiro-agent\\node_modules\\win-ca\\lib",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Javascript/Typescript Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 12 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 13 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        }
-      ]
-    },
-    {
       "name": "java",
       "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\PyCharm Community\\jbr\\bin\\java.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\PyCharm Community\\jbr\\bin",
@@ -2554,6 +2800,21 @@
     {
       "name": "javac",
       "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\PyCharm Community\\jbr\\bin\\javac.exe",
+      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\PyCharm Community\\jbr\\bin",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Runtime API Service",
+          "category": "network_operations",
+          "description": "Application appears to provide API services at runtime",
+          "confidence_score": 0.45,
+          "detection_method": "api_endpoint_analysis"
+        }
+      ]
+    },
+    {
+      "name": "javadoc",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\PyCharm Community\\jbr\\bin\\javadoc.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\PyCharm Community\\jbr\\bin",
       "version": "",
       "capabilities": [
@@ -2626,74 +2887,15 @@
       ]
     },
     {
-      "name": "javadoc",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\PyCharm Community\\jbr\\bin\\javadoc.exe",
-      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\PyCharm Community\\jbr\\bin",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Runtime API Service",
-          "category": "network_operations",
-          "description": "Application appears to provide API services at runtime",
-          "confidence_score": 0.45,
-          "detection_method": "api_endpoint_analysis"
-        }
-      ]
-    },
-    {
-      "name": "Code",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe",
-      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Microsoft VS Code",
+      "name": "roots",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Kiro\\resources\\app\\extensions\\kiro.kiro-agent\\node_modules\\win-ca\\lib\\roots.exe",
+      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Kiro\\resources\\app\\extensions\\kiro.kiro-agent\\node_modules\\win-ca\\lib",
       "version": "",
       "capabilities": [
         {
           "name": "Javascript/Typescript Source Analysis",
           "category": "development_tools",
-          "description": "Contains 29 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 69 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        },
-        {
-          "name": "C/C++ Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 1 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        }
-      ]
-    },
-    {
-      "name": "Pythonwin",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\pythonwin\\Pythonwin.exe",
-      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\pythonwin",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Python Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 29 python source file(s). Oxpecker static analysis: 0 error(s), 9 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        },
-        {
-          "name": "Runtime API Service",
-          "category": "network_operations",
-          "description": "Application appears to provide API services at runtime",
-          "confidence_score": 0.45,
-          "detection_method": "api_endpoint_analysis"
-        }
-      ]
-    },
-    {
-      "name": "cli-arm64",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\setuptools\\cli-arm64.exe",
-      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\setuptools",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Python Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 30 python source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "description": "Contains 12 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 13 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
           "confidence_score": 0.855,
           "detection_method": "oxpecker_analysis"
         }
@@ -2730,23 +2932,8 @@
       ]
     },
     {
-      "name": "gui-arm64",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\setuptools\\gui-arm64.exe",
-      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\setuptools",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Python Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 30 python source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        }
-      ]
-    },
-    {
-      "name": "cbor2",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\cbor2.exe",
+      "name": "celery",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\celery.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
       "version": "",
       "capabilities": [
@@ -2760,8 +2947,8 @@
       ]
     },
     {
-      "name": "celery",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\celery.exe",
+      "name": "cbor2",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\cbor2.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
       "version": "",
       "capabilities": [
@@ -2790,6 +2977,28 @@
       ]
     },
     {
+      "name": "Code",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe",
+      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Microsoft VS Code",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Javascript/Typescript Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 29 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 69 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        },
+        {
+          "name": "C/C++ Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 1 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        }
+      ]
+    },
+    {
       "name": "check-model",
       "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\check-model.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
@@ -2805,17 +3014,24 @@
       ]
     },
     {
-      "name": "csv2rdf",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\csv2rdf.exe",
-      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
+      "name": "Pythonwin",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\pythonwin\\Pythonwin.exe",
+      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\pythonwin",
       "version": "",
       "capabilities": [
         {
           "name": "Python Source Analysis",
           "category": "development_tools",
-          "description": "Contains 4 python source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "description": "Contains 29 python source file(s). Oxpecker static analysis: 0 error(s), 9 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
           "confidence_score": 0.855,
           "detection_method": "oxpecker_analysis"
+        },
+        {
+          "name": "Runtime API Service",
+          "category": "network_operations",
+          "description": "Application appears to provide API services at runtime",
+          "confidence_score": 0.45,
+          "detection_method": "api_endpoint_analysis"
         }
       ]
     },
@@ -2842,8 +3058,8 @@
       ]
     },
     {
-      "name": "csvw2json",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\csvw2json.exe",
+      "name": "csv2rdf",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\csv2rdf.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
       "version": "",
       "capabilities": [
@@ -2872,8 +3088,8 @@
       ]
     },
     {
-      "name": "csvw2markdown",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\csvw2markdown.exe",
+      "name": "csvw2json",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\csvw2json.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
       "version": "",
       "capabilities": [
@@ -2887,8 +3103,8 @@
       ]
     },
     {
-      "name": "csvwdescribe",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\csvwdescribe.exe",
+      "name": "csvw2markdown",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\csvw2markdown.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
       "version": "",
       "capabilities": [
@@ -2917,8 +3133,8 @@
       ]
     },
     {
-      "name": "csvwvalidate",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\csvwvalidate.exe",
+      "name": "csvwdescribe",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\csvwdescribe.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
       "version": "",
       "capabilities": [
@@ -2934,6 +3150,21 @@
     {
       "name": "ct2-fairseq-converter",
       "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\ct2-fairseq-converter.exe",
+      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Python Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 4 python source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        }
+      ]
+    },
+    {
+      "name": "csvwvalidate",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\csvwvalidate.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
       "version": "",
       "capabilities": [
@@ -3007,8 +3238,8 @@
       ]
     },
     {
-      "name": "ct2-transformers-converter",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\ct2-transformers-converter.exe",
+      "name": "ct2-opus-mt-converter",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\ct2-opus-mt-converter.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
       "version": "",
       "capabilities": [
@@ -3022,8 +3253,8 @@
       ]
     },
     {
-      "name": "ct2-opus-mt-converter",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\ct2-opus-mt-converter.exe",
+      "name": "ct2-transformers-converter",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\ct2-transformers-converter.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
       "version": "",
       "capabilities": [
@@ -3067,45 +3298,8 @@
       ]
     },
     {
-      "name": "flask",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\flask.exe",
-      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Python Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 4 python source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        },
-        {
-          "name": "Runtime API Service",
-          "category": "network_operations",
-          "description": "Application appears to provide API services at runtime",
-          "confidence_score": 0.45,
-          "detection_method": "api_endpoint_analysis"
-        }
-      ]
-    },
-    {
       "name": "f2py",
       "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\f2py.exe",
-      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Python Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 4 python source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        }
-      ]
-    },
-    {
-      "name": "git-filter-repo",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\git-filter-repo.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
       "version": "",
       "capabilities": [
@@ -3141,6 +3335,58 @@
       ]
     },
     {
+      "name": "flask",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\flask.exe",
+      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Python Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 4 python source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        },
+        {
+          "name": "Runtime API Service",
+          "category": "network_operations",
+          "description": "Application appears to provide API services at runtime",
+          "confidence_score": 0.45,
+          "detection_method": "api_endpoint_analysis"
+        }
+      ]
+    },
+    {
+      "name": "git-filter-repo",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\git-filter-repo.exe",
+      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Python Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 4 python source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        }
+      ]
+    },
+    {
+      "name": "hf",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\hf.exe",
+      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Python Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 4 python source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        }
+      ]
+    },
+    {
       "name": "httpx",
       "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\httpx.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
@@ -3163,8 +3409,8 @@
       ]
     },
     {
-      "name": "hf",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\hf.exe",
+      "name": "hypothesis",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\hypothesis.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
       "version": "",
       "capabilities": [
@@ -3180,21 +3426,6 @@
     {
       "name": "huggingface-cli",
       "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\huggingface-cli.exe",
-      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Python Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 4 python source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        }
-      ]
-    },
-    {
-      "name": "hypothesis",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\hypothesis.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
       "version": "",
       "capabilities": [
@@ -3230,21 +3461,6 @@
       ]
     },
     {
-      "name": "isympy",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\isympy.exe",
-      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Python Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 4 python source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        }
-      ]
-    },
-    {
       "name": "ipython3",
       "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\ipython3.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
@@ -3263,6 +3479,36 @@
           "description": "Application appears to provide API services at runtime",
           "confidence_score": 0.45,
           "detection_method": "api_endpoint_analysis"
+        }
+      ]
+    },
+    {
+      "name": "isympy",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\isympy.exe",
+      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Python Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 4 python source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        }
+      ]
+    },
+    {
+      "name": "langid",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\langid.exe",
+      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Python Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 4 python source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
         }
       ]
     },
@@ -3297,8 +3543,8 @@
       ]
     },
     {
-      "name": "langid",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\langid.exe",
+      "name": "markdown-it",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\markdown-it.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
       "version": "",
       "capabilities": [
@@ -3314,21 +3560,6 @@
     {
       "name": "markdownify",
       "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\markdownify.exe",
-      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Python Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 4 python source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        }
-      ]
-    },
-    {
-      "name": "markdown-it",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\markdown-it.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
       "version": "",
       "capabilities": [
@@ -3402,21 +3633,6 @@
       ]
     },
     {
-      "name": "moggsplit",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\moggsplit.exe",
-      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Python Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 4 python source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        }
-      ]
-    },
-    {
       "name": "mss",
       "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\mss.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
@@ -3434,6 +3650,21 @@
     {
       "name": "mutagen-inspect",
       "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\mutagen-inspect.exe",
+      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Python Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 4 python source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        }
+      ]
+    },
+    {
+      "name": "moggsplit",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\moggsplit.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
       "version": "",
       "capabilities": [
@@ -3492,21 +3723,6 @@
       ]
     },
     {
-      "name": "openai",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\openai.exe",
-      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Python Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 4 python source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        }
-      ]
-    },
-    {
       "name": "numpy-config",
       "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\numpy-config.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
@@ -3537,6 +3753,21 @@
       ]
     },
     {
+      "name": "openai",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\openai.exe",
+      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Python Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 4 python source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        }
+      ]
+    },
+    {
       "name": "phonemize",
       "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\phonemize.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
@@ -3548,6 +3779,28 @@
           "description": "Contains 4 python source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
           "confidence_score": 0.855,
           "detection_method": "oxpecker_analysis"
+        }
+      ]
+    },
+    {
+      "name": "protoc-gen-grpclib_python",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\protoc-gen-grpclib_python.exe",
+      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Python Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 4 python source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        },
+        {
+          "name": "Runtime API Service",
+          "category": "network_operations",
+          "description": "Application appears to provide API services at runtime",
+          "confidence_score": 0.45,
+          "detection_method": "api_endpoint_analysis"
         }
       ]
     },
@@ -3584,28 +3837,6 @@
     {
       "name": "protoc-gen-python_grpc",
       "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\protoc-gen-python_grpc.exe",
-      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Python Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 4 python source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        },
-        {
-          "name": "Runtime API Service",
-          "category": "network_operations",
-          "description": "Application appears to provide API services at runtime",
-          "confidence_score": 0.45,
-          "detection_method": "api_endpoint_analysis"
-        }
-      ]
-    },
-    {
-      "name": "protoc-gen-grpclib_python",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\protoc-gen-grpclib_python.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
       "version": "",
       "capabilities": [
@@ -3716,21 +3947,6 @@
       ]
     },
     {
-      "name": "pyrsa-keygen",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\pyrsa-keygen.exe",
-      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Python Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 4 python source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        }
-      ]
-    },
-    {
       "name": "pyrsa-decrypt",
       "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\pyrsa-decrypt.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
@@ -3776,8 +3992,8 @@
       ]
     },
     {
-      "name": "pyrsa-verify",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\pyrsa-verify.exe",
+      "name": "pyrsa-keygen",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\pyrsa-keygen.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
       "version": "",
       "capabilities": [
@@ -3793,6 +4009,21 @@
     {
       "name": "pytesseract",
       "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\pytesseract.exe",
+      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Python Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 4 python source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        }
+      ]
+    },
+    {
+      "name": "pyrsa-verify",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\pyrsa-verify.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
       "version": "",
       "capabilities": [
@@ -3836,21 +4067,6 @@
       ]
     },
     {
-      "name": "pywin32_testall",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\pywin32_testall.exe",
-      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Python Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 4 python source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        }
-      ]
-    },
-    {
       "name": "qr",
       "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\qr.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
@@ -3866,8 +4082,8 @@
       ]
     },
     {
-      "name": "rdfgraphisomorphism",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\rdfgraphisomorphism.exe",
+      "name": "pywin32_testall",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\pywin32_testall.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
       "version": "",
       "capabilities": [
@@ -3896,8 +4112,8 @@
       ]
     },
     {
-      "name": "rdfs2dot",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\rdfs2dot.exe",
+      "name": "rdfgraphisomorphism",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\rdfgraphisomorphism.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
       "version": "",
       "capabilities": [
@@ -3926,8 +4142,38 @@
       ]
     },
     {
+      "name": "rdfs2dot",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\rdfs2dot.exe",
+      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Python Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 4 python source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        }
+      ]
+    },
+    {
       "name": "read_zbar",
       "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\read_zbar.exe",
+      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Python Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 4 python source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        }
+      ]
+    },
+    {
+      "name": "segments",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\segments.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
       "version": "",
       "capabilities": [
@@ -3958,21 +4204,6 @@
     {
       "name": "spacy",
       "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\spacy.exe",
-      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Python Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 4 python source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        }
-      ]
-    },
-    {
-      "name": "segments",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\segments.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
       "version": "",
       "capabilities": [
@@ -4121,6 +4352,21 @@
       ]
     },
     {
+      "name": "watchfiles",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\watchfiles.exe",
+      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Python Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 4 python source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        }
+      ]
+    },
+    {
       "name": "uvicorn",
       "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\uvicorn.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
@@ -4143,36 +4389,6 @@
       ]
     },
     {
-      "name": "watchfiles",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\watchfiles.exe",
-      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Python Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 4 python source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        }
-      ]
-    },
-    {
-      "name": "weasel",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\weasel.exe",
-      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Python Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 4 python source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        }
-      ]
-    },
-    {
       "name": "websockets",
       "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\websockets.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
@@ -4191,6 +4407,21 @@
           "description": "Application appears to provide API services at runtime",
           "confidence_score": 0.45,
           "detection_method": "api_endpoint_analysis"
+        }
+      ]
+    },
+    {
+      "name": "weasel",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts\\weasel.exe",
+      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python311\\Scripts",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Python Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 4 python source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
         }
       ]
     },
@@ -4240,8 +4471,8 @@
       ]
     },
     {
-      "name": "coloredlogs",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python313\\Scripts\\coloredlogs.exe",
+      "name": "crewai",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python313\\Scripts\\crewai.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python313\\Scripts",
       "version": "",
       "capabilities": [
@@ -4255,8 +4486,8 @@
       ]
     },
     {
-      "name": "crewai",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python313\\Scripts\\crewai.exe",
+      "name": "coloredlogs",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python313\\Scripts\\coloredlogs.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python313\\Scripts",
       "version": "",
       "capabilities": [
@@ -4292,21 +4523,6 @@
       ]
     },
     {
-      "name": "instructor",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python313\\Scripts\\instructor.exe",
-      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python313\\Scripts",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Python Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 4 python source file(s). Oxpecker static analysis: 0 error(s), 1 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        }
-      ]
-    },
-    {
       "name": "humanfriendly",
       "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python313\\Scripts\\humanfriendly.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python313\\Scripts",
@@ -4331,6 +4547,21 @@
           "name": "C/C++ Source Analysis",
           "category": "development_tools",
           "description": "Contains 1 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        }
+      ]
+    },
+    {
+      "name": "instructor",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python313\\Scripts\\instructor.exe",
+      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python313\\Scripts",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Python Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 4 python source file(s). Oxpecker static analysis: 0 error(s), 1 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
           "confidence_score": 0.855,
           "detection_method": "oxpecker_analysis"
         }
@@ -4457,21 +4688,6 @@
       ]
     },
     {
-      "name": "uvw",
-      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python313\\Scripts\\uvw.exe",
-      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python313\\Scripts",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Python Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 4 python source file(s). Oxpecker static analysis: 0 error(s), 1 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        }
-      ]
-    },
-    {
       "name": "uvx",
       "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python313\\Scripts\\uvx.exe",
       "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python313\\Scripts",
@@ -4540,20 +4756,21 @@
           "description": "Opens and edits Python Application (Windowed) files (.pyzw)",
           "confidence_score": 0.9025,
           "detection_method": "appx_manifest"
-        },
+        }
+      ]
+    },
+    {
+      "name": "uvw",
+      "executable_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python313\\Scripts\\uvw.exe",
+      "installation_path": "C:\\Users\\legac\\AppData\\Local\\Programs\\Python\\Python313\\Scripts",
+      "version": "",
+      "capabilities": [
         {
-          "name": "Development Tools File Handler",
+          "name": "Python Source Analysis",
           "category": "development_tools",
-          "description": "Store: PythonSoftwareFoundation.PythonManager is the registered shell handler for Python File, Python File (no console) files (.py, .pyw)",
-          "confidence_score": 0.81,
-          "detection_method": "file_association"
-        },
-        {
-          "name": "File Processing File Handler",
-          "category": "file_processing",
-          "description": "Store: PythonSoftwareFoundation.PythonManager is the registered shell handler for Compiled Python File, Python Zip Application File, Python Zip Application File (no console) files (.pyc, .pyo, .pyz, .pyzw)",
-          "confidence_score": 0.81,
-          "detection_method": "file_association"
+          "description": "Contains 4 python source file(s). Oxpecker static analysis: 0 error(s), 1 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
         }
       ]
     },
@@ -4676,6 +4893,43 @@
       ]
     },
     {
+      "name": "JetBrains.Rider-2025.3.0.3",
+      "executable_path": "C:\\Users\\legac\\Downloads\\Blender Plugins\\JetBrains.Rider-2025.3.0.3.exe",
+      "installation_path": "C:\\Users\\legac\\Downloads\\Blender Plugins",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Python Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 2 python source file(s). Oxpecker static analysis: 2 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.765,
+          "detection_method": "oxpecker_analysis"
+        }
+      ]
+    },
+    {
+      "name": "postgresql-18.3-3-windows-x64",
+      "executable_path": "C:\\Users\\legac\\Downloads\\postgresql-18.3-3-windows-x64.exe",
+      "installation_path": "C:\\Users\\legac\\Downloads",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Javascript/Typescript Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 15 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        },
+        {
+          "name": "Python Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 15 python source file(s). Oxpecker static analysis: 2 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.843,
+          "detection_method": "oxpecker_analysis"
+        }
+      ]
+    },
+    {
       "name": "python-3.11.6-amd64",
       "executable_path": "C:\\Users\\legac\\Downloads\\python-3.11.6-amd64.exe",
       "installation_path": "C:\\Users\\legac\\Downloads",
@@ -4705,21 +4959,6 @@
       ]
     },
     {
-      "name": "JetBrains.Rider-2025.3.0.3",
-      "executable_path": "C:\\Users\\legac\\Downloads\\Blender Plugins\\JetBrains.Rider-2025.3.0.3.exe",
-      "installation_path": "C:\\Users\\legac\\Downloads\\Blender Plugins",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Python Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 2 python source file(s). Oxpecker static analysis: 2 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.765,
-          "detection_method": "oxpecker_analysis"
-        }
-      ]
-    },
-    {
       "name": "VC_redist.x64",
       "executable_path": "C:\\Users\\legac\\Downloads\\VC_redist.x64.exe",
       "installation_path": "C:\\Users\\legac\\Downloads",
@@ -4738,6 +4977,49 @@
           "description": "Contains 15 python source file(s). Oxpecker static analysis: 2 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
           "confidence_score": 0.843,
           "detection_method": "oxpecker_analysis"
+        }
+      ]
+    },
+    {
+      "name": "PATH: ByteCodeGenerator",
+      "executable_path": "C:\\WINDOWS\\system32\\ByteCodeGenerator.exe",
+      "installation_path": "C:\\WINDOWS\\system32",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Rust Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 13 rust source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        },
+        {
+          "name": "C/C++ Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 15 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        },
+        {
+          "name": "Javascript/Typescript Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 2 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        },
+        {
+          "name": "File Processing File Handler",
+          "category": "file_processing",
+          "description": "PATH: ByteCodeGenerator is the registered shell handler for Windows Backup Catalog File, Windows Remote Assistance Invitation, Compiled HTML Help file (+36 more) files (.7z, .blg, .bz2, .cab, .chm, .compositefont, .cpio, .diagcab, .diagcfg, .diagpkg (+45 more))",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        },
+        {
+          "name": "Development Tools File Handler",
+          "category": "development_tools",
+          "description": "PATH: ByteCodeGenerator is the registered shell handler for JavaScript File files (.js)",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
         }
       ]
     },
@@ -4771,7 +5053,7 @@
         {
           "name": "File Processing File Handler",
           "category": "file_processing",
-          "description": "PATH: chgport is the registered shell handler for RunTime Provisioning Tool, Web Point And Print File, Windows Backup Catalog File (+36 more) files (.7z, .blg, .bz2, .cab, .chm, .compositefont, .cpio, .diagcab, .diagcfg, .diagpkg (+45 more))",
+          "description": "PATH: chgport is the registered shell handler for Windows Backup Catalog File, Windows Remote Assistance Invitation, Compiled HTML Help file (+36 more) files (.7z, .blg, .bz2, .cab, .chm, .compositefont, .cpio, .diagcab, .diagcfg, .diagpkg (+45 more))",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
@@ -4814,7 +5096,7 @@
         {
           "name": "File Processing File Handler",
           "category": "file_processing",
-          "description": "PATH: chgusr is the registered shell handler for RunTime Provisioning Tool, Web Point And Print File, Windows Backup Catalog File (+36 more) files (.7z, .blg, .bz2, .cab, .chm, .compositefont, .cpio, .diagcab, .diagcfg, .diagpkg (+45 more))",
+          "description": "PATH: chgusr is the registered shell handler for Windows Backup Catalog File, Windows Remote Assistance Invitation, Compiled HTML Help file (+36 more) files (.7z, .blg, .bz2, .cab, .chm, .compositefont, .cpio, .diagcab, .diagcfg, .diagpkg (+45 more))",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
@@ -4822,49 +5104,6 @@
           "name": "Development Tools File Handler",
           "category": "development_tools",
           "description": "PATH: chgusr is the registered shell handler for JavaScript File files (.js)",
-          "confidence_score": 0.81,
-          "detection_method": "file_association"
-        }
-      ]
-    },
-    {
-      "name": "PATH: ByteCodeGenerator",
-      "executable_path": "C:\\WINDOWS\\system32\\ByteCodeGenerator.exe",
-      "installation_path": "C:\\WINDOWS\\system32",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Rust Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 13 rust source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        },
-        {
-          "name": "C/C++ Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 15 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        },
-        {
-          "name": "Javascript/Typescript Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 2 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        },
-        {
-          "name": "File Processing File Handler",
-          "category": "file_processing",
-          "description": "PATH: ByteCodeGenerator is the registered shell handler for RunTime Provisioning Tool, Web Point And Print File, Windows Backup Catalog File (+36 more) files (.7z, .blg, .bz2, .cab, .chm, .compositefont, .cpio, .diagcab, .diagcfg, .diagpkg (+45 more))",
-          "confidence_score": 0.81,
-          "detection_method": "file_association"
-        },
-        {
-          "name": "Development Tools File Handler",
-          "category": "development_tools",
-          "description": "PATH: ByteCodeGenerator is the registered shell handler for JavaScript File files (.js)",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         }
@@ -4900,7 +5139,7 @@
         {
           "name": "File Processing File Handler",
           "category": "file_processing",
-          "description": "PATH: chglogon is the registered shell handler for RunTime Provisioning Tool, Web Point And Print File, Windows Backup Catalog File (+36 more) files (.7z, .blg, .bz2, .cab, .chm, .compositefont, .cpio, .diagcab, .diagcfg, .diagpkg (+45 more))",
+          "description": "PATH: chglogon is the registered shell handler for Windows Backup Catalog File, Windows Remote Assistance Invitation, Compiled HTML Help file (+36 more) files (.7z, .blg, .bz2, .cab, .chm, .compositefont, .cpio, .diagcab, .diagcfg, .diagpkg (+45 more))",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
@@ -4908,92 +5147,6 @@
           "name": "Development Tools File Handler",
           "category": "development_tools",
           "description": "PATH: chglogon is the registered shell handler for JavaScript File files (.js)",
-          "confidence_score": 0.81,
-          "detection_method": "file_association"
-        }
-      ]
-    },
-    {
-      "name": "PATH: findstr",
-      "executable_path": "C:\\WINDOWS\\system32\\findstr.exe",
-      "installation_path": "C:\\WINDOWS\\system32",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Rust Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 13 rust source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        },
-        {
-          "name": "C/C++ Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 15 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        },
-        {
-          "name": "Javascript/Typescript Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 2 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        },
-        {
-          "name": "File Processing File Handler",
-          "category": "file_processing",
-          "description": "PATH: findstr is the registered shell handler for RunTime Provisioning Tool, Web Point And Print File, Windows Backup Catalog File (+36 more) files (.7z, .blg, .bz2, .cab, .chm, .compositefont, .cpio, .diagcab, .diagcfg, .diagpkg (+45 more))",
-          "confidence_score": 0.81,
-          "detection_method": "file_association"
-        },
-        {
-          "name": "Development Tools File Handler",
-          "category": "development_tools",
-          "description": "PATH: findstr is the registered shell handler for JavaScript File files (.js)",
-          "confidence_score": 0.81,
-          "detection_method": "file_association"
-        }
-      ]
-    },
-    {
-      "name": "PATH: find",
-      "executable_path": "C:\\WINDOWS\\system32\\find.exe",
-      "installation_path": "C:\\WINDOWS\\system32",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Rust Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 13 rust source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        },
-        {
-          "name": "C/C++ Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 15 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        },
-        {
-          "name": "Javascript/Typescript Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 2 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        },
-        {
-          "name": "File Processing File Handler",
-          "category": "file_processing",
-          "description": "PATH: find is the registered shell handler for RunTime Provisioning Tool, Web Point And Print File, Windows Backup Catalog File (+36 more) files (.7z, .blg, .bz2, .cab, .chm, .compositefont, .cpio, .diagcab, .diagcfg, .diagpkg (+45 more))",
-          "confidence_score": 0.81,
-          "detection_method": "file_association"
-        },
-        {
-          "name": "Development Tools File Handler",
-          "category": "development_tools",
-          "description": "PATH: find is the registered shell handler for JavaScript File files (.js)",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         }
@@ -5029,7 +5182,7 @@
         {
           "name": "File Processing File Handler",
           "category": "file_processing",
-          "description": "PATH: curl is the registered shell handler for RunTime Provisioning Tool, Web Point And Print File, Windows Backup Catalog File (+36 more) files (.7z, .blg, .bz2, .cab, .chm, .compositefont, .cpio, .diagcab, .diagcfg, .diagpkg (+45 more))",
+          "description": "PATH: curl is the registered shell handler for Windows Backup Catalog File, Windows Remote Assistance Invitation, Compiled HTML Help file (+36 more) files (.7z, .blg, .bz2, .cab, .chm, .compositefont, .cpio, .diagcab, .diagcfg, .diagpkg (+45 more))",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
@@ -5072,7 +5225,7 @@
         {
           "name": "File Processing File Handler",
           "category": "file_processing",
-          "description": "PATH: EEURestart is the registered shell handler for RunTime Provisioning Tool, Web Point And Print File, Windows Backup Catalog File (+36 more) files (.7z, .blg, .bz2, .cab, .chm, .compositefont, .cpio, .diagcab, .diagcfg, .diagpkg (+45 more))",
+          "description": "PATH: EEURestart is the registered shell handler for Windows Backup Catalog File, Windows Remote Assistance Invitation, Compiled HTML Help file (+36 more) files (.7z, .blg, .bz2, .cab, .chm, .compositefont, .cpio, .diagcab, .diagcfg, .diagpkg (+45 more))",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
@@ -5086,8 +5239,8 @@
       ]
     },
     {
-      "name": "PATH: LiveCaptions",
-      "executable_path": "C:\\WINDOWS\\system32\\LiveCaptions.exe",
+      "name": "PATH: find",
+      "executable_path": "C:\\WINDOWS\\system32\\find.exe",
       "installation_path": "C:\\WINDOWS\\system32",
       "version": "",
       "capabilities": [
@@ -5115,22 +5268,22 @@
         {
           "name": "File Processing File Handler",
           "category": "file_processing",
-          "description": "PATH: LiveCaptions is the registered shell handler for RunTime Provisioning Tool, Web Point And Print File, Windows Backup Catalog File (+36 more) files (.7z, .blg, .bz2, .cab, .chm, .compositefont, .cpio, .diagcab, .diagcfg, .diagpkg (+45 more))",
+          "description": "PATH: find is the registered shell handler for Windows Backup Catalog File, Windows Remote Assistance Invitation, Compiled HTML Help file (+36 more) files (.7z, .blg, .bz2, .cab, .chm, .compositefont, .cpio, .diagcab, .diagcfg, .diagpkg (+45 more))",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
         {
           "name": "Development Tools File Handler",
           "category": "development_tools",
-          "description": "PATH: LiveCaptions is the registered shell handler for JavaScript File files (.js)",
+          "description": "PATH: find is the registered shell handler for JavaScript File files (.js)",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         }
       ]
     },
     {
-      "name": "PATH: LogonUI",
-      "executable_path": "C:\\WINDOWS\\system32\\LogonUI.exe",
+      "name": "PATH: findstr",
+      "executable_path": "C:\\WINDOWS\\system32\\findstr.exe",
       "installation_path": "C:\\WINDOWS\\system32",
       "version": "",
       "capabilities": [
@@ -5158,14 +5311,14 @@
         {
           "name": "File Processing File Handler",
           "category": "file_processing",
-          "description": "PATH: LogonUI is the registered shell handler for RunTime Provisioning Tool, Web Point And Print File, Windows Backup Catalog File (+36 more) files (.7z, .blg, .bz2, .cab, .chm, .compositefont, .cpio, .diagcab, .diagcfg, .diagpkg (+45 more))",
+          "description": "PATH: findstr is the registered shell handler for Windows Backup Catalog File, Windows Remote Assistance Invitation, Compiled HTML Help file (+36 more) files (.7z, .blg, .bz2, .cab, .chm, .compositefont, .cpio, .diagcab, .diagcfg, .diagpkg (+45 more))",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
         {
           "name": "Development Tools File Handler",
           "category": "development_tools",
-          "description": "PATH: LogonUI is the registered shell handler for JavaScript File files (.js)",
+          "description": "PATH: findstr is the registered shell handler for JavaScript File files (.js)",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         }
@@ -5201,7 +5354,7 @@
         {
           "name": "File Processing File Handler",
           "category": "file_processing",
-          "description": "PATH: iotstartup is the registered shell handler for RunTime Provisioning Tool, Web Point And Print File, Windows Backup Catalog File (+36 more) files (.7z, .blg, .bz2, .cab, .chm, .compositefont, .cpio, .diagcab, .diagcfg, .diagpkg (+45 more))",
+          "description": "PATH: iotstartup is the registered shell handler for Windows Backup Catalog File, Windows Remote Assistance Invitation, Compiled HTML Help file (+36 more) files (.7z, .blg, .bz2, .cab, .chm, .compositefont, .cpio, .diagcab, .diagcfg, .diagpkg (+45 more))",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
@@ -5209,6 +5362,49 @@
           "name": "Development Tools File Handler",
           "category": "development_tools",
           "description": "PATH: iotstartup is the registered shell handler for JavaScript File files (.js)",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        }
+      ]
+    },
+    {
+      "name": "PATH: LiveCaptions",
+      "executable_path": "C:\\WINDOWS\\system32\\LiveCaptions.exe",
+      "installation_path": "C:\\WINDOWS\\system32",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Rust Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 13 rust source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        },
+        {
+          "name": "C/C++ Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 15 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        },
+        {
+          "name": "Javascript/Typescript Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 2 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        },
+        {
+          "name": "File Processing File Handler",
+          "category": "file_processing",
+          "description": "PATH: LiveCaptions is the registered shell handler for Windows Backup Catalog File, Windows Remote Assistance Invitation, Compiled HTML Help file (+36 more) files (.7z, .blg, .bz2, .cab, .chm, .compositefont, .cpio, .diagcab, .diagcfg, .diagpkg (+45 more))",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        },
+        {
+          "name": "Development Tools File Handler",
+          "category": "development_tools",
+          "description": "PATH: LiveCaptions is the registered shell handler for JavaScript File files (.js)",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         }
@@ -5244,7 +5440,7 @@
         {
           "name": "File Processing File Handler",
           "category": "file_processing",
-          "description": "PATH: logoff is the registered shell handler for RunTime Provisioning Tool, Web Point And Print File, Windows Backup Catalog File (+36 more) files (.7z, .blg, .bz2, .cab, .chm, .compositefont, .cpio, .diagcab, .diagcfg, .diagpkg (+45 more))",
+          "description": "PATH: logoff is the registered shell handler for Windows Backup Catalog File, Windows Remote Assistance Invitation, Compiled HTML Help file (+36 more) files (.7z, .blg, .bz2, .cab, .chm, .compositefont, .cpio, .diagcab, .diagcfg, .diagpkg (+45 more))",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
@@ -5252,6 +5448,49 @@
           "name": "Development Tools File Handler",
           "category": "development_tools",
           "description": "PATH: logoff is the registered shell handler for JavaScript File files (.js)",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        }
+      ]
+    },
+    {
+      "name": "PATH: LogonUI",
+      "executable_path": "C:\\WINDOWS\\system32\\LogonUI.exe",
+      "installation_path": "C:\\WINDOWS\\system32",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Rust Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 13 rust source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        },
+        {
+          "name": "C/C++ Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 15 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        },
+        {
+          "name": "Javascript/Typescript Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 2 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        },
+        {
+          "name": "File Processing File Handler",
+          "category": "file_processing",
+          "description": "PATH: LogonUI is the registered shell handler for Windows Backup Catalog File, Windows Remote Assistance Invitation, Compiled HTML Help file (+36 more) files (.7z, .blg, .bz2, .cab, .chm, .compositefont, .cpio, .diagcab, .diagcfg, .diagpkg (+45 more))",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        },
+        {
+          "name": "Development Tools File Handler",
+          "category": "development_tools",
+          "description": "PATH: LogonUI is the registered shell handler for JavaScript File files (.js)",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         }
@@ -5287,7 +5526,7 @@
         {
           "name": "File Processing File Handler",
           "category": "file_processing",
-          "description": "PATH: makecab is the registered shell handler for RunTime Provisioning Tool, Web Point And Print File, Windows Backup Catalog File (+36 more) files (.7z, .blg, .bz2, .cab, .chm, .compositefont, .cpio, .diagcab, .diagcfg, .diagpkg (+45 more))",
+          "description": "PATH: makecab is the registered shell handler for Windows Backup Catalog File, Windows Remote Assistance Invitation, Compiled HTML Help file (+36 more) files (.7z, .blg, .bz2, .cab, .chm, .compositefont, .cpio, .diagcab, .diagcfg, .diagpkg (+45 more))",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
@@ -5295,6 +5534,49 @@
           "name": "Development Tools File Handler",
           "category": "development_tools",
           "description": "PATH: makecab is the registered shell handler for JavaScript File files (.js)",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        }
+      ]
+    },
+    {
+      "name": "PATH: microsoft.windows.softwarelogo.showdesktop",
+      "executable_path": "C:\\WINDOWS\\system32\\microsoft.windows.softwarelogo.showdesktop.exe",
+      "installation_path": "C:\\WINDOWS\\system32",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Rust Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 13 rust source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        },
+        {
+          "name": "C/C++ Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 15 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        },
+        {
+          "name": "Javascript/Typescript Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 2 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        },
+        {
+          "name": "File Processing File Handler",
+          "category": "file_processing",
+          "description": "PATH: microsoft.windows.softwarelogo.showdesktop is the registered shell handler for Windows Backup Catalog File, Windows Remote Assistance Invitation, Compiled HTML Help file (+36 more) files (.7z, .blg, .bz2, .cab, .chm, .compositefont, .cpio, .diagcab, .diagcfg, .diagpkg (+45 more))",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        },
+        {
+          "name": "Development Tools File Handler",
+          "category": "development_tools",
+          "description": "PATH: microsoft.windows.softwarelogo.showdesktop is the registered shell handler for JavaScript File files (.js)",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         }
@@ -5330,7 +5612,7 @@
         {
           "name": "File Processing File Handler",
           "category": "file_processing",
-          "description": "PATH: printfilterpipelinesvc is the registered shell handler for RunTime Provisioning Tool, Web Point And Print File, Windows Backup Catalog File (+36 more) files (.7z, .blg, .bz2, .cab, .chm, .compositefont, .cpio, .diagcab, .diagcfg, .diagpkg (+45 more))",
+          "description": "PATH: printfilterpipelinesvc is the registered shell handler for Windows Backup Catalog File, Windows Remote Assistance Invitation, Compiled HTML Help file (+36 more) files (.7z, .blg, .bz2, .cab, .chm, .compositefont, .cpio, .diagcab, .diagcfg, .diagpkg (+45 more))",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
@@ -5373,7 +5655,7 @@
         {
           "name": "File Processing File Handler",
           "category": "file_processing",
-          "description": "PATH: tar is the registered shell handler for RunTime Provisioning Tool, Web Point And Print File, Windows Backup Catalog File (+36 more) files (.7z, .blg, .bz2, .cab, .chm, .compositefont, .cpio, .diagcab, .diagcfg, .diagpkg (+45 more))",
+          "description": "PATH: tar is the registered shell handler for Windows Backup Catalog File, Windows Remote Assistance Invitation, Compiled HTML Help file (+36 more) files (.7z, .blg, .bz2, .cab, .chm, .compositefont, .cpio, .diagcab, .diagcfg, .diagpkg (+45 more))",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
@@ -5381,92 +5663,6 @@
           "name": "Development Tools File Handler",
           "category": "development_tools",
           "description": "PATH: tar is the registered shell handler for JavaScript File files (.js)",
-          "confidence_score": 0.81,
-          "detection_method": "file_association"
-        }
-      ]
-    },
-    {
-      "name": "PATH: microsoft.windows.softwarelogo.showdesktop",
-      "executable_path": "C:\\WINDOWS\\system32\\microsoft.windows.softwarelogo.showdesktop.exe",
-      "installation_path": "C:\\WINDOWS\\system32",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Rust Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 13 rust source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        },
-        {
-          "name": "C/C++ Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 15 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        },
-        {
-          "name": "Javascript/Typescript Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 2 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        },
-        {
-          "name": "File Processing File Handler",
-          "category": "file_processing",
-          "description": "PATH: microsoft.windows.softwarelogo.showdesktop is the registered shell handler for RunTime Provisioning Tool, Web Point And Print File, Windows Backup Catalog File (+36 more) files (.7z, .blg, .bz2, .cab, .chm, .compositefont, .cpio, .diagcab, .diagcfg, .diagpkg (+45 more))",
-          "confidence_score": 0.81,
-          "detection_method": "file_association"
-        },
-        {
-          "name": "Development Tools File Handler",
-          "category": "development_tools",
-          "description": "PATH: microsoft.windows.softwarelogo.showdesktop is the registered shell handler for JavaScript File files (.js)",
-          "confidence_score": 0.81,
-          "detection_method": "file_association"
-        }
-      ]
-    },
-    {
-      "name": "PATH: winlogon",
-      "executable_path": "C:\\WINDOWS\\system32\\winlogon.exe",
-      "installation_path": "C:\\WINDOWS\\system32",
-      "version": "",
-      "capabilities": [
-        {
-          "name": "Rust Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 13 rust source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        },
-        {
-          "name": "C/C++ Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 15 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        },
-        {
-          "name": "Javascript/Typescript Source Analysis",
-          "category": "development_tools",
-          "description": "Contains 2 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
-          "confidence_score": 0.855,
-          "detection_method": "oxpecker_analysis"
-        },
-        {
-          "name": "File Processing File Handler",
-          "category": "file_processing",
-          "description": "PATH: winlogon is the registered shell handler for RunTime Provisioning Tool, Web Point And Print File, Windows Backup Catalog File (+36 more) files (.7z, .blg, .bz2, .cab, .chm, .compositefont, .cpio, .diagcab, .diagcfg, .diagpkg (+45 more))",
-          "confidence_score": 0.81,
-          "detection_method": "file_association"
-        },
-        {
-          "name": "Development Tools File Handler",
-          "category": "development_tools",
-          "description": "PATH: winlogon is the registered shell handler for JavaScript File files (.js)",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         }
@@ -5502,7 +5698,7 @@
         {
           "name": "File Processing File Handler",
           "category": "file_processing",
-          "description": "PATH: UtcDecoderHost is the registered shell handler for RunTime Provisioning Tool, Web Point And Print File, Windows Backup Catalog File (+36 more) files (.7z, .blg, .bz2, .cab, .chm, .compositefont, .cpio, .diagcab, .diagcfg, .diagpkg (+45 more))",
+          "description": "PATH: UtcDecoderHost is the registered shell handler for Windows Backup Catalog File, Windows Remote Assistance Invitation, Compiled HTML Help file (+36 more) files (.7z, .blg, .bz2, .cab, .chm, .compositefont, .cpio, .diagcab, .diagcfg, .diagpkg (+45 more))",
           "confidence_score": 0.81,
           "detection_method": "file_association"
         },
@@ -5514,13 +5710,56 @@
           "detection_method": "file_association"
         }
       ]
+    },
+    {
+      "name": "PATH: winlogon",
+      "executable_path": "C:\\WINDOWS\\system32\\winlogon.exe",
+      "installation_path": "C:\\WINDOWS\\system32",
+      "version": "",
+      "capabilities": [
+        {
+          "name": "Rust Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 13 rust source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        },
+        {
+          "name": "C/C++ Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 15 c/c++ source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        },
+        {
+          "name": "Javascript/Typescript Source Analysis",
+          "category": "development_tools",
+          "description": "Contains 2 javascript/typescript source file(s). Oxpecker static analysis: 0 error(s), 0 warning(s). Supports syntax checking, fix suggestions, and automated repair via the universal_oxpecker engine.",
+          "confidence_score": 0.855,
+          "detection_method": "oxpecker_analysis"
+        },
+        {
+          "name": "File Processing File Handler",
+          "category": "file_processing",
+          "description": "PATH: winlogon is the registered shell handler for Windows Backup Catalog File, Windows Remote Assistance Invitation, Compiled HTML Help file (+36 more) files (.7z, .blg, .bz2, .cab, .chm, .compositefont, .cpio, .diagcab, .diagcfg, .diagpkg (+45 more))",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        },
+        {
+          "name": "Development Tools File Handler",
+          "category": "development_tools",
+          "description": "PATH: winlogon is the registered shell handler for JavaScript File files (.js)",
+          "confidence_score": 0.81,
+          "detection_method": "file_association"
+        }
+      ]
     }
   ],
   "stats": {
-    "total_scanned": 3255,
-    "after_filtering": 1378,
-    "after_dedup": 784,
-    "analyzed": 755,
-    "successful": 265
+    "total_scanned": 3344,
+    "after_filtering": 1400,
+    "after_dedup": 796,
+    "analyzed": 767,
+    "successful": 273
   }
 }

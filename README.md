@@ -1,151 +1,311 @@
-# Janus
+# Janus Dependency Analyzer
 
-An autonomous AI system built from scratch. No API keys. No cloud dependencies. Everything runs locally.
+A cross-platform system that discovers installed applications, analyzes their capabilities, maps current Janus dependencies, and generates prioritized implementation roadmaps for internalizing external dependencies.
 
-## What Janus Is
+## Overview
 
-Janus is a full-stack autonomous agent combining a custom transformer (Avus), persistent holographic memory, video comprehension, speech synthesis, and a tool execution layer. The goal is a system that can perceive, reason, remember, and act — continuously, without external services.
+The Janus Dependency Analyzer helps Janus become more self-reliant by identifying external applications that could be replaced with internal implementations. The system provides:
+
+- **Cross-platform application discovery** (Windows, macOS, Linux)
+- **Capability analysis** using multiple strategies
+- **Dependency mapping** to identify current usage patterns
+- **Priority scoring** for implementation planning
+- **Implementation roadmaps** with effort estimates
+
+## Features
+
+### Application Discovery
+- Registry scanning (Windows)
+- Package manager integration (apt, yum, pacman, Homebrew, etc.)
+- Standard installation directory scanning
+- Portable application detection (AppImages, etc.)
+
+### Capability Analysis
+- Documentation parsing (README, man pages)
+- Help text analysis (--help, -h flags)
+- Command-line interface analysis
+- API endpoint detection (REST, GraphQL)
+
+### Security & Privacy
+- Respects system access controls
+- Encrypts stored metadata
+- Comprehensive audit logging
+- Minimal privilege operation
+
+## Installation
+
+### From Source
+
+```bash
+git clone https://github.com/janus-ai/dependency-analyzer.git
+cd dependency-analyzer
+pip install -e .
+```
+
+### Development Installation
+
+```bash
+git clone https://github.com/janus-ai/dependency-analyzer.git
+cd dependency-analyzer
+pip install -e ".[dev,test]"
+```
+
+## Quick Start
+
+### Basic System Scan
+
+```bash
+# Scan system for installed applications
+janus-analyzer scan
+
+# Scan with verbose output
+janus-analyzer -v scan
+
+# Save results to JSON file
+janus-analyzer scan --format json --output results.json
+```
+
+### Analyze Specific Application
+
+```bash
+# Analyze capabilities of a specific application
+janus-analyzer analyze "firefox"
+janus-analyzer analyze "git"
+```
+
+### System Information
+
+```bash
+# Display system and configuration information
+janus-analyzer info
+```
 
 ## Architecture
 
+The system follows a modular architecture with clear separation of concerns:
+
 ```
-┌─────────────────────────────────────────────────────┐
-│                     Janus System                    │
-├─────────────────┬───────────────────────────────────┤
-│   Perception    │  screen_interpreter.py            │
-│                 │  video_observer.py                │
-│                 │  janus_video_comprehension.py     │
-│                 │  voice_io_enhanced.py             │
-├─────────────────┼───────────────────────────────────┤
-│   Reasoning     │  avus.py          (transformer)   │
-│                 │  avus_inference.py                │
-│                 │  avus_brain.py    (high-level API) │
-├─────────────────┼───────────────────────────────────┤
-│   Memory        │  holographic_brain_memory/        │
-│                 │    core.py        (complex HRR)   │
-│                 │    real_valued.py (real HRR)      │
-│                 │    spawning.py    (dynamic growth) │
-├─────────────────┼───────────────────────────────────┤
-│   Action        │  updated_janus_capability_hub.py  │
-│                 │  video_capability.py              │
-│                 │  autonomy_capability.py           │
-│                 │  browser_automation.py            │
-├─────────────────┼───────────────────────────────────┤
-│   Speech        │  speech_synthesis.py              │
-│                 │  voice_io_enhanced.py             │
-│                 │  janus_voip.py                    │
-├─────────────────┼───────────────────────────────────┤
-│   Training      │  train.py         (unified)       │
-│                 │  avus_cognitive_dataset_generator_v3.py │
-│                 │  language_dataset_generator_v2.py │
-└─────────────────┴───────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                    Presentation Layer                       │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
+│  │ CLI Interface│  │ REST API    │  │ Report Generator    │  │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                   Business Logic Layer                     │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
+│  │System Scanner│  │Capability   │  │ Priority Engine     │  │
+│  │             │  │Analyzer     │  │                     │  │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
+│  │Dependency   │  │Roadmap      │  │ Configuration       │  │
+│  │Mapper       │  │Generator    │  │ Manager             │  │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                      Data Layer                            │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
+│  │Application  │  │Configuration│  │ Analysis Cache      │  │
+│  │Catalog      │  │Store        │  │                     │  │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                    Platform Layer                          │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
+│  │Windows      │  │macOS        │  │ Linux Scanner       │  │
+│  │Scanner      │  │Scanner      │  │                     │  │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ## Core Components
 
-### Avus — The Transformer
-Custom transformer architecture with RoPE, GQA, SwiGLU, and RMSNorm. Scales from 1B to 70B parameters.
+### System Scanner
+Orchestrates platform-specific discovery mechanisms to build comprehensive application inventories.
 
-| Model | Dim | Layers | Heads | KV Heads | Est. Params |
-|-------|-----|--------|-------|----------|-------------|
-| avus-1b | 768 | 12 | 12 | 4 | ~1B |
-| avus-3b | 2048 | 24 | 16 | 8 | ~3B |
-| avus-7b | 4096 | 32 | 32 | 8 | ~7B |
-| avus-13b | 5120 | 40 | 40 | 8 | ~13B |
-| avus-34b | 7168 | 48 | 56 | 8 | ~34B |
-| avus-70b | 8192 | 80 | 64 | 8 | ~70B |
+### Capability Analyzer
+Uses multiple analysis strategies to identify application capabilities:
+- **Documentation Analysis**: Parses README files, man pages, embedded docs
+- **Help Text Analysis**: Executes apps with --help flags
+- **CLI Analysis**: Analyzes command-line argument patterns
+- **API Analysis**: Scans for REST/GraphQL endpoints
 
-### Holographic Brain Memory (HBM)
-Persistent memory using Holographic Reduced Representations. Stores knowledge in a fixed-size vector via circular convolution — survives between sessions, grows capacity dynamically via `SpawningBrain` without increasing physical memory.
+### Platform Scanners
+Platform-specific implementations for:
+- **Windows**: Registry scanning, Program Files, Windows Store
+- **macOS**: Applications folder, Homebrew, LaunchServices
+- **Linux**: Package managers, /usr/bin, AppImages, Flatpak
 
-### Speech Synthesis
-Source-filter voice model implementing the full Human Speech Synthesis Diagnostic Framework — glottal source, formant filtering, prosody, micro-variations (jitter, shimmer, breathiness), emotional expression, and room acoustics. No external TTS API.
+## Configuration
 
-### Video Comprehension
-Captures any window (browser, video player), runs motion detection, subtitle scanning, and scene analysis. Feeds observations into HBM via `AvusBrain`.
+Create a configuration file to customize behavior:
 
-## Quick Start
+```yaml
+# Scanning configuration
+scan_exclusion_patterns:
+  - "*/temp/*"
+  - "*/cache/*"
+scan_timeout_seconds: 300
+max_applications_per_scan: 10000
+
+# Analysis configuration
+min_confidence_threshold: 0.5
+analysis_timeout_seconds: 60
+
+# Priority weights
+priority_weights:
+  usage: 0.3
+  complexity: 0.2
+  security: 0.25
+  performance: 0.25
+
+# Security settings
+respect_access_controls: true
+encrypt_stored_data: true
+audit_logging_enabled: true
+```
+
+## Development
+
+### Project Structure
+
+```
+janus_dependency_analyzer/
+├── core/                   # Core data models and interfaces
+│   ├── models.py          # Data models (Application, Capability, etc.)
+│   └── interfaces.py      # Abstract base classes
+├── scanners/              # Platform-specific scanners
+│   ├── system_scanner.py  # Main scanner orchestrator
+│   ├── windows_scanner.py # Windows-specific implementation
+│   ├── macos_scanner.py   # macOS-specific implementation
+│   └── linux_scanner.py   # Linux-specific implementation
+├── analyzers/             # Capability analysis components
+│   ├── capability_analyzer.py  # Main analyzer
+│   └── strategies/        # Analysis strategies
+│       ├── documentation_strategy.py
+│       ├── help_text_strategy.py
+│       ├── cli_strategy.py
+│       └── api_strategy.py
+└── cli.py                 # Command-line interface
+```
+
+### Running Tests
 
 ```bash
-# Install dependencies
-pip install torch numpy matplotlib
+# Run all tests
+pytest
 
-# Bootstrap the full system
-python Janus-main/bootstrap_video_observer.py
+# Run with coverage
+pytest --cov=janus_dependency_analyzer
 
-# Train Avus (starts with 1B by default)
-python Janus-main/train.py --model avus --size 1b --epochs 10
+# Run specific test file
+pytest tests/test_models.py
 
-# Test speech synthesis
-python Janus-main/speech_synthesis.py
-
-# Test video comprehension
-python Janus-main/janus_video_comprehension.py --watch "YouTube" --window --duration 120
+# Run property-based tests
+pytest -m property
 ```
 
-## Training
+### Code Quality
 
 ```bash
-# Train any model size
-python train.py --model avus --size 7b --epochs 5 --resume
+# Format code
+black janus_dependency_analyzer/
 
-# Train holographic memory
-python train.py --model hbm --epochs 20
+# Sort imports
+isort janus_dependency_analyzer/
 
-# Train everything
-python train.py --model all --size 1b --epochs 10
+# Type checking
+mypy janus_dependency_analyzer/
+
+# Linting
+flake8 janus_dependency_analyzer/
 ```
 
-## Weight Merging
+## API Reference
 
-Three methods for combining trained checkpoints:
+### Core Models
 
-```bash
-# SLERP: smooth blend between two checkpoints
-python train.py --merge slerp --a weights_a.pt --b weights_b.pt --out merged.pt
-
-# DARE: merge specialist models via task arithmetic
-python train.py --merge dare --inputs base.pt specialist_3d.pt specialist_lang.pt --out merged.pt
-
-# Model Soup: average N checkpoints
-python train.py --merge soup --inputs epoch1.pt epoch2.pt epoch3.pt --out merged.pt
+#### Application
+Represents an installed application with metadata:
+```python
+@dataclass
+class Application:
+    id: str
+    name: str
+    version: str
+    installation_path: Path
+    executable_path: Path
+    platform: Platform
+    metadata: ApplicationMetadata
+    is_accessible: bool
 ```
 
-## Design Principles
-
-- **No API keys** — everything runs locally on your hardware
-- **No external LLMs** — Avus is our own model, built from scratch
-- **Persistent memory** — HBM survives between sessions; standard transformers don't
-- **Modular** — each component works standalone and composes cleanly
-- **Scalable** — same codebase from 1B to 70B parameters
-
-## Project Structure
-
+#### Capability
+Represents a capability provided by an application:
+```python
+@dataclass
+class Capability:
+    id: str
+    application_id: str
+    name: str
+    category: CapabilityCategory
+    interface_type: InterfaceType
+    confidence_score: float
+    parameters: List[Parameter]
 ```
-Janus-main/
-├── avus.py                          # Transformer architecture
-├── avus_inference.py                # Inference wrapper
-├── avus_brain.py                    # High-level reasoning API
-├── avus_tokenizer.py                # Tokenizer
-├── train.py                         # Unified training + weight merging
-├── speech_synthesis.py              # Human speech synthesis engine
-├── screen_interpreter.py            # Screen/pixel understanding
-├── video_observer.py                # Video frame capture
-├── janus_video_comprehension.py     # Video understanding pipeline
-├── voice_io_enhanced.py             # Wake word + conversation loop
-├── bootstrap_video_observer.py      # System startup
-├── updated_janus_capability_hub.py  # Tool registry
-├── holographic_brain_memory/        # HBM package
-│   ├── core.py                      # Complex-valued HRR
-│   ├── real_valued.py               # Real-valued HRR
-│   ├── spawning.py                  # Dynamic neuron spawning
-│   ├── visualization.py             # Memory trace visualization
-│   ├── examples/toy_task.py
-│   └── tests/test_core.py
-├── config_avus_1b.json              # Model configs
-├── config_avus_3b.json
-├── config_avus_7b.json
-├── config_avus_13b.json
-├── config_avus_34b.json
-└── config_avus_70b.json
+
+### Scanner Interface
+
+```python
+class SystemScanner(ABC):
+    @abstractmethod
+    def scan_full(self) -> ScanResult:
+        """Perform complete system scan"""
+        
+    @abstractmethod
+    def scan_incremental(self, last_scan_time: datetime) -> ScanResult:
+        """Scan for changes since last scan"""
 ```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Add tests for new functionality
+5. Run the test suite (`pytest`)
+6. Commit your changes (`git commit -m 'Add amazing feature'`)
+7. Push to the branch (`git push origin feature/amazing-feature`)
+8. Open a Pull Request
+
+### Development Guidelines
+
+- Follow PEP 8 style guidelines
+- Add type hints to all functions
+- Write comprehensive tests
+- Update documentation for new features
+- Use property-based testing for complex logic
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Roadmap
+
+- [ ] **Phase 1**: Core scanning and analysis (Current)
+- [ ] **Phase 2**: Dependency mapping and priority scoring
+- [ ] **Phase 3**: Implementation roadmap generation
+- [ ] **Phase 4**: Web interface and advanced reporting
+- [ ] **Phase 5**: Integration with CI/CD pipelines
+
+## Support
+
+- **Documentation**: [https://janus-dependency-analyzer.readthedocs.io/](https://janus-dependency-analyzer.readthedocs.io/)
+- **Issues**: [GitHub Issues](https://github.com/janus-ai/dependency-analyzer/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/janus-ai/dependency-analyzer/discussions)
+
+## Acknowledgments
+
+- Built for the Janus AI system
+- Inspired by dependency analysis tools in the software engineering community
+- Thanks to all contributors and the open-source community

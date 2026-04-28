@@ -1,0 +1,143 @@
+{"timestamp": "2026-04-27T22:02:37.311429", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-27T22:02:49.247353", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-27T22:03:56.023829", "metrics": {"total_metrics": 6, "active_timers": 0}, "counters": {"engine_initializations": 1, "decisions_made": 3, "reflections_performed": 1}, "metadata": {}}
+{"timestamp": "2026-04-27T22:11:00.840458", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-27T22:11:00.887516", "metrics": {"total_metrics": 1, "active_timers": 0}, "counters": {"engine_initializations": 1, "decisions_made": 1}, "metadata": {}}
+{"timestamp": "2026-04-27T22:11:00.916022", "metrics": {"total_metrics": 1, "active_timers": 0}, "counters": {"engine_initializations": 1, "reflections_performed": 1}, "metadata": {}}
+{"timestamp": "2026-04-27T22:11:00.946942", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-27T22:11:00.995435", "metrics": {"total_metrics": 8, "active_timers": 0}, "counters": {"engine_initializations": 1, "decisions_made": 5}, "metadata": {}}
+{"timestamp": "2026-04-27T22:11:01.025134", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-27T22:11:14.932902", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-27T22:11:14.977434", "metrics": {"total_metrics": 2, "active_timers": 0}, "counters": {"engine_initializations": 1, "decisions_made": 1}, "metadata": {}}
+{"timestamp": "2026-04-27T22:11:15.007344", "metrics": {"total_metrics": 1, "active_timers": 0}, "counters": {"engine_initializations": 1, "reflections_performed": 1}, "metadata": {}}
+{"timestamp": "2026-04-27T22:11:15.039014", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-27T22:11:15.087059", "metrics": {"total_metrics": 9, "active_timers": 0}, "counters": {"engine_initializations": 1, "decisions_made": 5}, "metadata": {}}
+{"timestamp": "2026-04-27T22:11:15.114065", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-27T22:11:23.753312", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-27T22:11:23.794699", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-27T22:11:23.834915", "metrics": {"total_metrics": 1, "active_timers": 0}, "counters": {"engine_initializations": 1, "decisions_made": 1}, "metadata": {}}
+{"timestamp": "2026-04-27T22:11:23.862540", "metrics": {"total_metrics": 1, "active_timers": 0}, "counters": {"engine_initializations": 1, "reflections_performed": 1}, "metadata": {}}
+{"timestamp": "2026-04-27T22:11:23.895056", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-27T22:11:23.940343", "metrics": {"total_metrics": 8, "active_timers": 0}, "counters": {"engine_initializations": 1, "decisions_made": 5}, "metadata": {}}
+{"timestamp": "2026-04-27T22:11:23.964026", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-27T22:24:13.442444", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-27T22:24:13.480292", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-27T22:24:13.519774", "metrics": {"total_metrics": 1, "active_timers": 0}, "counters": {"engine_initializations": 1, "decisions_made": 1}, "metadata": {}}
+{"timestamp": "2026-04-27T22:24:13.547114", "metrics": {"total_metrics": 1, "active_timers": 0}, "counters": {"engine_initializations": 1, "reflections_performed": 1}, "metadata": {}}
+{"timestamp": "2026-04-27T22:24:13.577495", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-27T22:24:13.623568", "metrics": {"total_metrics": 6, "active_timers": 0}, "counters": {"engine_initializations": 1, "decisions_made": 5}, "metadata": {}}
+{"timestamp": "2026-04-27T22:24:13.647244", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-27T22:24:18.936920", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-27T22:25:57.721307", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-27T22:25:57.767594", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-27T22:25:57.810229", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-27T22:34:55.578321", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-27T22:34:55.678001", "metrics": {"total_metrics": 2, "active_timers": 0}, "counters": {"engine_initializations": 1, "decisions_made": 1}, "metadata": {}}
+{"timestamp": "2026-04-27T22:34:55.748860", "metrics": {"total_metrics": 1, "active_timers": 0}, "counters": {"engine_initializations": 1, "reflections_performed": 1}, "metadata": {}}
+{"timestamp": "2026-04-27T22:34:55.831291", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-27T22:34:55.968827", "metrics": {"total_metrics": 9, "active_timers": 0}, "counters": {"engine_initializations": 1, "decisions_made": 5}, "metadata": {}}
+{"timestamp": "2026-04-27T22:34:56.034554", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-27T22:34:56.113261", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-27T22:34:56.254350", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-27T22:34:56.418542", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T00:28:17.654344", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T00:28:17.715972", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T00:28:18.540108", "metrics": {"total_metrics": 2, "active_timers": 0}, "counters": {"engine_initializations": 1, "decisions_made": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T00:28:18.570825", "metrics": {"total_metrics": 1, "active_timers": 0}, "counters": {"engine_initializations": 1, "reflections_performed": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T00:28:18.640712", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T00:28:18.692877", "metrics": {"total_metrics": 9, "active_timers": 0}, "counters": {"engine_initializations": 1, "decisions_made": 5}, "metadata": {}}
+{"timestamp": "2026-04-28T00:28:18.720168", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T00:28:18.751400", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T00:28:18.799977", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T00:28:18.852742", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T00:43:40.502765", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T00:43:40.534763", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T00:43:40.577868", "metrics": {"total_metrics": 2, "active_timers": 0}, "counters": {"engine_initializations": 1, "decisions_made": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T00:43:40.601694", "metrics": {"total_metrics": 1, "active_timers": 0}, "counters": {"engine_initializations": 1, "reflections_performed": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T00:43:40.645802", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T00:43:40.716175", "metrics": {"total_metrics": 7, "active_timers": 0}, "counters": {"engine_initializations": 1, "decisions_made": 5}, "metadata": {}}
+{"timestamp": "2026-04-28T00:43:40.736176", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T00:43:40.760176", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T00:43:40.797680", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T00:43:40.833878", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T00:48:18.665708", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T00:48:18.709143", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T00:48:18.750492", "metrics": {"total_metrics": 2, "active_timers": 0}, "counters": {"engine_initializations": 1, "decisions_made": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T00:48:18.778145", "metrics": {"total_metrics": 1, "active_timers": 0}, "counters": {"engine_initializations": 1, "reflections_performed": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T00:48:18.808658", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T00:48:18.854647", "metrics": {"total_metrics": 9, "active_timers": 0}, "counters": {"engine_initializations": 1, "decisions_made": 5}, "metadata": {}}
+{"timestamp": "2026-04-28T00:48:18.877113", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T00:48:18.903147", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T00:48:18.944118", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T00:48:18.987148", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T00:59:11.401242", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T00:59:11.436571", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T00:59:11.481667", "metrics": {"total_metrics": 2, "active_timers": 0}, "counters": {"engine_initializations": 1, "decisions_made": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T00:59:11.509731", "metrics": {"total_metrics": 1, "active_timers": 0}, "counters": {"engine_initializations": 1, "reflections_performed": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T00:59:11.543366", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T00:59:11.591338", "metrics": {"total_metrics": 7, "active_timers": 0}, "counters": {"engine_initializations": 1, "decisions_made": 5}, "metadata": {}}
+{"timestamp": "2026-04-28T00:59:11.617801", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T00:59:11.651025", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T00:59:11.698861", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T00:59:11.743690", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:08:19.088085", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:08:19.124957", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:08:19.180401", "metrics": {"total_metrics": 2, "active_timers": 0}, "counters": {"engine_initializations": 1, "decisions_made": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:08:19.216451", "metrics": {"total_metrics": 1, "active_timers": 0}, "counters": {"engine_initializations": 1, "reflections_performed": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:08:19.269773", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:08:19.348173", "metrics": {"total_metrics": 10, "active_timers": 0}, "counters": {"engine_initializations": 1, "decisions_made": 5}, "metadata": {}}
+{"timestamp": "2026-04-28T01:08:19.394138", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:08:19.442741", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:08:19.502473", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:08:19.551445", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:14:46.056407", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:14:46.094552", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:14:46.136958", "metrics": {"total_metrics": 2, "active_timers": 0}, "counters": {"engine_initializations": 1, "decisions_made": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:14:46.159890", "metrics": {"total_metrics": 1, "active_timers": 0}, "counters": {"engine_initializations": 1, "reflections_performed": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:14:46.189628", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:14:46.227415", "metrics": {"total_metrics": 8, "active_timers": 0}, "counters": {"engine_initializations": 1, "decisions_made": 5}, "metadata": {}}
+{"timestamp": "2026-04-28T01:14:46.249959", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:14:46.274334", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:14:46.313039", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:14:46.353222", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:27:14.204164", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:27:14.574513", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:27:14.619114", "metrics": {"total_metrics": 2, "active_timers": 0}, "counters": {"engine_initializations": 1, "decisions_made": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:27:14.644733", "metrics": {"total_metrics": 1, "active_timers": 0}, "counters": {"engine_initializations": 1, "reflections_performed": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:27:14.676604", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:27:14.722428", "metrics": {"total_metrics": 8, "active_timers": 0}, "counters": {"engine_initializations": 1, "decisions_made": 5}, "metadata": {}}
+{"timestamp": "2026-04-28T01:27:14.743025", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:27:14.769901", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:27:14.812316", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:27:14.857069", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:27:43.575300", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:27:43.961124", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:27:44.003756", "metrics": {"total_metrics": 1, "active_timers": 0}, "counters": {"engine_initializations": 1, "decisions_made": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:27:44.031710", "metrics": {"total_metrics": 1, "active_timers": 0}, "counters": {"engine_initializations": 1, "reflections_performed": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:27:44.063153", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:27:44.111307", "metrics": {"total_metrics": 8, "active_timers": 0}, "counters": {"engine_initializations": 1, "decisions_made": 5}, "metadata": {}}
+{"timestamp": "2026-04-28T01:27:44.139707", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:27:44.175526", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:27:44.234174", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:27:44.289033", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:28:35.157334", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:28:35.500990", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:28:35.545140", "metrics": {"total_metrics": 1, "active_timers": 0}, "counters": {"engine_initializations": 1, "decisions_made": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:28:35.573834", "metrics": {"total_metrics": 1, "active_timers": 0}, "counters": {"engine_initializations": 1, "reflections_performed": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:28:35.605917", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:28:35.652192", "metrics": {"total_metrics": 8, "active_timers": 0}, "counters": {"engine_initializations": 1, "decisions_made": 5}, "metadata": {}}
+{"timestamp": "2026-04-28T01:28:35.676513", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:28:35.701719", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:28:35.744636", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:28:35.801473", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:30:21.303173", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:30:21.779931", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:30:21.818172", "metrics": {"total_metrics": 1, "active_timers": 0}, "counters": {"engine_initializations": 1, "decisions_made": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:30:21.841880", "metrics": {"total_metrics": 1, "active_timers": 0}, "counters": {"engine_initializations": 1, "reflections_performed": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:30:21.869262", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:30:21.911508", "metrics": {"total_metrics": 6, "active_timers": 0}, "counters": {"engine_initializations": 1, "decisions_made": 5}, "metadata": {}}
+{"timestamp": "2026-04-28T01:30:21.932722", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:30:21.956338", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:30:21.994005", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:30:22.033164", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}
+{"timestamp": "2026-04-28T01:40:46.185201", "metrics": {"total_metrics": 0, "active_timers": 0}, "counters": {"engine_initializations": 1}, "metadata": {}}

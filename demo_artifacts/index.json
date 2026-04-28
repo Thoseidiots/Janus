@@ -1,0 +1,17 @@
+{
+  "7fe7c561-2870-4f0a-948b-f04d81b6c7c8": {
+    "memory_type": "artifact",
+    "storage_path": "demo_artifacts\\checkpoints\\7fe7c561-2870-4f0a-948b-f04d81b6c7c8",
+    "content": {
+      "filename": "checkpoint.json"
+    },
+    "metadata": {
+      "type": "checkpoint",
+      "tags": [
+        "checkpoint",
+        "state"
+      ]
+    },
+    "timestamp": "2026-04-27T22:10:32.026127"
+  }
+}

@@ -1,8 +1,13 @@
 // engine-runtime/src/lib.rs
 
-// This is a simplified stub. A real implementation would have dependencies on all other engine crates.
+pub mod overlay;
+pub mod desktop_capture;
+pub mod arania_controller;
 
 use std::path::Path;
+use overlay::{OverlayConfig, OverlayWindow};
+use desktop_capture::{CaptureConfig, DesktopCapture};
+use arania_controller::{AraniaController, AraniaCommand, default_screen_waypoints};
 
 pub trait Plugin {
     fn on_register(&mut self);
@@ -23,10 +28,6 @@ mod lib_loader {
 // --- Main Engine Loop (Section 19) ---
 
 pub struct Engine {
-    // Stubs for all the engine subsystems
-    // world: World,
-    // scene_manager: SceneManager,
-    // etc.
     is_running: bool,
     plugins: Vec<Box<dyn Plugin>>,
 }
@@ -40,36 +41,83 @@ impl Engine {
     }
 
     pub fn load_plugin(&mut self, _path: &Path) {
-        // In a real implementation, we would use the lib_loader
-        // For testing, we can't load actual dynamic libraries, so this is a placeholder.
         println!("Plugin loading is stubbed out for tests.");
     }
 
     pub fn run(&mut self) {
         self.is_running = true;
         println!("Engine is running...");
-
-        // Main loop stub
         while self.is_running {
-            // The loop order as defined in the tasks
-            // 1. Poll input
-            // 2. Check for hot-reloads
-            // 3. Script on_update
-            // 4. System dispatch (ECS)
-            // 5. Physics tick
-            // 6. Audio mix
-            // 7. Render
-            // 8. Editor tick
-
             println!("Executing a frame...");
-            self.stop(); // In a real engine, this would be triggered by an event
+            self.stop();
         }
-
         println!("Engine has stopped.");
     }
 
     pub fn stop(&mut self) {
         self.is_running = false;
+    }
+}
+
+// ── Arania Runtime ────────────────────────────────────────────────────────────
+// High-level entry point that boots the overlay, desktop capture,
+// and Arania controller together.
+
+pub struct AraniaRuntime {
+    pub overlay:   OverlayWindow,
+    pub capture:   DesktopCapture,
+    pub controller: AraniaController,
+    target_fps:    u32,
+}
+
+impl AraniaRuntime {
+    /// Create a runtime with default configuration.
+    pub fn new() -> Self {
+        let overlay_cfg  = OverlayConfig::default();
+        let target_fps   = overlay_cfg.target_fps;
+        let capture_cfg  = CaptureConfig { hz: 30, ..Default::default() };
+        let waypoints    = default_screen_waypoints();
+
+        Self {
+            overlay:    OverlayWindow::new(overlay_cfg),
+            capture:    DesktopCapture::new(capture_cfg),
+            controller: AraniaController::new(waypoints),
+            target_fps,
+        }
+    }
+
+    /// Send a command to the Arania character.
+    pub fn send(&mut self, cmd: AraniaCommand) {
+        self.controller.apply_command(cmd);
+    }
+
+    /// Advance one simulation tick of `dt` seconds.
+    /// In real usage this is called from the winit event loop.
+    pub fn tick(&mut self, dt: f32) {
+        self.controller.update(dt);
+    }
+
+    /// Run a headless simulation for `seconds` at target FPS.
+    /// Used for testing without a real window.
+    pub fn run_headless(&mut self, seconds: f32) {
+        let dt = 1.0 / self.target_fps as f32;
+        let frames = (seconds / dt) as u32;
+        for _ in 0..frames {
+            self.tick(dt);
+            if self.overlay.should_close() { break; }
+        }
+    }
+
+    /// Load and parse a KiroScene file, printing entity count.
+    pub fn load_scene(&self, path: &Path) -> Result<usize, String> {
+        let text = std::fs::read_to_string(path)
+            .map_err(|e| format!("Cannot read scene: {e}"))?;
+        let entity_count = text.lines()
+            .filter(|l| l.trim().starts_with("entity "))
+            .count();
+        println!("[engine] Loaded scene '{}' — {} entities",
+                 path.display(), entity_count);
+        Ok(entity_count)
     }
 }
 

@@ -1,0 +1,136 @@
+{
+  "material_name": "Arania_PBR_FullBody",
+  "shader": "oss://engine-renderer/pbr_cook_torrance",
+  "shader_source": "engine-renderer/src/shaders.rs::PBR_FRAG_GLSL",
+  "passes": {
+    "skin": {
+      "color": [
+        0.784,
+        0.569,
+        0.416
+      ],
+      "roughness": 0.42,
+      "metallic": 0.0,
+      "ao": 0.95,
+      "sss": 0.28
+    },
+    "hair": {
+      "color": [
+        0.102,
+        0.039,
+        0.008
+      ],
+      "roughness": 0.35,
+      "metallic": 0.0,
+      "ao": 1.0
+    },
+    "robe": {
+      "color": [
+        0.784,
+        0.627,
+        0.157
+      ],
+      "roughness": 0.72,
+      "metallic": 0.05,
+      "ao": 0.9
+    },
+    "gold": {
+      "color": [
+        0.941,
+        0.753,
+        0.188
+      ],
+      "roughness": 0.18,
+      "metallic": 0.95,
+      "ao": 1.0
+    },
+    "eye_iris": {
+      "color": [
+        1.0,
+        0.816,
+        0.376
+      ],
+      "roughness": 0.05,
+      "metallic": 0.0,
+      "emissive": 0.9
+    },
+    "eye_white": {
+      "color": [
+        0.973,
+        0.941,
+        0.878
+      ],
+      "roughness": 0.2,
+      "metallic": 0.0
+    },
+    "lip": {
+      "color": [
+        0.733,
+        0.439,
+        0.333
+      ],
+      "roughness": 0.38,
+      "metallic": 0.0
+    }
+  },
+  "lights": {
+    "sun": {
+      "pos": [
+        4.0,
+        8.0,
+        5.0
+      ],
+      "color": [
+        1.0,
+        0.941,
+        0.816
+      ],
+      "intensity": 2.2
+    },
+    "rim": {
+      "pos": [
+        -4.0,
+        2.0,
+        -3.0
+      ],
+      "color": [
+        0.376,
+        0.251,
+        0.753
+      ],
+      "intensity": 0.45
+    },
+    "fill": {
+      "pos": [
+        0.0,
+        -2.0,
+        3.0
+      ],
+      "color": [
+        0.784,
+        0.565,
+        0.314
+      ],
+      "intensity": 0.35
+    }
+  },
+  "blend_shapes": {
+    "neutral": "assets/face_neutral.obj",
+    "smile": "assets/face_smile.obj"
+  },
+  "animation": {
+    "idle": {
+      "head_sway": true,
+      "breathe": true,
+      "blink_interval_s": 4.0
+    },
+    "walk": {
+      "stride_length": 0.6,
+      "arm_swing": true
+    },
+    "talk": {
+      "lip_sync": "janus_tts",
+      "eye_dart": true
+    }
+  }
+}

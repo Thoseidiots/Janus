@@ -1,372 +1,281 @@
-# """
+"""
 screen_action_dataset_generator.py
+====================================
+Generates rich screen action training data for Avus fine-tuning.
 
-Synthetic (screen_description, action_json) dataset generator for training
-Avus to interpret screen state and output desktop control actions.
+Covers:
+- App launching (Win+R, Start menu, taskbar)
+- Typing text into fields
+- Multi-step tasks (open app → click → type → submit)
+- Browser navigation
+- File operations
+- Window management
 
-No real screenshots needed. Generates thousands of described UI states paired
-with the correct JSON action — same philosophy as Grade3DGeneration.
-
-Output format (matches skill_executor action types):
-<|startoftext|>{screen_description} [ACT_START] {action_json} [ACT_END]<|endoftext|>
-
-Action types produced:
-click, double_click, right_click, type, key, press_enter, scroll, wait, mouse_move
-
-Usage:
-gen = ScreenActionDataset()
-pairs = gen.generate_dataset(samples=10_000)
-
-# pairs -> List[Tuple[str, str]]  (description, json_string)
-
+Format: <|startoftext|>{screen_description} [ACT_START]{action_json}[ACT_END]<|endoftext|>
 """
 
 import json
 import random
-from typing import List, Tuple
+import os
+from typing import List, Dict, Any
+from pathlib import Path
 
-# ─────────────────────────────────────────────────────────────────────────────
+# ── Helpers ───────────────────────────────────────────────────────────────────
 
-# Vocabulary pools
-
-# ─────────────────────────────────────────────────────────────────────────────
+def _ri(lo, hi): return random.randint(lo, hi)
+def _rc(lst):    return random.choice(lst)
+def _rf(lo, hi): return round(random.uniform(lo, hi), 2)
 
 APPS = [
-"Chrome", "Firefox", "Notepad", "VS Code", "File Explorer",
-"Discord", "Slack", "Terminal", "Paint", "Excel",
-"Word", "Outlook", "Task Manager", "Settings", "Calculator",
+    "Notepad", "Chrome", "Firefox", "VS Code", "File Explorer",
+    "Discord", "Slack", "Terminal", "PowerShell", "Paint",
+    "Calculator", "Task Manager", "Settings", "Word", "Excel",
 ]
 
 WEBSITES = [
-"Google", "YouTube", "GitHub", "Fiverr", "Reddit",
-"Twitter", "LinkedIn", "Gmail", "Wikipedia", "Stack Overflow",
+    "google.com", "github.com", "upwork.com", "fiverr.com",
+    "stackoverflow.com", "youtube.com", "reddit.com",
 ]
 
-BUTTON_LABELS = [
-"Submit", "Cancel", "OK", "Close", "Save",
-"Login", "Sign Up", "Search", "Next", "Back",
-"Download", "Upload", "Delete", "Edit", "Confirm",
-"Apply", "Reset", "Send", "Continue", "Finish",
+BUTTONS = [
+    "Submit", "Cancel", "Save", "Login", "Search", "Next", "Delete",
+    "OK", "Apply", "Close", "Open", "New", "Edit", "Upload", "Download",
+    "Sign In", "Sign Up", "Continue", "Back", "Confirm", "Send",
 ]
 
-INPUT_FIELDS = [
-"username", "password", "email", "search bar", "message box",
-"title field", "description field", "URL bar", "file name field",
-"phone number field", "zip code field", "comment box",
+TEXT_INPUTS = [
+    "hello world", "test message", "search query", "username",
+    "my project", "important note", "task description",
 ]
 
-MENU_ITEMS = [
-"File > Save", "File > Open", "File > New", "Edit > Copy",
-"Edit > Paste", "Edit > Undo", "View > Zoom In", "View > Zoom Out",
-"Tools > Settings", "Help > About",
-]
+# ── Single action generators ──────────────────────────────────────────────────
 
-KEYBOARD_ACTIONS = [
-("press Ctrl+C", 0x43, "copy"),
-("press Ctrl+V", 0x56, "paste"),
-("press Ctrl+Z", 0x5A, "undo"),
-("press Ctrl+S", 0x53, "save"),
-("press Escape",  0x1B, "dismiss"),
-("press Tab",     0x09, "tab"),
-("press Delete",  0x2E, "delete selected"),
-("press Ctrl+A",  0x41, "select all"),
-("press Ctrl+F",  0x46, "open find"),
-("press F5",      0x74, "refresh"),
-]
-
-SCROLL_CONTEXTS = [
-"a long webpage", "a list of search results", "a file directory",
-"a chat history", "a code file", "a settings panel",
-"a dropdown menu", "an image gallery", "a log output",
-]
-
-WAIT_REASONS = [
-"a loading spinner is visible", "a progress bar is at 60%",
-"a page is still loading", "a download is in progress",
-"an animation is playing", "a video is buffering",
-]
-
-DRAG_TARGETS = [
-"a file icon", "a window title bar", "a slider handle",
-"a list item", "an image thumbnail",
-]
-
-TEXT_TO_TYPE = [
-"Hello, world!", "search query", "my username", "a short note",
-"the file name", "an email address", "a URL", "a password",
-"Yes", "No", "Done", "1234", "test input",
-]
-
-# ─────────────────────────────────────────────────────────────────────────────
-
-# Coordinate helpers
-
-# ─────────────────────────────────────────────────────────────────────────────
-
-# Common screen resolutions to sample from
-
-RESOLUTIONS = [
-(1920, 1080), (1366, 768), (2560, 1440), (1280, 720), (1600, 900)
-]
-
-def _res():
-return random.choice(RESOLUTIONS)
-
-def _coord(w, h):
-return random.randint(10, w - 10), random.randint(10, h - 10)
-
-def _rc(lst):  return random.choice(lst)
-def _ri(a, b): return random.randint(a, b)
-def _rf(a, b): return round(random.uniform(a, b), 2)
-
-# ─────────────────────────────────────────────────────────────────────────────
-
-# ScreenActionDataset
-
-# ─────────────────────────────────────────────────────────────────────────────
-
-class ScreenActionDataset:
-"""
-Generates synthetic (screen_description, action_json) pairs.
-
-```
-Each sample is a realistic description of what Janus 'sees' on screen,
-paired with the correct action to take — formatted as JSON matching
-skill_executor's action dispatch.
-"""
-
-def __init__(self):
-    self._generators = [
-        self._click_button,
-        self._double_click_item,
-        self._right_click_item,
-        self._type_into_field,
-        self._press_keyboard_shortcut,
-        self._press_enter_to_confirm,
-        self._scroll_page,
-        self._wait_for_load,
-        self._click_menu_item,
-        self._move_to_element,
-        self._click_link,
-        self._dismiss_dialog,
-        self._select_all_and_type,
-        self._click_tab,
-        self._scroll_to_find,
-    ]
-
-# ── public ────────────────────────────────────────────────────────────────
-
-def generate_dataset(self, samples: int = 10_000, seed: int = 42
-                     ) -> List[Tuple[str, str]]:
-    """
-    Returns a list of (screen_description, action_json_string) tuples.
-    """
-    random.seed(seed)
+def gen_click(n: int) -> List[str]:
+    """Click a button on screen."""
     out = []
-    for _ in range(samples):
-        fn = _rc(self._generators)
-        desc, action = fn()
-        out.append((desc, json.dumps(action)))
+    for _ in range(n):
+        x, y = _ri(10, 1910), _ri(10, 1070)
+        btn = _rc(BUTTONS)
+        app = _rc(APPS)
+        action = {"type": "click", "x": x, "y": y, "button": "left"}
+        screen = f"{app} is open. A '{btn}' button is visible at ({x}, {y})."
+        out.append(f"<|startoftext|>{screen} [ACT_START]{json.dumps(action)}[ACT_END]<|endoftext|>")
     return out
 
-# ── scenario generators ───────────────────────────────────────────────────
 
-def _click_button(self):
-    w, h   = _res()
-    app    = _rc(APPS)
-    label  = _rc(BUTTON_LABELS)
-    x, y   = _coord(w, h)
-    desc = (f"The screen shows {app}. "
-            f"There is a '{label}' button visible at approximately ({x}, {y}). "
-            f"The task requires clicking it to proceed.")
-    action = {"type": "click", "x": x, "y": y, "button": "left"}
-    return desc, action
+def gen_type(n: int) -> List[str]:
+    """Type text into a field."""
+    out = []
+    for _ in range(n):
+        x, y = _ri(100, 1800), _ri(100, 900)
+        text = _rc(TEXT_INPUTS)
+        app = _rc(APPS)
+        field = _rc(["text field", "input box", "search bar", "text area", "address bar"])
+        action = {"type": "type", "text": text}
+        screen = f"{app} is open. A {field} is active at ({x}, {y}). Type: '{text}'."
+        out.append(f"<|startoftext|>{screen} [ACT_START]{json.dumps(action)}[ACT_END]<|endoftext|>")
+    return out
 
-def _double_click_item(self):
-    w, h  = _res()
-    app   = _rc(["File Explorer", "Desktop", "VS Code", "Excel"])
-    item  = _rc(["a folder", "a file", "a shortcut icon",
-                  "a spreadsheet cell", "a text file"])
-    x, y  = _coord(w, h)
-    desc = (f"{app} is open. "
-            f"There is {item} at position ({x}, {y}). "
-            f"It needs to be opened with a double-click.")
-    action = {"type": "double_click", "x": x, "y": y}
-    return desc, action
 
-def _right_click_item(self):
-    w, h   = _res()
-    target = _rc(["a file icon", "a folder", "the desktop background",
-                   "a taskbar icon", "an image"])
-    x, y   = _coord(w, h)
-    desc = (f"The screen shows the desktop or file manager. "
-            f"There is {target} at ({x}, {y}). "
-            f"A context menu is needed — right-click it.")
-    action = {"type": "right_click", "x": x, "y": y}
-    return desc, action
+def gen_hotkey(n: int) -> List[str]:
+    """Press a keyboard shortcut."""
+    hotkeys = [
+        (["ctrl", "c"], "copy selected text"),
+        (["ctrl", "v"], "paste from clipboard"),
+        (["ctrl", "s"], "save the file"),
+        (["ctrl", "z"], "undo last action"),
+        (["ctrl", "a"], "select all text"),
+        (["ctrl", "n"], "open new window"),
+        (["ctrl", "w"], "close current tab"),
+        (["alt", "F4"], "close the application"),
+        (["win", "r"], "open Run dialog"),
+        (["ctrl", "t"], "open new tab"),
+        (["F5"], "refresh the page"),
+        (["enter"], "confirm the action"),
+        (["escape"], "cancel or close dialog"),
+        (["tab"], "move to next field"),
+    ]
+    out = []
+    for _ in range(n):
+        keys, desc = _rc(hotkeys)
+        app = _rc(APPS)
+        action = {"type": "hotkey", "keys": keys}
+        screen = f"{app} is open. Need to {desc}."
+        out.append(f"<|startoftext|>{screen} [ACT_START]{json.dumps(action)}[ACT_END]<|endoftext|>")
+    return out
 
-def _type_into_field(self):
-    w, h  = _res()
-    field = _rc(INPUT_FIELDS)
-    text  = _rc(TEXT_TO_TYPE)
-    x, y  = _coord(w, h)
-    app   = _rc(APPS + WEBSITES)
-    desc = (f"{app} is open with a {field} visible and focused at ({x}, {y}). "
-            f"The field is empty and waiting for input. "
-            f"Type: \"{text}\".")
-    action = {"type": "type", "text": text, "x": x, "y": y}
-    return desc, action
 
-def _press_keyboard_shortcut(self):
-    w, h          = _res()
-    label, vk, purpose = _rc(KEYBOARD_ACTIONS)
-    app           = _rc(APPS)
-    desc = (f"{app} is in focus. "
-            f"The current task requires {purpose}. "
-            f"Use the keyboard: {label}.")
-    action = {"type": "key", "vk_code": vk, "label": label}
-    return desc, action
+def gen_launch_app(n: int) -> List[str]:
+    """Launch an application."""
+    out = []
+    for _ in range(n):
+        app = _rc(APPS)
+        # Win+R approach
+        action = {"type": "hotkey", "keys": ["win", "r"]}
+        screen = f"Windows desktop is visible. Need to open {app}."
+        out.append(f"<|startoftext|>{screen} [ACT_START]{json.dumps(action)}[ACT_END]<|endoftext|>")
 
-def _press_enter_to_confirm(self):
-    w, h  = _res()
-    ctx   = _rc(["a dialog box is open asking to confirm",
-                  "a search field has been filled in",
-                  "a form is complete and ready to submit",
-                  "a rename field is active with new text entered",
-                  "a terminal command has been typed"])
-    desc = (f"The screen shows {ctx}. "
-            f"Press Enter to confirm or execute.")
-    action = {"type": "press_enter"}
-    return desc, action
+        # Type in run dialog
+        action2 = {"type": "type", "text": app.lower().replace(" ", "")}
+        screen2 = f"Run dialog is open. Need to launch {app}."
+        out.append(f"<|startoftext|>{screen2} [ACT_START]{json.dumps(action2)}[ACT_END]<|endoftext|>")
+    return out
 
-def _scroll_page(self):
-    direction = _rc(["down", "up"])
-    amount    = _ri(2, 8)
-    ctx       = _rc(SCROLL_CONTEXTS)
-    goal      = _rc(["find a specific item", "read more content",
-                      "reach the bottom", "find a button",
-                      "see earlier messages"])
-    desc = (f"The screen is showing {ctx}. "
-            f"Need to scroll {direction} {amount} times to {goal}.")
-    action = {"type": "scroll", "direction": direction, "amount": amount}
-    return desc, action
 
-def _wait_for_load(self):
-    duration = _rf(0.5, 3.0)
-    reason   = _rc(WAIT_REASONS)
-    desc = (f"The screen shows {reason}. "
-            f"Wait {duration} seconds before taking the next action.")
-    action = {"type": "wait", "duration": duration}
-    return desc, action
+def gen_scroll(n: int) -> List[str]:
+    """Scroll the page."""
+    out = []
+    for _ in range(n):
+        x, y = _ri(200, 1700), _ri(200, 800)
+        direction = _rc(["up", "down"])
+        amount = _ri(3, 10)
+        app = _rc(APPS)
+        action = {"type": "scroll", "x": x, "y": y, "direction": direction, "amount": amount}
+        screen = f"{app} is open. Need to scroll {direction} to see more content."
+        out.append(f"<|startoftext|>{screen} [ACT_START]{json.dumps(action)}[ACT_END]<|endoftext|>")
+    return out
 
-def _click_menu_item(self):
-    w, h  = _res()
-    menu  = _rc(MENU_ITEMS)
-    app   = _rc(APPS)
-    x, y  = _coord(w, h)
-    desc = (f"{app} is open with the menu bar visible. "
-            f"The menu item '{menu}' is highlighted at approximately ({x}, {y}). "
-            f"Click it.")
-    action = {"type": "click", "x": x, "y": y, "button": "left",
-              "context": f"menu:{menu}"}
-    return desc, action
 
-def _move_to_element(self):
-    w, h   = _res()
-    target = _rc(DRAG_TARGETS)
-    x, y   = _coord(w, h)
-    desc = (f"The cursor needs to move to {target} at ({x}, {y}) "
-            f"before performing the next action.")
-    action = {"type": "mouse_move", "x": x, "y": y}
-    return desc, action
+def gen_navigate_browser(n: int) -> List[str]:
+    """Navigate to a URL."""
+    out = []
+    for _ in range(n):
+        site = _rc(WEBSITES)
+        url = f"https://www.{site}"
+        # Click address bar
+        action1 = {"type": "click", "x": 700, "y": 45, "button": "left"}
+        screen1 = f"Chrome is open. Need to navigate to {url}. Address bar is at top."
+        out.append(f"<|startoftext|>{screen1} [ACT_START]{json.dumps(action1)}[ACT_END]<|endoftext|>")
 
-def _click_link(self):
-    w, h = _res()
-    site = _rc(WEBSITES)
-    link = _rc(["a blue hyperlink", "a navigation item", "a search result",
-                 "a 'Read more' link", "a profile link", "an article title"])
-    x, y = _coord(w, h)
-    desc = (f"A {site} page is open in the browser. "
-            f"There is {link} visible at ({x}, {y}). "
-            f"Click it to navigate.")
-    action = {"type": "click", "x": x, "y": y, "button": "left",
-              "context": f"link:{site}"}
-    return desc, action
+        # Type URL
+        action2 = {"type": "type", "text": url}
+        screen2 = f"Chrome address bar is selected. Need to type {url}."
+        out.append(f"<|startoftext|>{screen2} [ACT_START]{json.dumps(action2)}[ACT_END]<|endoftext|>")
 
-def _dismiss_dialog(self):
-    w, h    = _res()
-    dialog  = _rc(["an error dialog", "a confirmation popup",
-                    "a save prompt", "an update notification",
-                    "a cookie consent banner"])
-    btn     = _rc(["OK", "Close", "Dismiss", "Cancel", "No Thanks"])
-    x, y    = _coord(w, h)
-    desc = (f"The screen has {dialog} overlaying the main window. "
-            f"A '{btn}' button is visible at ({x}, {y}). "
-            f"Dismiss it.")
-    action = {"type": "click", "x": x, "y": y, "button": "left",
-              "context": f"dialog_dismiss:{btn}"}
-    return desc, action
+        # Press Enter
+        action3 = {"type": "hotkey", "keys": ["enter"]}
+        screen3 = f"Chrome address bar shows '{url}'. Need to navigate."
+        out.append(f"<|startoftext|>{screen3} [ACT_START]{json.dumps(action3)}[ACT_END]<|endoftext|>")
+    return out
 
-def _select_all_and_type(self):
-    w, h  = _res()
-    field = _rc(INPUT_FIELDS)
-    text  = _rc(TEXT_TO_TYPE)
-    x, y  = _coord(w, h)
-    app   = _rc(APPS)
-    desc = (f"{app} shows a {field} at ({x}, {y}) with existing text. "
-            f"Select all existing content and replace it with: \"{text}\".")
-    # Two-action scenario encoded as a sequence note in context
-    action = {"type": "key", "vk_code": 0x41, "label": "Ctrl+A",
-              "then": {"type": "type", "text": text}}
-    return desc, action
 
-def _click_tab(self):
-    w, h = _res()
-    tab  = _rc(["Settings", "Profile", "Home", "Notifications",
-                 "Messages", "Dashboard", "Analytics", "Help"])
-    x, y = _coord(w, h)
-    app  = _rc(APPS + WEBSITES)
-    desc = (f"{app} is open. "
-            f"There is a '{tab}' tab in the navigation bar at ({x}, {y}). "
-            f"Click it to switch views.")
-    action = {"type": "click", "x": x, "y": y, "button": "left",
-              "context": f"tab:{tab}"}
-    return desc, action
+# ── Multi-step task generators ────────────────────────────────────────────────
 
-def _scroll_to_find(self):
-    direction = _rc(["down", "up"])
-    amount    = _ri(3, 10)
-    target    = _rc(BUTTON_LABELS + INPUT_FIELDS)
-    ctx       = _rc(SCROLL_CONTEXTS)
-    desc = (f"The screen shows {ctx}. "
-            f"The '{target}' element is not yet visible. "
-            f"Scroll {direction} {amount} times to locate it.")
-    action = {"type": "scroll", "direction": direction, "amount": amount,
-              "target": target}
-    return desc, action
-```
+def gen_open_notepad_and_type(n: int) -> List[str]:
+    """Full multi-step: open Notepad and type text."""
+    out = []
+    texts = ["hello", "hello world", "test", "meeting notes", "todo list"]
+    for _ in range(n):
+        text = _rc(texts)
 
-# ─────────────────────────────────────────────────────────────────────────────
+        # Step 1: Win+R
+        a1 = {"type": "hotkey", "keys": ["win", "r"]}
+        out.append(f"<|startoftext|>Windows desktop. Goal: open Notepad and type '{text}'. Step 1: open Run dialog. [ACT_START]{json.dumps(a1)}[ACT_END]<|endoftext|>")
 
-# Quick test
+        # Step 2: type notepad
+        a2 = {"type": "type", "text": "notepad"}
+        out.append(f"<|startoftext|>Run dialog is open. Goal: open Notepad. Type 'notepad' in the field. [ACT_START]{json.dumps(a2)}[ACT_END]<|endoftext|>")
 
-# ─────────────────────────────────────────────────────────────────────────────
+        # Step 3: press enter
+        a3 = {"type": "hotkey", "keys": ["enter"]}
+        out.append(f"<|startoftext|>Run dialog shows 'notepad'. Press Enter to launch. [ACT_START]{json.dumps(a3)}[ACT_END]<|endoftext|>")
 
-if **name** == "**main**":
-gen   = ScreenActionDataset()
-pairs = gen.generate_dataset(samples=10_000)
+        # Step 4: click text area
+        a4 = {"type": "click", "x": 640, "y": 400, "button": "left"}
+        out.append(f"<|startoftext|>Notepad is open. Click the text area to focus it. [ACT_START]{json.dumps(a4)}[ACT_END]<|endoftext|>")
 
-```
-print(f"Generated {len(pairs)} samples\n")
-print("── Sample outputs ──────────────────────────────────────")
-for i in random.sample(range(len(pairs)), 6):
-    desc, action = pairs[i]
-    print(f"\n[{i}] SCREEN:\n  {desc}")
-    print(f"     ACTION:\n  {action}")
+        # Step 5: type text
+        a5 = {"type": "type", "text": text}
+        out.append(f"<|startoftext|>Notepad text area is active. Type '{text}'. [ACT_START]{json.dumps(a5)}[ACT_END]<|endoftext|>")
 
-# Verify every action type present
-types = set()
-for _, a in pairs:
-    types.add(json.loads(a).get("type"))
-print(f"\nAction types covered: {sorted(types)}")
-```
+    return out
+
+
+def gen_browser_search(n: int) -> List[str]:
+    """Full multi-step: open browser and search."""
+    queries = ["python tutorial", "how to code", "weather today", "news"]
+    out = []
+    for _ in range(n):
+        query = _rc(queries)
+
+        a1 = {"type": "hotkey", "keys": ["win", "r"]}
+        out.append(f"<|startoftext|>Desktop. Goal: search for '{query}' in browser. Open Run dialog first. [ACT_START]{json.dumps(a1)}[ACT_END]<|endoftext|>")
+
+        a2 = {"type": "type", "text": "chrome"}
+        out.append(f"<|startoftext|>Run dialog open. Launch Chrome browser. [ACT_START]{json.dumps(a2)}[ACT_END]<|endoftext|>")
+
+        a3 = {"type": "hotkey", "keys": ["enter"]}
+        out.append(f"<|startoftext|>Run dialog shows 'chrome'. Press Enter. [ACT_START]{json.dumps(a3)}[ACT_END]<|endoftext|>")
+
+        a4 = {"type": "click", "x": 700, "y": 45, "button": "left"}
+        out.append(f"<|startoftext|>Chrome is open. Click address bar to search for '{query}'. [ACT_START]{json.dumps(a4)}[ACT_END]<|endoftext|>")
+
+        a5 = {"type": "type", "text": query}
+        out.append(f"<|startoftext|>Chrome address bar selected. Type search query '{query}'. [ACT_START]{json.dumps(a5)}[ACT_END]<|endoftext|>")
+
+        a6 = {"type": "hotkey", "keys": ["enter"]}
+        out.append(f"<|startoftext|>Chrome address bar shows '{query}'. Press Enter to search. [ACT_START]{json.dumps(a6)}[ACT_END]<|endoftext|>")
+
+    return out
+
+
+# ── Main generator ────────────────────────────────────────────────────────────
+
+def generate_screen_action_dataset(
+    total: int = 100_000,
+    output_path: str = "training_data/screen_actions.jsonl",
+) -> int:
+    """
+    Generate a rich screen action dataset and save to JSONL.
+
+    Returns the number of examples generated.
+    """
+    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+
+    per_type = total // 10
+    all_examples = []
+
+    print(f"Generating {total:,} screen action examples...")
+
+    all_examples += gen_click(per_type * 2)
+    print(f"  clicks: {per_type * 2:,}")
+
+    all_examples += gen_type(per_type)
+    print(f"  type: {per_type:,}")
+
+    all_examples += gen_hotkey(per_type)
+    print(f"  hotkeys: {per_type:,}")
+
+    all_examples += gen_launch_app(per_type // 2)
+    print(f"  launch app: {per_type // 2 * 2:,}")  # 2 steps each
+
+    all_examples += gen_scroll(per_type // 2)
+    print(f"  scroll: {per_type // 2:,}")
+
+    all_examples += gen_navigate_browser(per_type // 3)
+    print(f"  browser nav: {per_type // 3 * 3:,}")  # 3 steps each
+
+    all_examples += gen_open_notepad_and_type(per_type // 5)
+    print(f"  open+type: {per_type // 5 * 5:,}")  # 5 steps each
+
+    all_examples += gen_browser_search(per_type // 6)
+    print(f"  browser search: {per_type // 6 * 6:,}")  # 6 steps each
+
+    random.shuffle(all_examples)
+
+    with open(output_path, "w", encoding="utf-8") as f:
+        for ex in all_examples:
+            f.write(json.dumps({"text": ex}) + "\n")
+
+    print(f"\nSaved {len(all_examples):,} examples to {output_path}")
+    return len(all_examples)
+
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--total", type=int, default=100_000)
+    parser.add_argument("--output", type=str, default="training_data/screen_actions.jsonl")
+    args = parser.parse_args()
+    n = generate_screen_action_dataset(args.total, args.output)
+    print(f"Done: {n:,} examples")
