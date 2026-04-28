@@ -86,9 +86,11 @@ class BLTConfig:
     max_patches:             int = 512    # max patches in one forward pass
 
     def to_avus_config(self) -> AvusConfig:
-        """Build the AvusConfig for the global model."""
-        return AvusConfig(
-            vocab_size        = self.global_dim,  # not used for token embedding
+        """Build the AvusConfig for the global model — compatible with any avus.py version."""
+        import inspect
+        valid_fields = set(inspect.signature(AvusConfig.__init__).parameters.keys()) - {'self'}
+        kwargs = dict(
+            vocab_size        = self.global_dim,
             dim               = self.global_dim,
             n_layers          = self.global_layers,
             n_heads           = self.global_heads,
@@ -101,6 +103,7 @@ class BLTConfig:
             n_experts         = self.global_n_experts,
             n_experts_active  = self.global_n_experts_active,
         )
+        return AvusConfig(**{k: v for k, v in kwargs.items() if k in valid_fields})
 
     @classmethod
     def from_dict(cls, d: dict) -> "BLTConfig":
