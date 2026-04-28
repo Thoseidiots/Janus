@@ -68,6 +68,14 @@ KAGGLE_SEQ_LEN        = 256
 KAGGLE_BATCH          = 1
 KAGGLE_GRAD_ACCUM     = 16
 
+# ── Collaborative mode Kaggle profile (fits Avus on cuda:0, BLT on cuda:1) ───
+# Avus ~400M params on cuda:0 only, BLT ~50M on cuda:1
+KAGGLE_COLLAB_DIM     = 1024
+KAGGLE_COLLAB_LAYERS  = 12
+KAGGLE_COLLAB_HEADS   = 8
+KAGGLE_COLLAB_KV_HEADS = 4
+KAGGLE_COLLAB_FFN     = 2048
+
 # ═══════════════════════════════════════════════════════════════════════════════
 
 import os, sys, json, random, gc, math, shutil, time
@@ -946,15 +954,34 @@ def _train_collaborative(device):
     BLT_BEST_OUT     = KAGGLE_WORKING / "avus_blt_best.pt"
 
     # ── Build Avus ────────────────────────────────────────────────────────────
-    config_path = None
-    for p in REPO_CANDIDATES:
-        cp = p / f"config_avus_{MODEL_SIZE}.json"
-        if cp.exists():
-            config_path = cp
-            break
-    cfg_avus = AvusConfig.from_file(str(config_path)) if config_path else AvusConfig()
-    avus_model = Avus(cfg_avus).to(device)
-    print(f"[collab] Avus params: {avus_model.count_parameters()/1e6:.1f}M")
+    # In collaborative mode use a smaller single-GPU config so BLT fits on cuda:1
+    if KAGGLE_MODE:
+        cfg_dict = {
+            "vocab_size": 50304,
+            "dim":        KAGGLE_COLLAB_DIM,
+            "n_layers":   KAGGLE_COLLAB_LAYERS,
+            "n_heads":    KAGGLE_COLLAB_HEADS,
+            "n_kv_heads": KAGGLE_COLLAB_KV_HEADS,
+            "ffn_hidden": KAGGLE_COLLAB_FFN,
+            "max_seq_len": KAGGLE_SEQ_LEN,
+            "dropout": 0.0,
+        }
+        cfg_avus = AvusConfig.from_dict(cfg_dict)
+        print(f"[collab] Kaggle mode: using smaller Avus config "
+              f"(dim={KAGGLE_COLLAB_DIM}, layers={KAGGLE_COLLAB_LAYERS}) "
+              f"to fit alongside BLT")
+    else:
+        config_path = None
+        for p in REPO_CANDIDATES:
+            cp = p / f"config_avus_{MODEL_SIZE}.json"
+            if cp.exists():
+                config_path = cp
+                break
+        cfg_avus = AvusConfig.from_file(str(config_path)) if config_path else AvusConfig()
+
+    # Keep Avus on cuda:0 only — no model parallel in collaborative mode
+    avus_model = Avus(cfg_avus).to(torch.device("cuda:0") if torch.cuda.is_available() else device)
+    print(f"[collab] Avus params: {avus_model.count_parameters()/1e6:.1f}M on cuda:0")
 
     avus_start_epoch = 0
     for wpath in [AVUS_WEIGHTS_OUT, WEIGHTS_IN]:
@@ -1063,7 +1090,8 @@ def _train_collaborative(device):
                 byte_iter = iter(byte_loader)
                 byte_x, byte_y = next(byte_iter)
 
-            token_x = token_x.to(device); token_y = token_y.to(device)
+            token_x = token_x.to(torch.device("cuda:0") if torch.cuda.is_available() else device)
+            token_y = token_y.to(torch.device("cuda:0") if torch.cuda.is_available() else device)
             byte_x  = byte_x.to(blt_device);  byte_y  = byte_y.to(blt_device)
 
             a_loss, b_loss, d_loss = collab.step(
