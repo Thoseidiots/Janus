@@ -226,12 +226,12 @@ class CausalSelfAttention(nn.Module):
             if k.shape[2] > self.window_size:
                 k = k[:, :, -self.window_size:, :]
                 v = v[:, :, -self.window_size:, :]
-            # Q attends to at most window_size past tokens
-            q_len   = q.shape[2]
-            kv_len  = k.shape[2]
-            win     = min(self.window_size, kv_len)
-            # Build local causal mask for this window
-            local_mask = self.mask[:, :, :q_len, :win].to(dev)
+            q_len  = q.shape[2]
+            kv_len = k.shape[2]
+            # Build causal mask dynamically — handles any seq length
+            local_mask = torch.tril(torch.ones(q_len, kv_len, device=dev)).view(
+                1, 1, q_len, kv_len
+            )
 
         # Repeat K and V heads for GQA
         if self.num_groups > 1:
@@ -247,9 +247,15 @@ class CausalSelfAttention(nn.Module):
             if self.window_size > 0 and not use_cache:
                 scores = scores.masked_fill(local_mask == 0, float("-inf"))
             else:
-                seq_len = scores.shape[-1]
                 q_len   = scores.shape[-2]
-                full_mask = self.mask[:, :, :q_len, :seq_len].to(dev)
+                seq_len = scores.shape[-1]
+                # Build dynamically if sequence exceeds stored mask size
+                if q_len <= self.mask.shape[2] and seq_len <= self.mask.shape[3]:
+                    full_mask = self.mask[:, :, :q_len, :seq_len].to(dev)
+                else:
+                    full_mask = torch.tril(torch.ones(q_len, seq_len, device=dev)).view(
+                        1, 1, q_len, seq_len
+                    )
                 scores = scores.masked_fill(full_mask == 0, float("-inf"))
 
         attn   = F.softmax(scores, dim=-1)
