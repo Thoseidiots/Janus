@@ -92,19 +92,21 @@ class CollaborativeTrainer:
         avus_model,
         blt_model,
         device,
-        shared_dim:      int   = 256,
+        shared_dim:      int   = 128,
         distill_weight:  float = 0.1,   # weight of distillation loss
         distill_temp:    float = 2.0,   # softmax temperature for distillation
         distill_every:   int   = 4,     # only distill every N steps (saves memory)
+        blt_device=None,
     ):
         self.avus        = avus_model
         self.blt         = blt_model
         self.device      = device
+        self.blt_device  = blt_device if blt_device is not None else device
         self.distill_w   = distill_weight
         self.distill_t   = distill_temp
         self.distill_every = distill_every
 
-        # Shared projection — learns the alignment between token and byte spaces
+        # Shared projection on primary device (cuda:0)
         avus_dim = avus_model.config.dim
         blt_dim  = blt_model.cfg.global_dim
         self.projector = SharedProjection(avus_dim, blt_dim, shared_dim).to(device)
@@ -188,9 +190,9 @@ class CollaborativeTrainer:
                 avus_hidden = self._extract_avus_hidden(raw_avus, token_x)
                 blt_hidden  = self._extract_blt_hidden(raw_blt,  byte_x)
 
-                # Project to shared space
-                avus_proj = self.projector.project_avus(avus_hidden)  # (B, shared_dim)
-                blt_proj  = self.projector.project_blt(blt_hidden)    # (B, shared_dim)
+                # Project to shared space — move BLT hidden to avus device
+                avus_proj = self.projector.project_avus(avus_hidden)                    # (B, shared_dim) on device
+                blt_proj  = self.projector.project_blt(blt_hidden.to(self.device))      # (B, shared_dim) on device
 
                 # Symmetric KL divergence
                 distill_loss = _kl_divergence(avus_proj, blt_proj, self.distill_t)

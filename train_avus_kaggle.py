@@ -968,14 +968,18 @@ def _train_collaborative(device):
             break
 
     # ── Build BLT ─────────────────────────────────────────────────────────────
+    # Smaller config to fit alongside Avus on T4 x2 (30GB total VRAM)
+    # Avus takes ~13GB, so BLT gets ~10GB — keep it lean
     blt_cfg = BLTConfig(
-        patch_size=8, local_dim=128, local_layers=2, local_heads=4,
-        global_dim=512, global_layers=8, global_heads=8, global_kv_heads=4,
-        global_window=256, global_n_experts=8, global_n_experts_active=2,
-        max_patches=512,
+        patch_size=8, local_dim=64, local_layers=2, local_heads=4,
+        global_dim=256, global_layers=4, global_heads=4, global_kv_heads=2,
+        global_window=128, global_n_experts=4, global_n_experts_active=2,
+        max_patches=256,
     )
-    blt_model = ByteLatentAvus(blt_cfg).to(device)
-    print(f"[collab] BLT params: {blt_model.count_parameters()/1e6:.1f}M")
+    # BLT stays on cuda:1 to avoid competing with Avus on cuda:0
+    blt_device = torch.device("cuda:1") if torch.cuda.device_count() > 1 else device
+    blt_model = ByteLatentAvus(blt_cfg).to(blt_device)
+    print(f"[collab] BLT params: {blt_model.count_parameters()/1e6:.1f}M on {blt_device}")
 
     blt_start_epoch = 0
     if BLT_WEIGHTS_OUT.exists():
@@ -989,7 +993,8 @@ def _train_collaborative(device):
     # ── Collaborative trainer ─────────────────────────────────────────────────
     collab = CollaborativeTrainer(
         avus_model, blt_model, device,
-        shared_dim=256, distill_weight=0.1, distill_temp=2.0, distill_every=4,
+        shared_dim=128, distill_weight=0.1, distill_temp=2.0, distill_every=4,
+        blt_device=blt_device,
     )
 
     # ── Dataset ───────────────────────────────────────────────────────────────
@@ -1059,7 +1064,7 @@ def _train_collaborative(device):
                 byte_x, byte_y = next(byte_iter)
 
             token_x = token_x.to(device); token_y = token_y.to(device)
-            byte_x  = byte_x.to(device);  byte_y  = byte_y.to(device)
+            byte_x  = byte_x.to(blt_device);  byte_y  = byte_y.to(blt_device)
 
             a_loss, b_loss, d_loss = collab.step(
                 token_x, token_y, avus_opt, avus_scaler,
