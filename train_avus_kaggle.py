@@ -986,13 +986,25 @@ def _train_collaborative(device):
     avus_start_epoch = 0
     for wpath in [AVUS_WEIGHTS_OUT, WEIGHTS_IN]:
         if wpath.exists():
-            ckpt = torch.load(str(wpath), map_location="cpu")
-            sd   = {k.replace("module.", ""): v
-                    for k, v in ckpt.get("model_state_dict", ckpt).items()}
-            avus_model.load_state_dict(sd, strict=False)
-            avus_start_epoch = ckpt.get("epoch", 0) if isinstance(ckpt, dict) else 0
-            print(f"[collab] Avus resumed from epoch {avus_start_epoch}")
-            break
+            try:
+                ckpt = torch.load(str(wpath), map_location="cpu")
+                sd   = {k.replace("module.", ""): v
+                        for k, v in ckpt.get("model_state_dict", ckpt).items()}
+                # Check config compatibility before loading
+                ckpt_cfg = ckpt.get("config", {}) if isinstance(ckpt, dict) else {}
+                ckpt_dim = ckpt_cfg.get("dim", None)
+                if ckpt_dim is not None and ckpt_dim != cfg_avus.dim:
+                    print(f"[collab] Skipping checkpoint {wpath.name} — "
+                          f"dim mismatch (ckpt={ckpt_dim}, model={cfg_avus.dim}). "
+                          f"Training from scratch.")
+                    break
+                avus_model.load_state_dict(sd, strict=False)
+                avus_start_epoch = ckpt.get("epoch", 0) if isinstance(ckpt, dict) else 0
+                print(f"[collab] Avus resumed from epoch {avus_start_epoch}")
+                break
+            except Exception as e:
+                print(f"[collab] Could not load checkpoint {wpath.name}: {e}. Training from scratch.")
+                break
 
     # ── Build BLT ─────────────────────────────────────────────────────────────
     # Smaller config to fit alongside Avus on T4 x2 (30GB total VRAM)
