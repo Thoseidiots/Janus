@@ -51,7 +51,13 @@ from dataclasses import dataclass, field
 from typing import Optional, Tuple
 from pathlib import Path
 
-from avus import RMSNorm, SwiGLU, RoPE, AvusConfig, Avus, MoEFFN, AvusFFN
+# Import from avus — MoEFFN may not exist in older dataset snapshots
+try:
+    from avus import RMSNorm, SwiGLU, RoPE, AvusConfig, Avus, MoEFFN, AvusFFN
+except ImportError:
+    from avus import RMSNorm, SwiGLU, RoPE, AvusConfig, Avus, AvusFFN
+    # MoEFFN not available — define a passthrough so BLT still works
+    MoEFFN = AvusFFN
 
 # ── BLT Config ────────────────────────────────────────────────────────────────
 
