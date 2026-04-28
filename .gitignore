@@ -28,3 +28,7 @@ synthetic_databases/
 *.bak
 *.log
 .kiro/
+
+# Rust build artifacts
+target/
+oss-game-engine/target/
