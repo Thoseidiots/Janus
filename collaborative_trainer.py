@@ -197,12 +197,14 @@ class CollaborativeTrainer:
                 distill_loss_val = distill_loss.item()
                 self._distill_losses.append(distill_loss_val)
 
-                # Add distillation loss to both models
-                avus_total = avus_task_loss + self.distill_w * distill_loss
-                blt_total  = blt_task_loss  + self.distill_w * distill_loss
+                # Add distillation loss to both models — ensure same device
+                loss_dev = avus_task_loss.device
+                avus_total = avus_task_loss + self.distill_w * distill_loss.to(loss_dev)
+                blt_total  = blt_task_loss.to(loss_dev)  + self.distill_w * distill_loss.to(loss_dev)
         else:
-            avus_total = avus_task_loss if avus_task_loss is not None else torch.tensor(0.0)
-            blt_total  = blt_task_loss  if blt_task_loss  is not None else torch.tensor(0.0)
+            loss_dev   = avus_task_loss.device if avus_task_loss is not None else self.device
+            avus_total = avus_task_loss if avus_task_loss is not None else torch.tensor(0.0, device=loss_dev)
+            blt_total  = blt_task_loss.to(loss_dev) if blt_task_loss is not None else torch.tensor(0.0, device=loss_dev)
 
         # ── Backward: Avus ────────────────────────────────────────────────────
         avus_scaler.scale(avus_total / grad_accum_steps).backward(retain_graph=do_distill)
