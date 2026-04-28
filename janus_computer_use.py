@@ -1898,12 +1898,21 @@ class ComputerUseEngine:
             # Use a forward reference so this works once it is implemented.
             planner_cls = globals().get("ActionPlanner")
             if planner_cls is not None:
-                # Try to get AvusBrain if available
+                # Load the best available brain via the unified adapter
                 try:
-                    from avus_brain import AvusBrain
-                    brain = AvusBrain()
+                    from janus_brain_adapter import JanusBrain
+                    brain = JanusBrain()
+                    logger.info(
+                        "ActionPlanner brain: %s",
+                        type(brain._backend).__name__,
+                    )
                 except Exception:
-                    brain = None
+                    # Last resort: try AvusBrain directly
+                    try:
+                        from avus_brain import AvusBrain
+                        brain = AvusBrain()
+                    except Exception:
+                        brain = None
                 self._planner = planner_cls(engine=self, brain=brain)
             else:
                 self._planner = None

@@ -34,7 +34,7 @@ except ImportError:
 # Janus imports
 try:
     from avus_brain import AvusBrain
-    from holographic_brain_memory.core import HolographicMemory
+    from holographic_brain_memory.core import HolographicBrainMemory as HolographicMemory
     from browser_automation import BrowserAutomation
     from janus_video_comprehension import JanusVideoComprehension
     from speech_synthesis import SpeechSynthesis
@@ -128,7 +128,7 @@ class JanusAICEO:
     def _initialize_components(self):
         """Initialize Janus AI components"""
         try:
-            self.avus_brain = AvusBrain(model_size="7b")
+            self.avus_brain = AvusBrain()
             logger.info("Avus brain initialized")
         except Exception as e:
             logger.warning(f"Could not initialize Avus brain: {e}")
