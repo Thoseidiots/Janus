@@ -709,12 +709,32 @@ class JanusTTSv2:
         print(f"[JanusTTSv2] Saved weights to '{path}'.")
 
     @torch.no_grad()
-    def synthesize(self, text: str, speed: float = 1.0) -> bytes:
+    def synthesize(self, text: str, speed: float = 1.0,
+                   use_neural: bool = True) -> bytes:
         """
         Synthesize text to raw PCM int16 bytes at SAMPLE_RATE Hz.
-        Uses fixed duration (6 frames/phoneme) until duration predictor is
-        properly trained on real speech data.
+
+        Priority order:
+          1. Kokoro af_heart  — local neural TTS, most human-sounding
+          2. Edge TTS Ana Neural (en-US-AnaNeural) — cloud, very natural
+          3. Pure PyTorch vocoder — fallback, untrained until fine-tuned
+
+        Set use_neural=False to force the pure PyTorch path (for training).
         """
+        if use_neural:
+            # ── 1. Try Kokoro (local, af_heart voice) ────────────────────
+            wav_np = self._kokoro_synthesize(text, speed)
+            if wav_np is not None:
+                return self._normalise_and_encode(wav_np)
+
+            # ── 2. Try Edge TTS Ana Neural ────────────────────────────────
+            wav_np = self._ana_synthesize(text, speed)
+            if wav_np is not None:
+                return self._normalise_and_encode(wav_np)
+
+            print("[JanusTTSv2] Neural synthesis unavailable — using PyTorch vocoder")
+
+        # ── 3. Pure PyTorch fallback ──────────────────────────────────────
         phonemes = self.phonemizer.text_to_phonemes(text)
         ids = self.phonemizer.phonemes_to_ids(phonemes)
         ids_tensor = torch.tensor([ids], dtype=torch.long)
@@ -722,7 +742,6 @@ class JanusTTSv2:
         encoded = self.text_encoder(ids_tensor)              # (1, T, 256)
 
         # Fixed duration: 6 frames per phoneme ≈ 64ms at 24kHz/256hop
-        # This gives natural-sounding speech without needing a trained predictor
         T = encoded.shape[1]
         durations = torch.full((1, T), 6.0)
 
@@ -730,17 +749,127 @@ class JanusTTSv2:
         mel = self.decoder(frame_feats, self.style_vector)   # (1, T_frames, 80)
         waveform = self.vocoder(mel)                         # (1, T_samples)
         wav_np = waveform[0].detach().cpu().numpy()
+        return self._normalise_and_encode(wav_np)
 
-        # Normalize to prevent silent output from undertrained vocoder
+    def _normalise_and_encode(self, wav_np: np.ndarray) -> bytes:
+        """Normalise float32 waveform and encode as PCM int16 bytes."""
         peak = np.max(np.abs(wav_np))
         if peak > 1e-6:
             wav_np = wav_np / peak * 0.92
         else:
             wav_np = np.zeros_like(wav_np)
-
         wav_np = np.clip(wav_np, -1.0, 1.0)
-        pcm16 = (wav_np * 32767.0).astype(np.int16)
-        return pcm16.tobytes()
+        return (wav_np * 32767.0).astype(np.int16).tobytes()
+
+    def _fix_pronunciations(self, text: str) -> str:
+        """Fix words that neural TTS engines mispronounce."""
+        import re
+        fixes = {
+            r'\bJanus\b': 'Yanus',
+            r'\bjanus\b': 'yanus',
+            r'\bJANUS\b': 'YANUS',
+        }
+        result = text
+        for pattern, replacement in fixes.items():
+            result = re.sub(pattern, replacement, result)
+        return result
+
+    def _kokoro_synthesize(self, text: str, speed: float = 1.0):
+        """
+        Synthesize using Kokoro af_heart (local, no internet).
+        Returns float32 numpy array at SAMPLE_RATE, or None if unavailable.
+        """
+        try:
+            from kokoro import KPipeline
+            if not hasattr(self, '_kokoro_pipeline'):
+                self._kokoro_pipeline = KPipeline(lang_code='a')
+                print("[JanusTTSv2] Kokoro loaded (af_heart voice)")
+
+            fixed_text = self._fix_pronunciations(text)
+            generator = self._kokoro_pipeline(fixed_text, voice='af_heart', speed=speed)
+            chunks = [audio for _, _, audio in generator]
+            if not chunks:
+                return None
+
+            full = np.concatenate(chunks)
+            # Kokoro outputs at 24000 Hz — resample if needed
+            if 24000 != SAMPLE_RATE:
+                n = int(len(full) * SAMPLE_RATE / 24000)
+                full = np.interp(
+                    np.linspace(0, len(full) - 1, n),
+                    np.arange(len(full)), full
+                ).astype(np.float32)
+
+            print(f"[JanusTTSv2] Kokoro (af_heart)")
+            return full
+        except ImportError:
+            return None
+        except Exception as e:
+            print(f"[JanusTTSv2] Kokoro failed: {e}")
+            return None
+
+    def _ana_synthesize(self, text: str, speed: float = 1.0):
+        """
+        Synthesize using Edge TTS en-US-AnaNeural (cloud, most human-sounding).
+        Returns float32 numpy array at SAMPLE_RATE, or None if unavailable.
+        Ana Neural is chosen because she has the most natural prosody and
+        warmth of all the Edge TTS English voices.
+        """
+        import asyncio, tempfile, os as _os
+
+        rate_pct = int((speed - 1.0) * 100)
+        rate_str = f"+{rate_pct}%" if rate_pct >= 0 else f"{rate_pct}%"
+
+        async def _run():
+            import edge_tts
+            with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as f:
+                tmp = f.name
+            # en-US-AnaNeural: warm, natural, conversational — most human-like
+            await edge_tts.Communicate(
+                text, "en-US-AnaNeural", rate=rate_str
+            ).save(tmp)
+            return tmp
+
+        try:
+            loop = asyncio.new_event_loop()
+            tmp_path = loop.run_until_complete(_run())
+            loop.close()
+            if not tmp_path or not _os.path.exists(tmp_path):
+                return None
+            audio = self._mp3_to_float32(tmp_path)
+            _os.unlink(tmp_path)
+            if audio is not None:
+                print(f"[JanusTTSv2] Edge TTS (en-US-AnaNeural)")
+            return audio
+        except Exception as e:
+            print(f"[JanusTTSv2] Edge TTS failed: {e}")
+            return None
+
+    def _mp3_to_float32(self, mp3_path: str):
+        """Decode MP3 → float32 numpy at SAMPLE_RATE."""
+        try:
+            from pydub import AudioSegment
+            seg = AudioSegment.from_mp3(mp3_path)
+            seg = seg.set_channels(1).set_frame_rate(SAMPLE_RATE).set_sample_width(2)
+            return np.frombuffer(seg.raw_data, dtype=np.int16).astype(np.float32) / 32768.0
+        except Exception:
+            pass
+        try:
+            import soundfile as sf
+            audio, sr = sf.read(mp3_path)
+            if audio.ndim == 2:
+                audio = audio.mean(axis=1)
+            audio = audio.astype(np.float32)
+            if sr != SAMPLE_RATE:
+                n = int(len(audio) * SAMPLE_RATE / sr)
+                audio = np.interp(
+                    np.linspace(0, len(audio) - 1, n),
+                    np.arange(len(audio)), audio
+                ).astype(np.float32)
+            return audio
+        except Exception:
+            pass
+        return None
 
     def load_style_from_audio(self, audio_path: str) -> torch.Tensor:
         """

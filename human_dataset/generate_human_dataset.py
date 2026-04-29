@@ -720,6 +720,173 @@ def generate_all():
     print(f"    {PAIRS_PATH}")
     print(f"    {CONV_PATH}")
 
+    return conversations
+
+
+# =============================================================================
+# AUDIO SYNTHESIS — Ana Neural voice via JanusTTSv2
+# =============================================================================
+
+def _extract_avus_turns(pair_text: str) -> list[str]:
+    """
+    Extract all Avus turns from a training pair string.
+    Format: <|startoftext|>Human: ...\nAvus: ...\n...<|endoftext|>
+    Returns list of Avus response strings.
+    """
+    # Strip SOT/EOT tokens
+    text = pair_text.replace("<|startoftext|>", "").replace("<|endoftext|>", "").strip()
+    turns = []
+    for line in text.split("\n"):
+        line = line.strip()
+        if line.startswith("Avus:"):
+            turns.append(line[len("Avus:"):].strip())
+    return turns
+
+
+def synthesize_audio_dataset(
+    n_samples: int = 500,
+    speed: float = 1.0,
+    tts_weights: str = "janus_tts_v2_weights.pt",
+):
+    """
+    Synthesize audio for a subset of the human dataset using JanusTTSv2
+    with Ana Neural as the primary voice (most human-sounding).
+
+    For each sampled conversation:
+      - Extracts all Avus turns
+      - Synthesizes each turn to WAV using Ana Neural (en-US-AnaNeural)
+      - Saves to human_dataset/output/audio/{conv_type}/{idx}_{turn}.wav
+      - Writes a manifest JSON mapping text → audio path
+
+    This creates a speech dataset that can be used to:
+      1. Fine-tune JanusTTSv2's vocoder on real Ana-quality audio
+      2. Provide audio training data for speech-aware models
+      3. Validate that Avus responses sound natural when spoken
+
+    Usage:
+        python human_dataset/generate_human_dataset.py --audio
+        python human_dataset/generate_human_dataset.py --audio --n 1000
+        python human_dataset/generate_human_dataset.py --audio --n 200 --speed 0.95
+    """
+    import sys, wave
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+
+    # Load JanusTTSv2 — Ana Neural is the primary voice
+    try:
+        from janus_tts_v2 import JanusTTSv2, SAMPLE_RATE
+        tts = JanusTTSv2(weights_path=tts_weights)
+        print(f"[audio] JanusTTSv2 loaded. Primary voice: Ana Neural (en-US-AnaNeural)")
+        print(f"[audio] Fallback chain: Kokoro af_heart → Ana Neural → PyTorch vocoder")
+    except Exception as e:
+        print(f"[audio] Failed to load JanusTTSv2: {e}")
+        return
+
+    # Load existing conversations
+    if not CONV_PATH.exists():
+        print("[audio] No conversations found. Run without --audio first.")
+        return
+
+    conversations = json.loads(CONV_PATH.read_text(encoding="utf-8"))
+    sample = random.sample(conversations, min(n_samples, len(conversations)))
+
+    audio_dir = OUT_DIR / "audio"
+    audio_dir.mkdir(parents=True, exist_ok=True)
+
+    manifest = []
+    total_turns = 0
+    failed = 0
+
+    print(f"\n[audio] Synthesizing {len(sample)} conversations with Ana Neural voice...")
+    print(f"[audio] Output: {audio_dir}\n")
+
+    for i, conv in enumerate(sample):
+        conv_type = conv.get("type", "unknown")
+        type_dir = audio_dir / conv_type
+        type_dir.mkdir(exist_ok=True)
+
+        avus_turns = _extract_avus_turns(conv["text"])
+        if not avus_turns:
+            continue
+
+        conv_manifest = {
+            "conv_idx": i,
+            "conv_type": conv_type,
+            "turns": []
+        }
+
+        for t_idx, turn_text in enumerate(avus_turns):
+            if not turn_text.strip():
+                continue
+
+            wav_path = type_dir / f"{i:05d}_turn{t_idx}.wav"
+
+            try:
+                pcm_bytes = tts.synthesize(turn_text, speed=speed)
+
+                # Write WAV file
+                pcm_array = __import__("numpy").frombuffer(
+                    pcm_bytes, dtype=__import__("numpy").int16
+                )
+                with wave.open(str(wav_path), "wb") as wf:
+                    wf.setnchannels(1)
+                    wf.setsampwidth(2)
+                    wf.setframerate(SAMPLE_RATE)
+                    wf.writeframes(pcm_bytes)
+
+                duration_s = len(pcm_array) / SAMPLE_RATE
+                conv_manifest["turns"].append({
+                    "turn_idx": t_idx,
+                    "text": turn_text,
+                    "wav": str(wav_path.relative_to(OUT_DIR)),
+                    "duration_s": round(duration_s, 2),
+                })
+                total_turns += 1
+
+            except Exception as e:
+                print(f"  [!] Failed turn {t_idx} of conv {i}: {e}")
+                failed += 1
+
+        manifest.append(conv_manifest)
+
+        if (i + 1) % 50 == 0:
+            print(f"  [{i+1}/{len(sample)}] {total_turns} turns synthesized, {failed} failed")
+
+    # Write manifest
+    manifest_path = OUT_DIR / "audio_manifest.json"
+    manifest_path.write_text(
+        json.dumps(manifest, indent=2, ensure_ascii=False),
+        encoding="utf-8"
+    )
+
+    print(f"\n[audio] Done!")
+    print(f"  Conversations : {len(manifest)}")
+    print(f"  Turns synth'd : {total_turns}")
+    print(f"  Failed        : {failed}")
+    print(f"  Manifest      : {manifest_path}")
+    print(f"\n  To fine-tune JanusTTSv2 on this audio:")
+    print(f"    from janus_tts_v2 import JanusTTSv2")
+    print(f"    tts = JanusTTSv2()")
+    print(f"    tts.train_on_sample(text, wav_path, steps=200)")
+
 
 if __name__ == "__main__":
-    generate_all()
+    import argparse
+    parser = argparse.ArgumentParser(description="Generate human-like training data for Avus")
+    parser.add_argument("--audio", action="store_true",
+                        help="Synthesize audio using JanusTTSv2 (Ana Neural voice)")
+    parser.add_argument("--n", type=int, default=500,
+                        help="Number of conversations to synthesize (default: 500)")
+    parser.add_argument("--speed", type=float, default=1.0,
+                        help="Speech speed factor (default: 1.0)")
+    parser.add_argument("--weights", type=str, default="janus_tts_v2_weights.pt",
+                        help="Path to JanusTTSv2 weights")
+    args = parser.parse_args()
+
+    if args.audio:
+        synthesize_audio_dataset(
+            n_samples=args.n,
+            speed=args.speed,
+            tts_weights=args.weights,
+        )
+    else:
+        generate_all()
