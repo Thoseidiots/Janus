@@ -771,6 +771,15 @@ def synthesize_audio_dataset(
     import sys, wave
     sys.path.insert(0, str(Path(__file__).parent.parent))
 
+    # Load AudioValidator
+    try:
+        from audio_validator import AudioValidator
+        validator = AudioValidator()
+        print("[audio] AudioValidator loaded — will reject silence, noise, and bad synthesis")
+    except ImportError:
+        validator = None
+        print("[audio] AudioValidator not found — skipping quality checks")
+
     # Load JanusTTSv2 — Ana Neural is the primary voice
     try:
         from janus_tts_v2 import JanusTTSv2, SAMPLE_RATE
@@ -822,6 +831,14 @@ def synthesize_audio_dataset(
 
             try:
                 pcm_bytes = tts.synthesize(turn_text, speed=speed)
+
+                # ── Quality gate: reject silence, noise, bad synthesis ────
+                if validator is not None:
+                    check = validator.validate_pcm(pcm_bytes, SAMPLE_RATE, text=turn_text)
+                    if not check.passed:
+                        print(f"  [rejected] conv {i} turn {t_idx}: {check.reason}")
+                        failed += 1
+                        continue
 
                 # Write WAV file
                 pcm_array = __import__("numpy").frombuffer(

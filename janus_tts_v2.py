@@ -761,6 +761,24 @@ class JanusTTSv2:
         wav_np = np.clip(wav_np, -1.0, 1.0)
         return (wav_np * 32767.0).astype(np.int16).tobytes()
 
+    def validate_output(self, pcm_bytes: bytes, text: str = "") -> tuple[bool, str]:
+        """
+        Run the AudioValidator on synthesized PCM bytes.
+        Returns (passed, reason). Import is lazy so the validator is optional.
+
+        Usage:
+            pcm = tts.synthesize("hello world")
+            ok, reason = tts.validate_output(pcm, "hello world")
+            if not ok:
+                print(f"Bad audio: {reason}")
+        """
+        try:
+            from audio_validator import AudioValidator
+            result = AudioValidator().validate_pcm(pcm_bytes, SAMPLE_RATE, text=text)
+            return result.passed, result.reason
+        except ImportError:
+            return True, "AudioValidator not available"
+
     def _fix_pronunciations(self, text: str) -> str:
         """Fix words that neural TTS engines mispronounce."""
         import re
