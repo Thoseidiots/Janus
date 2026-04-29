@@ -1084,10 +1084,20 @@ def _train_collaborative(device):
 
     blt_start_epoch = 0
     if BLT_WEIGHTS_OUT.exists():
-        ckpt = torch.load(str(BLT_WEIGHTS_OUT), map_location="cpu")
-        blt_model.load_state_dict(ckpt.get("model_state_dict", ckpt), strict=False)
-        blt_start_epoch = ckpt.get("epoch", 0)
-        print(f"[collab] BLT resumed from epoch {blt_start_epoch}")
+        try:
+            ckpt = torch.load(str(BLT_WEIGHTS_OUT), map_location="cpu")
+            ckpt_cfg = ckpt.get("config", {}) if isinstance(ckpt, dict) else {}
+            ckpt_window = ckpt_cfg.get("global_window", None)
+            if ckpt_window is not None and ckpt_window != blt_cfg.global_window:
+                print(f"[collab] Skipping BLT checkpoint — "
+                      f"global_window mismatch (ckpt={ckpt_window}, model={blt_cfg.global_window}). "
+                      f"Training BLT from scratch.")
+            else:
+                blt_model.load_state_dict(ckpt.get("model_state_dict", ckpt), strict=False)
+                blt_start_epoch = ckpt.get("epoch", 0)
+                print(f"[collab] BLT resumed from epoch {blt_start_epoch}")
+        except Exception as e:
+            print(f"[collab] Could not load BLT checkpoint: {e}. Training from scratch.")
 
     start_epoch = max(avus_start_epoch, blt_start_epoch)
 
