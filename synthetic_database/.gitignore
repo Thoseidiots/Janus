@@ -1,0 +1,13 @@
+# Generated outputs — regenerate with generate_dataset.py + generate_rich_training.py
+output/coherent_dataset.db
+output/anomalies_log.json
+output/events_log.json
+output/conversational_dataset.json
+
+# Keep the rich training pairs — these are the actual training data
+# output/avus_training_pairs.txt  <-- intentionally NOT ignored
+# output/rich_conversations.json  <-- intentionally NOT ignored
+
+# Inspection helpers
+inspect.py
+inspect_rich.py

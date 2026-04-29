@@ -1,0 +1,63 @@
+{
+  "relationships": [
+    {
+      "source_table": "Products",
+      "source_column": "supplier_id",
+      "target_table": "Users",
+      "target_column": "user_id",
+      "type": "Many-to-One",
+      "constraint": "role == 'Supplier'",
+      "description": "Products must be supplied by a User with the Supplier role."
+    },
+    {
+      "source_table": "Orders",
+      "source_column": "customer_id",
+      "target_table": "Users",
+      "target_column": "user_id",
+      "type": "Many-to-One",
+      "constraint": "role == 'Customer'",
+      "description": "Orders must be placed by a User with the Customer role."
+    },
+    {
+      "source_table": "Order_Items",
+      "source_column": "order_id",
+      "target_table": "Orders",
+      "target_column": "order_id",
+      "type": "Many-to-One",
+      "description": "Each line item belongs to a single Order."
+    },
+    {
+      "source_table": "Order_Items",
+      "source_column": "product_id",
+      "target_table": "Products",
+      "target_column": "product_id",
+      "type": "Many-to-One",
+      "description": "Each line item references exactly one Product."
+    },
+    {
+      "source_table": "Payments",
+      "source_column": "order_id",
+      "target_table": "Orders",
+      "target_column": "order_id",
+      "type": "One-to-One",
+      "description": "Payments are 1:1 linked to Orders."
+    },
+    {
+      "source_table": "Shipments",
+      "source_column": "order_id",
+      "target_table": "Orders",
+      "target_column": "order_id",
+      "type": "One-to-One",
+      "description": "Shipments are 1:1 linked to Orders."
+    }
+  ],
+  "hierarchies": {
+    "temporal_flow": [
+      "Users.created_at",
+      "Orders.order_date",
+      "Payments.payment_date",
+      "Shipments.dispatched_date",
+      "Shipments.delivered_date"
+    ]
+  }
+}
