@@ -528,72 +528,131 @@ def generate_screen_action_pairs(n: int = 10_000) -> List[str]:
 
 def generate_reasoning_pairs(n: int = 10_000) -> List[str]:
     """
-    Arithmetic and reasoning curriculum.
-    Uses varied, direct Q→A formats so the model learns to OUTPUT answers,
-    not echo the question structure.
+    Arithmetic, reasoning, and memory curriculum.
+
+    Key improvements:
+    - Uniform answer distribution (prevents mode collapse to common numbers)
+    - 15+ question phrasings per concept (model learns concept, not template)
+    - Multi-turn dialogue context (model learns it's being quizzed)
+    - Explicit answer confirmation patterns
+    - Distractor-resistant: same answer shown in many different contexts
     """
     out = []
+
+    # ── Arithmetic ────────────────────────────────────────────────────────────
+    # Uniform distribution: ensure all answer values 0-200 are equally represented
+    # This prevents the model collapsing to frequent values like 45, 24, 6
+    arithmetic_templates = [
+        lambda a, op, b, r: f"<|startoftext|>Q: What is {a} {op} {b}?\nA: {r}<|endoftext|>",
+        lambda a, op, b, r: f"<|startoftext|>Calculate {a} {op} {b}.\nAnswer: {r}<|endoftext|>",
+        lambda a, op, b, r: f"<|startoftext|>Math problem: {a} {op} {b} = ?\nSolution: {r}<|endoftext|>",
+        lambda a, op, b, r: f"<|startoftext|>Solve: {a} {op} {b}\nResult: {r}<|endoftext|>",
+        lambda a, op, b, r: f"<|startoftext|>{a} {op} {b} equals {r}.<|endoftext|>",
+        lambda a, op, b, r: f"<|startoftext|>If you compute {a} {op} {b}, you get {r}.<|endoftext|>",
+        lambda a, op, b, r: f"<|startoftext|>User: What is {a} {op} {b}?\nAssistant: The answer is {r}.<|endoftext|>",
+        lambda a, op, b, r: f"<|startoftext|>Question: {a} {op} {b} = ?\nAnswer: {r}<|endoftext|>",
+        lambda a, op, b, r: f"<|startoftext|>Compute {a} {op} {b}.\n{r}<|endoftext|>",
+        lambda a, op, b, r: f"<|startoftext|>[Quiz] What is {a} {op} {b}? [{r}]<|endoftext|>",
+        lambda a, op, b, r: f"<|startoftext|>Evaluate: {a} {op} {b}\nValue: {r}<|endoftext|>",
+        lambda a, op, b, r: f"<|startoftext|>The sum of {a} and {b} is {a+b}.<|endoftext|>" if op == "+" else f"<|startoftext|>{a} {op} {b} = {r}<|endoftext|>",
+        lambda a, op, b, r: f"<|startoftext|>Test: {a} {op} {b}\nCorrect answer: {r}<|endoftext|>",
+        lambda a, op, b, r: f"<|startoftext|>What does {a} {op} {b} equal?\n{r}<|endoftext|>",
+        lambda a, op, b, r: f"<|startoftext|>Arithmetic: {a} {op} {b} = {r}<|endoftext|>",
+    ]
+
     for _ in range(n):
-        a, b = _ri(1, 100), _ri(1, 100)
-        op   = _rc(["+", "-", "*"])
-        if op == "+":   result = a + b
-        elif op == "-": result = a - b
-        else:           result = a * b
+        op = _rc(["+", "-", "*"])
+        if op == "+":
+            # Uniform distribution over sums 2-200
+            result = _ri(2, 200)
+            a = _ri(1, result - 1)
+            b = result - a
+        elif op == "-":
+            # Uniform distribution over differences 1-99
+            result = _ri(1, 99)
+            a = result + _ri(1, 50)
+            b = a - result
+        else:
+            # Uniform distribution over products (small factors)
+            a = _ri(2, 15)
+            b = _ri(2, 15)
+            result = a * b
 
-        # Vary the format heavily — prevents template memorisation
-        fmt = _ri(0, 5)
-        if fmt == 0:
+        tmpl = _rc(arithmetic_templates)
+        try:
+            text = tmpl(a, op, b, result)
+        except Exception:
             text = f"<|startoftext|>Q: What is {a} {op} {b}?\nA: {result}<|endoftext|>"
-        elif fmt == 1:
-            text = f"<|startoftext|>{a} {op} {b} = {result}<|endoftext|>"
-        elif fmt == 2:
-            text = f"<|startoftext|>Calculate {a} {op} {b}. The answer is {result}.<|endoftext|>"
-        elif fmt == 3:
-            text = f"<|startoftext|>Math: {a} {op} {b}\nResult: {result}<|endoftext|>"
-        elif fmt == 4:
-            text = f"<|startoftext|>Solve: {a} {op} {b} = ?  Answer: {result}<|endoftext|>"
-        else:
-            text = f"<|startoftext|>If you compute {a} {op} {b} you get {result}.<|endoftext|>"
         out.append(text)
 
-    # Add logic / syllogism pairs
-    entities = ["Alice", "Bob", "Carol", "Dave", "Eve", "Frank"]
-    props = ["smart", "fast", "kind", "brave", "honest", "tall"]
-    for _ in range(n // 4):
-        a, b = _rc(entities), _rc(entities)
+    # ── Logic / syllogism pairs ───────────────────────────────────────────────
+    entities = ["Alice", "Bob", "Carol", "Dave", "Eve", "Frank", "Grace", "Henry"]
+    props    = ["smart", "fast", "kind", "brave", "honest", "tall", "creative", "patient"]
+
+    logic_templates = [
+        lambda p1, p2, a: f"<|startoftext|>All {p1} people are {p2}. {a} is {p1}. Is {a} {p2}?\nAnswer: Yes.<|endoftext|>",
+        lambda p1, p2, a: f"<|startoftext|>Premise: Every {p1} person is also {p2}. {a} is {p1}. Therefore {a} is {p2}.<|endoftext|>",
+        lambda p1, p2, a: f"<|startoftext|>If someone is {p1}, they are also {p2}. {a} is {p1}. Conclusion: {a} is {p2}.<|endoftext|>",
+        lambda p1, p2, a: f"<|startoftext|>User: {a} is {p1}. All {p1} people are {p2}. What can we conclude?\nAssistant: {a} is {p2}.<|endoftext|>",
+        lambda p1, p2, a: f"<|startoftext|>[Logic] All {p1} → {p2}. {a} is {p1}. Therefore: {a} is {p2}.<|endoftext|>",
+        lambda p1, p2, a: f"<|startoftext|>Given: {p1} implies {p2}. {a} is {p1}. So {a} is {p2}.<|endoftext|>",
+        lambda p1, p2, a: f"<|startoftext|>Q: All {p1} people are {p2}. Is {a} {p2} if {a} is {p1}?\nA: Yes, {a} is {p2}.<|endoftext|>",
+    ]
+
+    for _ in range(n // 3):
+        a = _rc(entities)
         p1, p2 = _rc(props), _rc(props)
-        fmt = _ri(0, 2)
-        if fmt == 0:
-            text = (f"<|startoftext|>All {p1} people are {p2}. "
-                    f"{a} is {p1}. Is {a} {p2}?\nAnswer: Yes.<|endoftext|>")
-        elif fmt == 1:
-            text = (f"<|startoftext|>Premise: Every {p1} person is also {p2}. "
-                    f"{a} is {p1}. Therefore {a} is {p2}.<|endoftext|>")
-        else:
-            text = (f"<|startoftext|>Q: {a} is {p1}. All {p1} people are {p2}. "
-                    f"What can we conclude about {a}?\nA: {a} is {p2}.<|endoftext|>")
-        out.append(text)
+        tmpl = _rc(logic_templates)
+        out.append(tmpl(p1, p2, a))
 
-    # Add memory / fact recall pairs
-    names  = ["Alex", "Jordan", "Morgan", "Taylor", "Casey", "Riley"]
-    cities = ["Berlin", "Tokyo", "Lagos", "Sydney", "Oslo", "Cairo"]
-    jobs   = ["engineer", "teacher", "doctor", "designer", "pilot", "chef"]
-    for _ in range(n // 4):
+    # ── Memory / fact recall pairs ────────────────────────────────────────────
+    # Expanded pools to prevent collapse to a single city/name
+    names  = ["Alex", "Jordan", "Morgan", "Taylor", "Casey", "Riley",
+              "Jamie", "Quinn", "Avery", "Blake", "Drew", "Sage"]
+    cities = ["Berlin", "Tokyo", "Lagos", "Sydney", "Oslo", "Cairo",
+              "Paris", "Mumbai", "Seoul", "Lima", "Nairobi", "Vienna"]
+    jobs   = ["engineer", "teacher", "doctor", "designer", "pilot", "chef",
+              "lawyer", "scientist", "artist", "nurse", "architect", "writer"]
+
+    memory_templates = [
+        lambda name, city, job: f"<|startoftext|>{name} was born in {city} and works as a {job}. Where was {name} born?\nAnswer: {city}.<|endoftext|>",
+        lambda name, city, job: f"<|startoftext|>Fact: {name} lives in {city}. Q: Where does {name} live?\nA: {city}.<|endoftext|>",
+        lambda name, city, job: f"<|startoftext|>{name} is a {job} from {city}. What city is {name} from?\n{city}.<|endoftext|>",
+        lambda name, city, job: f"<|startoftext|>User: Where is {name} from? They are a {job} born in {city}.\nAssistant: {name} is from {city}.<|endoftext|>",
+        lambda name, city, job: f"<|startoftext|>[Memory] {name}: city={city}, job={job}. Q: {name}'s city?\nA: {city}<|endoftext|>",
+        lambda name, city, job: f"<|startoftext|>{name} grew up in {city}. {name} became a {job}. Where did {name} grow up?\n{city}.<|endoftext|>",
+        lambda name, city, job: f"<|startoftext|>Profile: Name={name}, Location={city}, Occupation={job}. What is {name}'s location?\n{city}.<|endoftext|>",
+        lambda name, city, job: f"<|startoftext|>Q: What city does {name} the {job} come from?\nA: {city}.<|endoftext|>",
+    ]
+
+    for _ in range(n // 3):
         name = _rc(names)
         city = _rc(cities)
         job  = _rc(jobs)
-        fmt  = _ri(0, 2)
-        if fmt == 0:
-            text = (f"<|startoftext|>{name} was born in {city} and works as a {job}. "
-                    f"Where was {name} born?\nAnswer: {city}.<|endoftext|>")
-        elif fmt == 1:
-            text = (f"<|startoftext|>Fact: {name} lives in {city}. "
-                    f"Q: Where does {name} live?\nA: {city}.<|endoftext|>")
-        else:
-            text = (f"<|startoftext|>{name} is a {job} from {city}. "
-                    f"What is {name}'s job? {job.capitalize()}.<|endoftext|>")
-        out.append(text)
+        tmpl = _rc(memory_templates)
+        out.append(tmpl(name, city, job))
 
+    # ── Multi-turn dialogue context ───────────────────────────────────────────
+    # Teaches the model that questions expect specific answers, not continuations
+    for _ in range(n // 6):
+        a, b = _ri(1, 50), _ri(1, 50)
+        result = a + b
+        name = _rc(names)
+        city = _rc(cities)
+        out.append(
+            f"<|startoftext|>User: Hi, can you help me with some math?\n"
+            f"Assistant: Of course! What do you need?\n"
+            f"User: What is {a} + {b}?\n"
+            f"Assistant: {a} + {b} = {result}.<|endoftext|>"
+        )
+        out.append(
+            f"<|startoftext|>User: I'm testing your memory. {name} lives in {city}.\n"
+            f"Assistant: Got it, {name} lives in {city}.\n"
+            f"User: Where does {name} live?\n"
+            f"Assistant: {name} lives in {city}.<|endoftext|>"
+        )
+
+    random.shuffle(out)
     return out
 
 
