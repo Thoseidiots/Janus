@@ -67,12 +67,32 @@ def generate(model, encode, decode, prompt: str,
              max_tokens: int = 60, temperature: float = 0.3,
              top_k: int = 20, device: str = "cpu") -> str:
     tokens = encode("<|startoftext|>" + prompt)
+    eos_id = encode("<|endoftext|>")[0]
+    sot_id = encode("<|startoftext|>")[0]
     idx = torch.tensor([tokens], device=device)
+    out_toks = []
     with torch.no_grad():
-        out = model.generate(idx, max_new_tokens=max_tokens,
-                             temperature=temperature, top_k=top_k)
-    new = out[0][len(tokens):].tolist()
-    return decode(new)
+        # Process prompt with cache
+        model.clear_cache()
+        _, _ = model(idx, use_cache=True, cache_offset=0)
+        for step in range(max_tokens):
+            last = idx[:, -1:]
+            logits, _ = model(last, use_cache=True,
+                              cache_offset=idx.shape[1] - 1)
+            logits = logits[:, -1, :] / temperature
+            if top_k > 0:
+                v, _ = torch.topk(logits, min(top_k, logits.size(-1)))
+                logits[logits < v[:, [-1]]] = float("-inf")
+            probs = F.softmax(logits, dim=-1)
+            next_tok = torch.multinomial(probs, num_samples=1)
+            tok_id = next_tok.item()
+            # Stop at EOS or new SOT (model thinks new example starting)
+            if tok_id == eos_id or tok_id == sot_id:
+                break
+            out_toks.append(tok_id)
+            idx = torch.cat([idx, next_tok], dim=1)
+    model.clear_cache()
+    return decode(out_toks)
 
 
 # ── Eval tasks ────────────────────────────────────────────────────────────────

@@ -655,7 +655,8 @@ class JanusDataset(Dataset):
         all_texts += generate_3d_pairs(samples_per)
         all_texts += generate_screen_action_pairs(samples_per)
         all_texts += generate_language_pairs(samples_per)
-        all_texts += generate_reasoning_pairs(samples_per)
+        # 3x arithmetic/reasoning — most important for intelligence baseline
+        all_texts += generate_reasoning_pairs(samples_per * 3)
 
         # ── Phase 2: AAA rendering quality ──────────────────────────────────
         # Fixes: Squibbling, Yosification, Uncanny Valley, Ghosting, Imaginary Lighting
@@ -682,9 +683,11 @@ class JanusDataset(Dataset):
         try:
             from deep_training_data import CombinedDeepDataset
             deep = CombinedDeepDataset()
-            deep_samples = deep.generate_curriculum(n_per_generator=samples_per // 6)
+            # Reduce deep curriculum to 1/10 — it's long-form content that
+            # bleeds into short-answer tasks when packed together
+            deep_samples = deep.generate_curriculum(n_per_generator=max(1, samples_per // 10))
             all_texts += deep_samples
-            print(f"[data] Deep curriculum added: {len(deep_samples):,} samples")
+            print(f"[data] Deep curriculum added: {len(deep_samples):,} samples (reduced weight)")
         except ImportError:
             print("[data] deep_training_data.py not found — skipping deep curriculum")
 
