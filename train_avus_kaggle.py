@@ -848,7 +848,28 @@ class JanusDataset(Dataset):
                 print(f"[data] Human language data: {len(_human_lines):,} pairs from {_human_path}")
                 break
         else:
-            print("[data] Human language data not found — skipping (run human_dataset/generate_human_dataset.py to generate)")
+            # Not found on disk — generate at runtime
+            print("[data] Human language data not found on disk — generating now...")
+            try:
+                import sys as _sys
+                for _p in [str(_script_dir), str(Path("/kaggle/working")), "."]:
+                    if _p not in _sys.path:
+                        _sys.path.insert(0, _p)
+                from human_dataset.generate_human_dataset import (
+                    gen_opinions, gen_emotions, gen_small_talk, gen_stories,
+                    gen_curiosity, gen_humor, gen_uncertainty, gen_empathy,
+                    gen_debate, gen_aspirations, gen_reflection, gen_identity,
+                )
+                _human_runtime = (
+                    gen_opinions(2000) + gen_emotions(2000) + gen_small_talk(2500) +
+                    gen_stories(1666) + gen_curiosity(2000) + gen_humor(2000) +
+                    gen_uncertainty(3000) + gen_empathy(2000) + gen_debate(1666) +
+                    gen_aspirations(1666) + gen_reflection(2000) + gen_identity(2500)
+                )
+                all_texts += _human_runtime
+                print(f"[data] Human language data: {len(_human_runtime):,} pairs (generated at runtime)")
+            except Exception as _e_human:
+                print(f"[data] Human language data skipped: {_e_human}")
 
         # ── Synthetic e-commerce / conversational database ───────────────────
         # Rich multi-turn dialogues: order status, returns, refunds, complaints,
@@ -869,7 +890,40 @@ class JanusDataset(Dataset):
                 print(f"[data] Synthetic e-commerce data: {len(_synth_lines):,} pairs from {_synth_path}")
                 break
         else:
-            print("[data] Synthetic e-commerce data not found — skipping (run synthetic_database/generate_rich_training.py to generate)")
+            # Not found on disk — generate at runtime
+            print("[data] Synthetic e-commerce data not found on disk — generating now...")
+            try:
+                import sys as _sys
+                for _p in [str(_script_dir), str(Path("/kaggle/working")), "."]:
+                    if _p not in _sys.path:
+                        _sys.path.insert(0, _p)
+                # Requires the SQLite DB — build it first if needed
+                _db_path = Path("synthetic_database/output/coherent_dataset.db")
+                if not _db_path.exists():
+                    import importlib as _il
+                    _gen = _il.import_module("synthetic_database.generate_dataset")
+                    import os as _os
+                    _orig = _os.getcwd()
+                    _os.chdir("synthetic_database")
+                    _gen.main()
+                    _os.chdir(_orig)
+                    print("[data] Synthetic database built")
+                import importlib as _il
+                _rich = _il.import_module("synthetic_database.generate_rich_training")
+                import os as _os
+                _orig = _os.getcwd()
+                _os.chdir("synthetic_database")
+                _rich.generate_rich_training()
+                _os.chdir(_orig)
+                _synth_rt_path = Path("synthetic_database/output/avus_training_pairs.txt")
+                if _synth_rt_path.exists():
+                    _synth_rt = [l.strip() for l in _synth_rt_path.read_text(encoding="utf-8").splitlines() if l.strip()]
+                    all_texts += _synth_rt
+                    print(f"[data] Synthetic e-commerce data: {len(_synth_rt):,} pairs (generated at runtime)")
+                else:
+                    print("[data] Synthetic e-commerce data: generation completed but output not found")
+            except Exception as _e_synth:
+                print(f"[data] Synthetic e-commerce data skipped: {_e_synth}")
 
         # ── Phase 2: AAA rendering quality ──────────────────────────────────
         # Fixes: Squibbling, Yosification, Uncanny Valley, Ghosting, Imaginary Lighting
