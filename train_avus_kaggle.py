@@ -851,20 +851,24 @@ class JanusDataset(Dataset):
             # Not found on disk — generate at runtime
             print("[data] Human language data not found on disk — generating now...")
             try:
-                import sys as _sys
-                for _p in [str(_script_dir), str(Path("/kaggle/working")), "."]:
-                    if _p not in _sys.path:
-                        _sys.path.insert(0, _p)
-                from human_dataset.generate_human_dataset import (
-                    gen_opinions, gen_emotions, gen_small_talk, gen_stories,
-                    gen_curiosity, gen_humor, gen_uncertainty, gen_empathy,
-                    gen_debate, gen_aspirations, gen_reflection, gen_identity,
-                )
+                import sys as _sys, importlib.util as _ilu
+                # Find the generator file — check several locations
+                _gen_candidates = [
+                    _script_dir / "human_dataset" / "generate_human_dataset.py",
+                    Path("/kaggle/working/human_dataset/generate_human_dataset.py"),
+                    Path("human_dataset/generate_human_dataset.py"),
+                ]
+                _gen_file = next((p for p in _gen_candidates if p.exists()), None)
+                if _gen_file is None:
+                    raise FileNotFoundError("generate_human_dataset.py not found")
+                _spec = _ilu.spec_from_file_location("_hd_gen", str(_gen_file))
+                _hd = _ilu.module_from_spec(_spec)
+                _spec.loader.exec_module(_hd)
                 _human_runtime = (
-                    gen_opinions(2000) + gen_emotions(2000) + gen_small_talk(2500) +
-                    gen_stories(1666) + gen_curiosity(2000) + gen_humor(2000) +
-                    gen_uncertainty(3000) + gen_empathy(2000) + gen_debate(1666) +
-                    gen_aspirations(1666) + gen_reflection(2000) + gen_identity(2500)
+                    _hd.gen_opinions(2000) + _hd.gen_emotions(2000) + _hd.gen_small_talk(2500) +
+                    _hd.gen_stories(1666) + _hd.gen_curiosity(2000) + _hd.gen_humor(2000) +
+                    _hd.gen_uncertainty(3000) + _hd.gen_empathy(2000) + _hd.gen_debate(1666) +
+                    _hd.gen_aspirations(1666) + _hd.gen_reflection(2000) + _hd.gen_identity(2500)
                 )
                 all_texts += _human_runtime
                 print(f"[data] Human language data: {len(_human_runtime):,} pairs (generated at runtime)")
@@ -893,29 +897,41 @@ class JanusDataset(Dataset):
             # Not found on disk — generate at runtime
             print("[data] Synthetic e-commerce data not found on disk — generating now...")
             try:
-                import sys as _sys
-                for _p in [str(_script_dir), str(Path("/kaggle/working")), "."]:
-                    if _p not in _sys.path:
-                        _sys.path.insert(0, _p)
-                # Requires the SQLite DB — build it first if needed
-                _db_path = Path("synthetic_database/output/coherent_dataset.db")
+                import importlib.util as _ilu, os as _os
+                # Find the generator files
+                _db_candidates = [
+                    _script_dir / "synthetic_database",
+                    Path("/kaggle/working/synthetic_database"),
+                    Path("synthetic_database"),
+                ]
+                _synth_dir = next((p for p in _db_candidates if p.exists()), None)
+                if _synth_dir is None:
+                    raise FileNotFoundError("synthetic_database directory not found")
+
+                def _load_mod(name, path):
+                    spec = _ilu.spec_from_file_location(name, str(path))
+                    mod = _ilu.module_from_spec(spec)
+                    spec.loader.exec_module(mod)
+                    return mod
+
+                # Build the SQLite DB if needed
+                _db_path = _synth_dir / "output" / "coherent_dataset.db"
                 if not _db_path.exists():
-                    import importlib as _il
-                    _gen = _il.import_module("synthetic_database.generate_dataset")
-                    import os as _os
                     _orig = _os.getcwd()
-                    _os.chdir("synthetic_database")
-                    _gen.main()
+                    _os.chdir(str(_synth_dir))
+                    _gen_db = _load_mod("_synth_gen", _synth_dir / "generate_dataset.py")
+                    _gen_db.main()
                     _os.chdir(_orig)
                     print("[data] Synthetic database built")
-                import importlib as _il
-                _rich = _il.import_module("synthetic_database.generate_rich_training")
-                import os as _os
+
+                # Generate rich training pairs
                 _orig = _os.getcwd()
-                _os.chdir("synthetic_database")
-                _rich.generate_rich_training()
+                _os.chdir(str(_synth_dir))
+                _gen_rich = _load_mod("_synth_rich", _synth_dir / "generate_rich_training.py")
+                _gen_rich.generate_rich_training()
                 _os.chdir(_orig)
-                _synth_rt_path = Path("synthetic_database/output/avus_training_pairs.txt")
+
+                _synth_rt_path = _synth_dir / "output" / "avus_training_pairs.txt"
                 if _synth_rt_path.exists():
                     _synth_rt = [l.strip() for l in _synth_rt_path.read_text(encoding="utf-8").splitlines() if l.strip()]
                     all_texts += _synth_rt
@@ -927,6 +943,9 @@ class JanusDataset(Dataset):
 
         # ── Phase 2: AAA rendering quality ──────────────────────────────────
         # Fixes: Squibbling, Yosification, Uncanny Valley, Ghosting, Imaginary Lighting
+        # These modules live in the repo root. When running via exec() on Kaggle,
+        # sys.path may not include the repo root — use spec_from_file_location
+        # to load them directly by path.
         _phase2_mods = [
             ("temporal_consistency_dataset",  "TemporalConsistencyDataset"),
             ("spatial_detail_dataset",        "SpatialDetailDataset"),
@@ -934,10 +953,26 @@ class JanusDataset(Dataset):
             ("optical_flow_dataset",          "OpticalFlowDataset"),
             ("semantic_lighting_dataset",     "SemanticLightingDataset"),
         ]
+        import importlib.util as _p2_ilu
         for _mn, _cn in _phase2_mods:
             try:
+                # Try normal import first (works when sys.path is correct)
                 import importlib as _il2
-                _m2 = _il2.import_module(_mn)
+                try:
+                    _m2 = _il2.import_module(_mn)
+                except ModuleNotFoundError:
+                    # Fall back to file-based load from repo root candidates
+                    _p2_candidates = [
+                        _script_dir / f"{_mn}.py",
+                        Path("/kaggle/working") / f"{_mn}.py",
+                        Path(f"{_mn}.py"),
+                    ]
+                    _p2_file = next((p for p in _p2_candidates if p.exists()), None)
+                    if _p2_file is None:
+                        raise ModuleNotFoundError(f"{_mn}.py not found in any candidate path")
+                    _spec2 = _p2_ilu.spec_from_file_location(_mn, str(_p2_file))
+                    _m2 = _p2_ilu.module_from_spec(_spec2)
+                    _spec2.loader.exec_module(_m2)
                 _p2 = getattr(_m2, _cn)().generate_dataset(samples_per)
                 for _prompt, _out in _p2:
                     all_texts.append(
@@ -1301,7 +1336,18 @@ def _train_collaborative(device):
                       f"global_window mismatch (ckpt={ckpt_window}, model={blt_cfg.global_window}). "
                       f"Training BLT from scratch.")
             else:
-                blt_model.load_state_dict(ckpt.get("model_state_dict", ckpt), strict=False)
+                sd = ckpt.get("model_state_dict", ckpt)
+                # Strip shape-incompatible buffers (attn.mask, rope caches).
+                # These are recomputed at init — no information is lost by
+                # dropping them. Avoids hard errors when seq_len changes
+                # between checkpoint and current config.
+                _skip_suffixes = ("attn.mask", "attn.rope.c", "attn.rope.s",
+                                  "attn.rope.freqs", "pos_emb", "pe")
+                sd = {k: v for k, v in sd.items()
+                      if not any(k.endswith(s) for s in _skip_suffixes)}
+                missing, unexpected = blt_model.load_state_dict(sd, strict=False)
+                if missing:
+                    print(f"[collab] BLT: {len(missing)} missing keys (expected for new layers)")
                 blt_start_epoch = ckpt.get("epoch", 0)
                 print(f"[collab] BLT resumed from epoch {blt_start_epoch}")
         except Exception as e:
