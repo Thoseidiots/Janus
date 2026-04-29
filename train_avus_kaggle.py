@@ -623,6 +623,11 @@ def generate_reasoning_pairs(n: int = 10_000) -> List[str]:
         lambda name, city, job: f"<|startoftext|>{name} grew up in {city}. {name} became a {job}. Where did {name} grow up?\n{city}.<|endoftext|>",
         lambda name, city, job: f"<|startoftext|>Profile: Name={name}, Location={city}, Occupation={job}. What is {name}'s location?\n{city}.<|endoftext|>",
         lambda name, city, job: f"<|startoftext|>Q: What city does {name} the {job} come from?\nA: {city}.<|endoftext|>",
+        # Extra patterns that reinforce full city name as the complete answer
+        lambda name, city, job: f"<|startoftext|>{name} was born in {city}. Where was {name} born?\nAnswer: {city}<|endoftext|>",
+        lambda name, city, job: f"<|startoftext|>Where is {name} from? {name} is from {city}.<|endoftext|>",
+        lambda name, city, job: f"<|startoftext|>{name}'s birthplace is {city}. What is {name}'s birthplace?\n{city}<|endoftext|>",
+        lambda name, city, job: f"<|startoftext|>Q: {name} was born where?\nA: {city}.<|endoftext|>",
     ]
 
     for _ in range(n // 3):
@@ -633,7 +638,9 @@ def generate_reasoning_pairs(n: int = 10_000) -> List[str]:
         out.append(tmpl(name, city, job))
 
     # ── Multi-turn dialogue context ───────────────────────────────────────────
-    # Teaches the model that questions expect specific answers, not continuations
+    # Teaches the model that questions expect specific answers, not continuations.
+    # NOTE: Keep these strictly math/memory — do NOT use goal/planning prompts
+    # here or the model will learn to respond to "Goal:" with chat continuations.
     for _ in range(n // 6):
         a, b = _ri(1, 50), _ri(1, 50)
         result = a + b
@@ -651,6 +658,103 @@ def generate_reasoning_pairs(n: int = 10_000) -> List[str]:
             f"User: Where does {name} live?\n"
             f"Assistant: {name} lives in {city}.<|endoftext|>"
         )
+
+    # ── Planning / goal decomposition pairs ──────────────────────────────────
+    # Fixes: model was outputting "Assistant: Got it, Drew" for all planning
+    # prompts because no planning training data existed — it fell back to the
+    # nearest learned pattern (multi-turn memory template above).
+    planning_goals = [
+        ("deploy a web application",
+         ["gather requirements", "set up environment", "write code", "run tests", "deploy to server"]),
+        ("train a machine learning model",
+         ["collect data", "preprocess data", "define model", "train model", "evaluate results"]),
+        ("publish a research paper",
+         ["write draft", "review and revise", "submit to journal", "address reviewer comments", "publish"]),
+        ("onboard a new employee",
+         ["complete paperwork", "grant system access", "run training sessions", "introduce to team", "assign first tasks"]),
+        ("migrate a database",
+         ["back up existing data", "update schema", "transfer data", "verify integrity", "switch over"]),
+        ("build a mobile app",
+         ["define requirements", "design UI", "implement features", "test on device", "release to store"]),
+        ("launch a marketing campaign",
+         ["define target audience", "create content", "set budget", "run ads", "measure results"]),
+        ("organise a conference",
+         ["book venue", "invite speakers", "promote event", "manage registrations", "run the event"]),
+        ("write a software library",
+         ["design API", "implement core functions", "write tests", "write documentation", "publish package"]),
+        ("set up a CI/CD pipeline",
+         ["choose tools", "write build scripts", "configure tests", "set up deployment", "monitor pipeline"]),
+    ]
+
+    planning_templates = [
+        lambda goal, steps: (
+            f"<|startoftext|>Goal: {goal}. List the key steps in order: "
+            f"1. {steps[0]} 2. {steps[1]} 3. {steps[2]} 4. {steps[3]}<|endoftext|>"
+        ),
+        lambda goal, steps: (
+            f"<|startoftext|>How do you {goal}? Steps:\n"
+            f"1. {steps[0]}\n2. {steps[1]}\n3. {steps[2]}\n4. {steps[3]}<|endoftext|>"
+        ),
+        lambda goal, steps: (
+            f"<|startoftext|>Q: What are the steps to {goal}?\n"
+            f"A: First {steps[0]}, then {steps[1]}, then {steps[2]}, finally {steps[3]}.<|endoftext|>"
+        ),
+        lambda goal, steps: (
+            f"<|startoftext|>Task: {goal}\n"
+            f"Step 1: {steps[0]}\nStep 2: {steps[1]}\nStep 3: {steps[2]}\nStep 4: {steps[3]}<|endoftext|>"
+        ),
+        lambda goal, steps: (
+            f"<|startoftext|>Plan for: {goal}\n"
+            f"- {steps[0]}\n- {steps[1]}\n- {steps[2]}\n- {steps[3]}<|endoftext|>"
+        ),
+        lambda goal, steps: (
+            f"<|startoftext|>To {goal}, you need to: {steps[0]}, {steps[1]}, "
+            f"{steps[2]}, and {steps[3]}.<|endoftext|>"
+        ),
+    ]
+
+    for _ in range(n // 3):
+        goal, steps = _rc(planning_goals)
+        random.shuffle(steps)  # vary step order so model learns keywords, not position
+        tmpl = _rc(planning_templates)
+        out.append(tmpl(goal, steps))
+
+    # ── Self-correction / reflection pairs ───────────────────────────────────
+    # Fixes: model was outputting empty string or nonsense after
+    # "The correct answer is:" because it had never seen self-correction examples.
+    for _ in range(n // 3):
+        a, b = _ri(5, 60), _ri(5, 60)
+        correct = a + b
+        wrong = correct + _rc([-3, -2, -1, 1, 2, 3])
+
+        self_correction_templates = [
+            (
+                f"<|startoftext|>Question: What is {a} + {b}? "
+                f"Initial answer: {wrong}. "
+                f"Wait, let me recheck. The correct answer is: {correct}<|endoftext|>"
+            ),
+            (
+                f"<|startoftext|>Q: {a} + {b} = ?\n"
+                f"First attempt: {wrong}\n"
+                f"Let me verify: {a} + {b} = {correct}. "
+                f"Correction: {correct}<|endoftext|>"
+            ),
+            (
+                f"<|startoftext|>Solve {a} + {b}.\n"
+                f"Draft answer: {wrong}. That's wrong.\n"
+                f"Recalculating: {correct}<|endoftext|>"
+            ),
+            (
+                f"<|startoftext|>What is {a} + {b}?\n"
+                f"I initially said {wrong}, but that is incorrect.\n"
+                f"The correct answer is {correct}.<|endoftext|>"
+            ),
+            (
+                f"<|startoftext|>[Self-check] {a} + {b}\n"
+                f"Estimate: {wrong}\nVerified: {correct}<|endoftext|>"
+            ),
+        ]
+        out.append(_rc(self_correction_templates))
 
     random.shuffle(out)
     return out
