@@ -6,8 +6,9 @@ pub mod vulkan_backend;
 pub mod metal_backend;
 pub mod dx12_backend;
 pub mod webgpu_backend;
+pub mod capture;
 
-pub use types::{MeshId, MaterialId, ShaderId, ShaderSource, DrawCall, Mat4, ShaderError, RenderError};
+pub use types::{MeshId, MaterialId, ShaderId, ShaderSource, DrawCall, Mat4, ShaderError, RenderError, CaptureStreamId, CaptureConfig, CaptureFormat};
 pub use backend::GfxBackend;
 pub use renderer::{Renderer, PipelineMode};
 pub use vulkan_backend::VulkanBackend;

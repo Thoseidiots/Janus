@@ -37,5 +37,18 @@
       "self_reflection": 0.0,
       "overall": 31.9
     }
+  },
+  {
+    "timestamp": "2026-04-30 02:49",
+    "weights": "C:\\Users\\legac\\Downloads\\Janus-workspace\\avus_1b_weights(1).pt",
+    "scores": {
+      "arithmetic": 30.0,
+      "reasoning": 100.0,
+      "memory_recall": 50.0,
+      "code": 19.3,
+      "planning": 18.3,
+      "self_reflection": 26.7,
+      "overall": 40.7
+    }
   }
 ]

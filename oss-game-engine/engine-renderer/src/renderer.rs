@@ -15,6 +15,7 @@ pub struct Renderer {
     viewport_height: u32,
     projection: Mat4,
     active_light_count: u32,
+    capture_engine: crate::capture::UniversalCaptureEngine,
 }
 
 impl Renderer {
@@ -32,6 +33,7 @@ impl Renderer {
             viewport_height: height,
             projection,
             active_light_count: 0,
+            capture_engine: crate::capture::UniversalCaptureEngine::new(),
         }
     }
 
@@ -52,7 +54,16 @@ impl Renderer {
 
     pub fn end_frame(&mut self) {
         self.flush();
+        self.capture_engine.dispatch_captures(&mut *self.backend);
         self.backend.end_frame();
+    }
+
+    pub fn register_capture_stream(&mut self, config: crate::types::CaptureConfig) -> crate::types::CaptureStreamId {
+        self.capture_engine.add_stream(&mut *self.backend, config)
+    }
+
+    pub fn unregister_capture_stream(&mut self, stream: crate::types::CaptureStreamId) {
+        self.capture_engine.remove_stream(&mut *self.backend, stream);
     }
 
     // --- Task 6.4: Pipeline selection ---
@@ -121,11 +132,18 @@ mod tests {
     struct MockBackend {
         submitted: Vec<DrawCall>,
         viewport: (u32, u32),
+        dispatched_captures: Vec<crate::types::CaptureStreamId>,
+        capabilities: u32,
     }
 
     impl MockBackend {
         fn new() -> Self {
-            MockBackend { submitted: Vec::new(), viewport: (800, 600) }
+            MockBackend { 
+                submitted: Vec::new(), 
+                viewport: (800, 600), 
+                dispatched_captures: Vec::new(),
+                capabilities: crate::types::CAPTURE_CAP_STAGING_BUFFER | crate::types::CAPTURE_CAP_ZERO_COPY,
+            }
         }
     }
 
@@ -141,6 +159,19 @@ mod tests {
         fn compile_shader(&mut self, _source: &ShaderSource) -> Result<ShaderId, ShaderError> {
             Ok(ShaderId(0))
         }
+
+        fn get_capture_capabilities(&self) -> u32 {
+            self.capabilities
+        }
+
+        fn register_capture_stream(&mut self, _config: crate::types::CaptureConfig) -> crate::types::CaptureStreamId {
+            crate::types::CaptureStreamId(42) // dummy ID
+        }
+        fn unregister_capture_stream(&mut self, _stream: crate::types::CaptureStreamId) {}
+        fn dispatch_capture(&mut self, stream: crate::types::CaptureStreamId) {
+            self.dispatched_captures.push(stream);
+        }
+
         fn as_any(&self) -> &dyn Any {
             self
         }
@@ -228,6 +259,45 @@ mod tests {
         r.submit(make_call(2, 2));
         r.flush();
         assert!(r.queue.is_empty());
+    }
+
+    // --- Test: capture dispatched on end_frame ---
+    #[test]
+    fn test_capture_dispatch_on_end_frame() {
+        let mut r = make_renderer();
+        let config = crate::types::CaptureConfig {
+            width: 1920,
+            height: 1080,
+            format: crate::types::CaptureFormat::Rgba8Unorm,
+            target_fps: 60,
+            strategy: crate::types::CaptureStrategy::None,
+        };
+        let stream_id = r.register_capture_stream(config);
+        r.end_frame();
+
+        let backend = r.backend.as_any_mut().downcast_mut::<MockBackend>().unwrap();
+        assert_eq!(backend.dispatched_captures.len(), 1);
+        assert_eq!(backend.dispatched_captures[0], stream_id);
+    }
+
+    // --- Test: capture strategy negotiation ---
+    #[test]
+    fn test_capture_negotiation() {
+        let backend = Box::new(MockBackend::new()); // Capabilities: STAGING_BUFFER | ZERO_COPY
+        let mut r = Renderer::new(backend, 800, 600);
+        let config = crate::types::CaptureConfig {
+            width: 1920,
+            height: 1080,
+            format: crate::types::CaptureFormat::Rgba8Unorm,
+            target_fps: 60,
+            strategy: crate::types::CaptureStrategy::None,
+        };
+        // It should negotiate ZeroCopy because MockBackend reports both capabilities and ZeroCopy is preferred
+        let _stream_id = r.register_capture_stream(config);
+        
+        let streams = &r.capture_engine.streams;
+        assert_eq!(streams.len(), 1);
+        assert_eq!(streams[0].config.strategy, crate::types::CaptureStrategy::ZeroCopy);
     }
 
     // Property 12: Viewport Updated on Resize

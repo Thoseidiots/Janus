@@ -39,15 +39,25 @@ def generate_body(force: bool = False) -> bool:
         print(f"[launch] Mesh already exists: {mesh}  (pass --regen to rebuild)")
         return True
 
+    print("[launch] Generating Arania 3D Face Expressions...")
+    result_face = subprocess.run(
+        [sys.executable, str(WORKSPACE / "advanced_3d_face_generator.py"), "--output-dir", str(ASSETS_DIR)],
+        cwd=str(WORKSPACE),
+    )
+    if result_face.returncode != 0:
+        print("[launch] [X] Face generation failed.")
+        return False
+    print("[launch] [OK] Face expressions generated.")
+
     print("[launch] Generating Arania body mesh...")
-    result = subprocess.run(
+    result_body = subprocess.run(
         [sys.executable, str(WORKSPACE / "arania_body_generator.py")],
         cwd=str(WORKSPACE),
     )
-    if result.returncode != 0:
-        print("[launch] ❌ Body generation failed.")
+    if result_body.returncode != 0:
+        print("[launch] [X] Body generation failed.")
         return False
-    print("[launch] ✅ Body mesh generated.")
+    print("[launch] [OK] Body mesh generated.")
     return True
 
 
@@ -69,15 +79,15 @@ def build_engine(release: bool = True) -> bool:
         cwd=str(ENGINE_DIR),
     )
     if result.returncode != 0:
-        print("[launch] ❌ Engine build failed.")
+        print("[launch] [X] Engine build failed.")
         return False
 
     if not binary.exists():
-        print(f"[launch] ⚠️  Binary not found at {binary} — may be a lib-only crate.")
+        print(f"[launch] [!] Binary not found at {binary} — may be a lib-only crate.")
         print("[launch] Running engine tests instead...")
         return run_engine_tests()
 
-    print(f"[launch] ✅ Engine built: {binary}")
+    print(f"[launch] [OK] Engine built: {binary}")
     return True
 
 
@@ -89,7 +99,7 @@ def run_engine_tests() -> bool:
         cwd=str(ENGINE_DIR),
     )
     passed = result.returncode == 0
-    print(f"[launch] {'✅' if passed else '❌'} Engine tests {'passed' if passed else 'failed'}.")
+    print(f"[launch] {'[OK]' if passed else '[X]'} Engine tests {'passed' if passed else 'failed'}.")
     return passed
 
 
@@ -221,7 +231,7 @@ def main():
 
     # Step 3 — Validate scene file
     if not SCENE_FILE.exists():
-        print(f"[launch] ⚠️  Scene file not found: {SCENE_FILE}")
+        print(f"[launch] [!] Scene file not found: {SCENE_FILE}")
         print("[launch] Run arania_body_generator.py first.")
         if not args.skip_generate:
             sys.exit(1)

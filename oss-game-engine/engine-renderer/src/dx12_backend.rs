@@ -25,6 +25,16 @@ mod inner {
             let _ = source;
             Ok(ShaderId(0))
         }
+
+        fn get_capture_capabilities(&self) -> u32 {
+            crate::types::CAPTURE_CAP_STAGING_BUFFER | crate::types::CAPTURE_CAP_ZERO_COPY
+        }
+
+        fn register_capture_stream(&mut self, _config: crate::types::CaptureConfig) -> crate::types::CaptureStreamId {
+            crate::types::CaptureStreamId(0)
+        }
+        fn unregister_capture_stream(&mut self, _stream: crate::types::CaptureStreamId) {}
+        fn dispatch_capture(&mut self, _stream: crate::types::CaptureStreamId) {}
     }
 }
 

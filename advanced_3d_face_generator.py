@@ -10,6 +10,8 @@ from dataclasses import dataclass, asdict
 from typing import List, Dict, Tuple, Optional
 import hashlib
 from datetime import datetime
+import argparse
+import os
 
 @dataclass
 class Vector3:
@@ -468,6 +470,13 @@ class ProceduralFaceGenerator:
 
 def main():
     """Example usage and testing"""
+    parser = argparse.ArgumentParser(description="Generate Janus 3D Face")
+    parser.add_argument("--output-dir", default=".", help="Directory to save generated files")
+    args = parser.parse_args()
+
+    out_dir = args.output_dir
+    os.makedirs(out_dir, exist_ok=True)
+
     generator = ProceduralFaceGenerator()
 
     # Create a custom face with specific features
@@ -487,8 +496,8 @@ def main():
     # Generate neutral face
     print("Generating neutral face...")
     neutral_face = generator.generate_face(custom_features)
-    generator.export_to_json(neutral_face, 'face_neutral.json')
-    generator.export_to_obj(neutral_face, 'face_neutral.obj')
+    generator.export_to_json(neutral_face, os.path.join(out_dir, 'face_neutral.json'))
+    generator.export_to_obj(neutral_face, os.path.join(out_dir, 'face_neutral.obj'))
 
     # Generate smiling face
     print("Generating smiling face...")
@@ -496,11 +505,11 @@ def main():
         custom_features,
         expressions={'smile': 0.8}
     )
-    generator.export_to_json(smiling_face, 'face_smile.json')
-    generator.export_to_obj(smiling_face, 'face_smile.obj')
+    generator.export_to_json(smiling_face, os.path.join(out_dir, 'face_smile.json'))
+    generator.export_to_obj(smiling_face, os.path.join(out_dir, 'face_smile.obj'))
 
     print("\nGeneration complete!")
-    print("Files created:")
+    print(f"Files created in {out_dir}:")
     print("  - face_neutral.json (full data)")
     print("  - face_neutral.obj (3D mesh)")
     print("  - face_smile.json")

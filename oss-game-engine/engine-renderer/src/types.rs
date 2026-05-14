@@ -59,3 +59,31 @@ pub enum ShaderError {
 pub enum RenderError {
     BackendLost,
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct CaptureStreamId(pub u64);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CaptureFormat {
+    Rgba8Unorm,
+    Nv12,
+}
+
+pub const CAPTURE_CAP_STAGING_BUFFER: u32 = 1 << 0;
+pub const CAPTURE_CAP_ZERO_COPY: u32 = 1 << 1;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CaptureStrategy {
+    None,
+    StagingBuffer,
+    ZeroCopy,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct CaptureConfig {
+    pub width: u32,
+    pub height: u32,
+    pub format: CaptureFormat,
+    pub target_fps: u32,
+    pub strategy: CaptureStrategy,
+}

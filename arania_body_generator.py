@@ -394,6 +394,10 @@ def write_extended_mat_json(ks_dir: Path) -> None:
             "neutral": "assets/face_neutral.obj",
             "smile":   "assets/face_smile.obj",
         },
+        "face_data": {
+            "neutral": "assets/face_neutral.json",
+            "smile":   "assets/face_smile.json",
+        },
         "animation": {
             "idle":  {"head_sway": True, "breathe": True, "blink_interval_s": 4.0},
             "walk":  {"stride_length": 0.6, "arm_swing": True},

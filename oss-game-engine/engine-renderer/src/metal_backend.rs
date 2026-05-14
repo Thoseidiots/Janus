@@ -31,6 +31,16 @@ mod inner {
         fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
             self
         }
+
+        fn get_capture_capabilities(&self) -> u32 {
+            crate::types::CAPTURE_CAP_STAGING_BUFFER // Metal backend fallback
+        }
+
+        fn register_capture_stream(&mut self, _config: crate::types::CaptureConfig) -> crate::types::CaptureStreamId {
+            crate::types::CaptureStreamId(0)
+        }
+        fn unregister_capture_stream(&mut self, _stream: crate::types::CaptureStreamId) {}
+        fn dispatch_capture(&mut self, _stream: crate::types::CaptureStreamId) {}
     }
 }
 

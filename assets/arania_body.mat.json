@@ -118,6 +118,10 @@
     "neutral": "assets/face_neutral.obj",
     "smile": "assets/face_smile.obj"
   },
+  "face_data": {
+    "neutral": "assets/face_neutral.json",
+    "smile": "assets/face_smile.json"
+  },
   "animation": {
     "idle": {
       "head_sway": true,

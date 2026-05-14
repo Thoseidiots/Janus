@@ -5,7 +5,7 @@ Runs on CPU in ~30 seconds.
 import sys, re, torch
 import torch.nn.functional as F
 
-WEIGHTS = r"C:\Users\legac\Downloads\Janus-workspace\avus_1b_weights (9).pt"
+WEIGHTS = r"C:\Users\legac\Downloads\Janus-workspace\avus_1b_weights (10).pt"
 
 # ── Load model ────────────────────────────────────────────────────────────────
 print(f"Loading {WEIGHTS}...")
