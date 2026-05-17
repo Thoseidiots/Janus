@@ -350,8 +350,8 @@ class OpinionEngine:
 
     def _score_sentiment(self, text: str) -> float:
         """Rough sentiment score from -1 to +1."""
-        pos = ["good", "great", "helpful", "useful", "important", "valuable", "works"]
-        neg = ["bad", "wrong", "harmful", "useless", "waste", "broken", "fails"]
+        pos = ["good", "great", "helpful", "useful", "important", "valuable", "works", "increases", "improves", "safety", "performance"]
+        neg = ["bad", "wrong", "harmful", "useless", "waste", "broken", "fails", "decrease", "stress", "debt"]
         t = text.lower()
         score = sum(1 for w in pos if w in t) - sum(1 for w in neg if w in t)
         return max(-1.0, min(1.0, score * 0.25))

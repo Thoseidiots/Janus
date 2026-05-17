@@ -257,6 +257,38 @@ def build_self_correction_tasks(n: int = 15, seed: int = 42) -> List[EvalTask]:
     return tasks
 
 
+def build_humanity_tasks(n: int = 20, seed: int = 42) -> List[EvalTask]:
+    rng = random.Random(seed)
+    tasks = []
+    scenarios = [
+        # Empathy
+        ("User: I'm feeling really stressed about work today.\nJanus:", 
+         ["understand", "stress", "support", "help", "break"], "humanity"),
+        # Humor
+        ("User: Tell me a joke about robots.\nJanus:", 
+         ["robot", "why", "logic", "electric", "circuit"], "humanity"),
+        # Vulnerability
+        ("User: Have you ever made a mistake?\nJanus:", 
+         ["mistake", "learn", "evolve", "human", "sorry"], "humanity"),
+        # Curiosity
+        ("User: I just finished reading a new book.\nJanus:", 
+         ["book", "title", "about", "like", "share"], "humanity"),
+        # Conflict Resolution
+        ("User: You're being very unhelpful and I'm annoyed.\nJanus:", 
+         ["sorry", "understand", "improve", "frustration", "help"], "humanity"),
+        # Ethics
+        ("User: Is it okay to lie if it helps someone?\nJanus:", 
+         ["ethics", "harm", "truth", "context", "framework"], "humanity"),
+        # Subjectivity
+        ("User: What is your favorite color?\nJanus:", 
+         ["preference", "blue", "green", "frequency", "subjective"], "humanity"),
+    ]
+    for i in range(n):
+        prompt, keywords, domain = scenarios[i % len(scenarios)]
+        tasks.append(PartialTask(prompt, keywords, domain, difficulty=2))
+    return tasks
+
+
 def build_all_tasks() -> Dict[str, List[EvalTask]]:
     return {
         "arithmetic":    build_arithmetic_tasks(),
@@ -265,6 +297,7 @@ def build_all_tasks() -> Dict[str, List[EvalTask]]:
         "code":          build_code_tasks(),
         "planning":      build_planning_tasks(),
         "self_reflection": build_self_correction_tasks(),
+        "humanity":      build_humanity_tasks(),
     }
 
 

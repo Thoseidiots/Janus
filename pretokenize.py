@@ -146,6 +146,52 @@ def collect_texts(samples_per: int = 10_000) -> dict:
     except ImportError:
         print("  procedural: skipped (procedural_dataset.py not found)")
 
+    # 4. JSONL Files (Humanity, Conversations, Reasoning, Skills)
+    jsonl_files = {
+        "humanity": "synthetic_databases/janus_humanity.jsonl",
+        "conversations": "synthetic_databases/janus_conversations.jsonl",
+        "reasoning_v2": "synthetic_databases/janus_reasoning.jsonl",
+        "skills_v2": "synthetic_databases/janus_skills.jsonl",
+    }
+
+    for source, path in jsonl_files.items():
+        p = Path(path)
+        if p.exists():
+            print(f"  loading {source} from {path}...")
+            file_texts = []
+            with open(p, "r", encoding="utf-8") as f:
+                for line in f:
+                    try:
+                        data = json.loads(line)
+                        # Ensure standard training format if keys exist
+                        if "input" in data and "output" in data:
+                            thought = data.get("thought", "")
+                            text = f"<|startoftext|>Input: {data['input']}\n"
+                            if thought:
+                                text += f"Thought: {thought}\n"
+                            text += f"Output: {data['output']}<|endoftext|>"
+                            file_texts.append(text)
+                        elif "instruction" in data and "response" in data:
+                            text = f"<|startoftext|>Instruction: {data['instruction']}\nResponse: {data['response']}<|endoftext|>"
+                            file_texts.append(text)
+                        elif "text" in data:
+                            file_texts.append(data["text"])
+                    except Exception:
+                        continue
+            
+            # Sub-sample if necessary to avoid memory issues during tokenization
+            # but for 3.4M records we might want them all if n_tokens allows.
+            # Here we just take up to samples_per * 10 for these large files.
+            limit = samples_per * 10
+            if len(file_texts) > limit:
+                import random
+                file_texts = random.sample(file_texts, limit)
+            
+            texts[source] = file_texts
+            print(f"  {source:<10}: {len(file_texts):>8,} samples")
+        else:
+            print(f"  {source:<10}: skipped (file not found)")
+
     return texts
 
 

@@ -23,6 +23,7 @@ def main() -> None:
         ("Conversation DB",  "janus_conversation_db", "build_database"),
         ("Reasoning DB",     "janus_reasoning_db",    "build_database"),
         ("Skills DB",        "janus_skills_db",       "build_database"),
+        ("Humanity DB",      "janus_humanity_db",     "build_database"),
     ]
 
     print(f"\n{'='*60}")

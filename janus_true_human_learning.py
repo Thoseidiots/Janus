@@ -112,6 +112,13 @@ class AdaptiveMemory:
             'question': ['what', 'how', 'why', 'when', 'where'],
             'emotion': ['feel', 'sad', 'happy', 'angry', 'worried'],
             'learning': ['learn', 'understand', 'explain', 'teach'],
+            'humor': ['joke', 'funny', 'laugh', 'sleep', 'robot', 'code'],
+            'philosophical': ['meaning', 'existence', 'life', 'reality', 'think'],
+            'personal': ['favorite', 'like', 'opinion', 'believe', 'think about', 'take on'],
+            'error_admission': ['mistake', 'wrong', 'sorry', 'oops'],
+            'conflict': ['disagree', 'wrong', 'annoyed', 'frustrating', 'bad'],
+            'memory_recall': ['remember', 'last time', 'yesterday', 'before'],
+            'curiosity': ['project', 'tired', 'jazz', 'day', 'tell me more'],
         }
         
         situation_lower = situation.lower()

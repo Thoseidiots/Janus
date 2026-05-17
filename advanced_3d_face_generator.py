@@ -91,9 +91,9 @@ class ProceduralFaceGenerator:
         uv_coords = []
         vertex_groups = {}  # For anatomical regions
         
-        # Higher resolution for better detail
-        segments = 48
-        rings = 36
+        # AAA game quality resolution for professional grade models
+        segments = 128
+        rings = 96
         
         # Create head shape with anatomical proportions
         for ring in range(rings + 1):

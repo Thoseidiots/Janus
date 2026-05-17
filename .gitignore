@@ -22,6 +22,7 @@ upwork.env
 # Large model weights (avus_*) stay ignored
 avus_*.pt
 *.pt.bak
+*.pt
 Janus-repo/
 .oxpecker_work/
 synthetic_databases/

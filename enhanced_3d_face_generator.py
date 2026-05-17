@@ -212,10 +212,10 @@ class AAA_FaceGenerator:
         self.database = GameAIFaceDatabase()
         self.archetype_templates = self._load_archetype_templates()
         self.performance_targets = {
-            'mobile': {'max_triangles': 2000, 'max_texture_size': 512},
-            'console': {'max_triangles': 8000, 'max_texture_size': 2048},
-            'pc_high': {'max_triangles': 20000, 'max_texture_size': 4096},
-            'cinematic': {'max_triangles': 100000, 'max_texture_size': 8192}
+            'mobile': {'max_triangles': 15000, 'max_texture_size': 1024},
+            'console': {'max_triangles': 50000, 'max_texture_size': 2048},
+            'pc_high': {'max_triangles': 100000, 'max_texture_size': 4096},
+            'cinematic': {'max_triangles': 250000, 'max_texture_size': 8192}
         }
     
     def _load_archetype_templates(self) -> Dict:
