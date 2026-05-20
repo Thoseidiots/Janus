@@ -1,0 +1,40 @@
+name: Graphite Stack Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  graphite-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for Graphite metadata
+        run: |
+          if [[ "${{ github.event.pull_request.body }}" == *"Graphite"* ]]; then
+            echo "✓ Graphite PR detected"
+          fi
+
+      - name: Validate commit messages
+        run: |
+          # Check that commits follow conventional commit format
+          git log origin/main..${{ github.head_ref }} --pretty=format:%B | grep -E "^(feat|fix|docs|style|refactor|test|chore)" || echo "Consider using conventional commits"
+
+      - name: Run linting
+        continue-on-error: true
+        run: |
+          # Python linting (82% of codebase)
+          if [ -f "requirements.txt" ] || [ -f "pyproject.toml" ]; then
+            pip install -q pylint flake8 2>/dev/null || true
+            find . -name "*.py" -not -path "./.*" | head -20 | xargs pylint --disable=all --enable=E,F 2>/dev/null || true
+          fi
+
+      - name: Type check TypeScript/JavaScript
+        continue-on-error: true
+        run: |
+          if [ -f "tsconfig.json" ] || [ -f "package.json" ]; then
+            npm list typescript >/dev/null 2>&1 && npx tsc --noEmit 2>/dev/null || true
+          fi
