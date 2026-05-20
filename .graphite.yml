@@ -1,0 +1,30 @@
+branch:
+  # Pattern for Graphite-managed branches
+  submitStrategy: stack
+
+  # Automatically track branch relationships
+  trackRelationships: true
+
+  # Prevent accidental force pushes
+  protectRemote: false
+
+# GitHub integration
+github:
+  # Auto-link commits and PRs
+  createDraft: false
+  
+  # Request reviewers automatically
+  requestReviewers: false
+
+# Workflow settings
+workflow:
+  # Stack mode - allows dependent PRs
+  stackMode: true
+  
+  # Auto-update from main
+  autoBranchUpdate: false
+
+# Commit settings
+commit:
+  # Show commit history in PR descriptions
+  showCommitHistory: true
