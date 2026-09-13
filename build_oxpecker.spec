@@ -65,7 +65,6 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='tools/universal_oxpecker/assets/oxpecker.ico',
 )
 
 # Collect all analysis plugins
