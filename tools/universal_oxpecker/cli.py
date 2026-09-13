@@ -13,8 +13,17 @@ from typing import List, Any
 
 try:
     from .core.orchestrator import OxpeckerOrchestrator
-except ImportError:  # pragma: no cover - script-mode fallback
-    from core.orchestrator import OxpeckerOrchestrator
+    from .license_manager import LicenseManager, check_license_at_startup
+except ImportError:  # pragma: no cover - script-mode or PyInstaller fallback
+    try:
+        from core.orchestrator import OxpeckerOrchestrator
+        from license_manager import LicenseManager, check_license_at_startup
+    except (ImportError, ModuleNotFoundError):
+        import sys
+        from pathlib import Path
+        sys.path.insert(0, str(Path(__file__).parent))
+        from core.orchestrator import OxpeckerOrchestrator
+        from license_manager import LicenseManager, check_license_at_startup
 
 _RED = "\033[31m"
 _YELLOW = "\033[33m"
@@ -231,6 +240,54 @@ def cmd_rollback(args) -> None:
     print(f"  {_BOLD}Description:{_RESET} {restored.description}")
 
 
+def cmd_license(args) -> None:
+    """Manage license: activate, renew, skip month, or check status."""
+    print(BANNER)
+    manager = LicenseManager()
+
+    if args.action == "status":
+        status = manager.get_status()
+        print(f"  {_BOLD}License Status:{_RESET}")
+        print(f"    Email: {status.email or 'none'}")
+        print(f"    Active: {_GREEN if status.is_licensed else _RED}{status.is_licensed}{_RESET}")
+        print(f"    Available today: {_GREEN if status.can_use_today else _RED}{status.can_use_today}{_RESET}")
+        if status.days_remaining is not None:
+            print(f"    Days remaining: {status.days_remaining}")
+        print(f"\n    {status.message}\n")
+
+    elif args.action == "activate":
+        if not args.key or not args.email:
+            print(f"  {_RED}ERROR:{_RESET} --key and --email required for activation\n")
+            return
+        success, msg = manager.activate_license(args.key, args.email)
+        if success:
+            print(f"  {_GREEN}{msg}{_RESET}\n")
+        else:
+            print(f"  {_RED}{msg}{_RESET}\n")
+
+    elif args.action == "renew":
+        success, msg = manager.renew_license(args.key if args.key else None)
+        if success:
+            print(f"  {_GREEN}{msg}{_RESET}\n")
+        else:
+            print(f"  {_RED}{msg}{_RESET}\n")
+
+    elif args.action == "cannot-afford":
+        success, msg = manager.set_cannot_afford()
+        if success:
+            print(f"  {_GREEN}{msg}{_RESET}\n")
+            print(f"  You can use Oxpecker for free this month.\n")
+        else:
+            print(f"  {_YELLOW}{msg}{_RESET}\n")
+
+    elif args.action == "remove":
+        success, msg = manager.uninstall_license()
+        if success:
+            print(f"  {_GREEN}{msg}{_RESET}\n")
+        else:
+            print(f"  {_YELLOW}{msg}{_RESET}\n")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="oxpecker",
@@ -273,6 +330,12 @@ def main() -> None:
     p_rollback.add_argument("target", help="Path to a repaired working copy")
     p_rollback.add_argument("--steps", type=int, default=1, help="How many snapshots to roll back")
 
+    p_lic = sub.add_parser("license", help="Manage license: activate, renew, or check status")
+    p_lic.add_argument("action", choices=["status", "activate", "renew", "cannot-afford", "remove"],
+                       help="License action")
+    p_lic.add_argument("--key", default=None, help="License key from Gumroad")
+    p_lic.add_argument("--email", default=None, help="Email address for license")
+
     sub.add_parser("langs", help="List all registered language adapters")
     sub.add_parser("version", help="Print version and exit")
 
@@ -284,6 +347,7 @@ def main() -> None:
         "repair": cmd_repair,
         "autofix": cmd_repair,
         "rollback": cmd_rollback,
+        "license": cmd_license,
         "langs": cmd_langs,
         "version": cmd_version,
     }
